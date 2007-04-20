@@ -1,0 +1,5 @@
+.SH "BSD/OS 2.X DIFFERENCES"
+The BSD/OS port is said to work at least as well as ps does.
+
+The BSD/OS 2.X port was done by Jeff Polk <polk@BSDI.COM>
+based on the 4.4BSD port written by Christos Zoulas.

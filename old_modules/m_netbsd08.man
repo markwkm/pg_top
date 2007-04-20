@@ -1,0 +1,4 @@
+.SH "NetBSD NOTES"
+
+Only tested with NetBSD/i386. Someone should check the memory size stuff.
+Stolen back from the m_386bsd.c...

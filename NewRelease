@@ -1,0 +1,37 @@
+To prepare a new release:
+
+Update the version number in the following files: configure.ac, INSTALL, README, top.faq
+
+Update Changes
+
+Make sure MANIFEST is up to date
+
+make configure
+./makefaq
+cp top.faq.shtml top.faq.toc.html /www/unixtop
+syncweb unixtop
+
+svn update
+
+test the release:
+cd ../tarballs; ./mktar current
+cd ../test; tar xvf ../tarballs/top-current.tar
+cd top-current; ./configure; make
+
+chdir to the top level (top-3)
+svn copy trunk release/<version>
+svn commit -m "Creating release <version>"
+
+cd tarballs; ./mktar <version>
+
+cp <version>.tar.* /www/unixtop/dist
+modify /www/unixtop/download.shtml to point to new version
+
+ftp tar files to upload.sourceforge.net (bin, passive, hash) in /incoming
+Add release to project (release name: top-<version>)
+Use "./fmtchanges Changes" to get a cut-n-paste version of the changelog
+
+chdir to top level (top-3)
+svn update
+./svnmirror
+go to sourceforge and submit request to update svn

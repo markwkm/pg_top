@@ -1,0 +1,4 @@
+.SH "386BSD NOTES"
+The 386BSD port was adapted by Steve Hocking from a module 
+originally written by Christos Zoulas.  The port was later updated
+by Andrew Herbert (andrew@werple.apana.org.au).

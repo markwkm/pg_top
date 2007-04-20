@@ -1,0 +1,7 @@
+.SH "SCO UNIX NOTES"
+The SCO Unix port was written by Gregory Shilin <shilin@onyx.co.il>.
+SCO Unix is almost totally different from normal Unix'es. Yes, there
+is a variable avenrun in kernel, but its length is 8, so it cannot be
+a 3 element array. And there is no variable cp_time at all. Also there
+is no function setpriority() in SCO.  All attempts to set a process's
+priority (such as with the internal renice command) will fail.

@@ -1,0 +1,13 @@
+.SH "A/UX NOTES"
+There is no obvious way to find the amount of memory per process
+that is currently resident.  The percent cpu usage is not
+maintained by the operating system, so we fake one.
+The last pid number is not plucked from the operating system
+either.  The number given is based on the information collected
+in the process snapshots.
+.LP
+Although AUX does not generally have a renice system call,
+there is a compile-time option that may have been enabled
+when the program was installed.
+.LP
+The A/UX 3.1 port was written by Richard Henderson <rth@tamu.edu>.

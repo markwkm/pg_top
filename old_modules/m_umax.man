@@ -1,0 +1,18 @@
+.SH "MULTIMAX DIFFERENCES"
+The umax operating system does not assign process ids sequentially, so
+there is no "last pid" display.  Process state names are: run, exec,
+wait, event, start, stop.  Information about physical memory is
+displayed on the memory status line, but information about virtual
+memory is not available.  WCPU is not displayed.  Percent CPU is
+calculated ove the entire life of the process and is a measure of the
+percentage of the process's life time spent running.  This is very
+different from the typical Unix measure of percent cpu, but is the
+best that can be done with the information available.  Also, no
+attempt is made to determine if a process is currently "idle", thus
+the -I flag is assumed to always be true (idle processes are displayed).
+
+The multimax port is not thorough and not complete.  It was done more
+as an exercise in porting top than as an effort to create something
+useful.  Currently cpu state percentages are not calculated.
+
+The Multimax port was written by William LeFebvre.

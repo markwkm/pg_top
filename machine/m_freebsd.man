@@ -1,0 +1,49 @@
+.SH "FreeBSD 4.0 NOTES"
+Last pid is compiler depended. 
+
+$ strings /kernel | grep _nextpid
+
+.SH "DESCRIPTION OF MEMORY"
+Memory: 10M Act 1208K Inact 3220K Wired 132K Free 25% Swap, 2924Kin 2604Kout
+
+.TP
+.B K: 
+Kilobyte
+.TP
+.B M: 
+Megabyte
+.TP
+.B %: 
+1/100
+
+.TP
+.B Act: 
+number of pages active
+.TP
+.B Incat: 
+number of pages inactive
+.TP
+.B Wired: 
+number of pages wired down
+.TP
+.B Free: 
+number of pages free
+
+.TP
+.B Swap: 
+swap usage
+.TP 
+.B Kin: 
+kilobytes swap pager pages paged in (last interval)
+.TP
+.B Kout: 
+kilobytes swap pager pages paged out  (last interval)
+
+.PP
+See /usr/include/sys/vmmeter.h and  /sys/vm/vm_meter.c.
+
+.PP
+Christos Zoulas, Steven Wallace, Wolfram Schneider, Monte Mitzelfelt.
+
+.PP
+This module was retrofitted from FreeBSD 4.6.2 sources.
