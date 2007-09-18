@@ -35,7 +35,6 @@
 #include <sys/vfs.h>
 
 #include <sys/param.h>		/* for HZ */
-#include <asm/page.h>		/* for PAGE_SHIFT */
 
 #if 0
 #include <linux/proc_fs.h>	/* for PROC_SUPER_MAGIC */
@@ -167,7 +166,7 @@ static long swap_stats[NSWAPSTATS];
 
 /* usefull macros */
 #define bytetok(x)	(((x) + 512) >> 10)
-#define pagetok(x)	((x) << (PAGE_SHIFT - 10))
+#define pagetok(x)	((x) << (getpagesize() - 10))
 #define HASH(x)		(((x) * 1686629713U) % HASH_SIZE)
 
 /*======================================================================*/
