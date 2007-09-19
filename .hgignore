@@ -8,6 +8,7 @@ commands.o
 config.h
 config.log
 config.status
+configure
 display.o
 m_linux.o
 screen.o
