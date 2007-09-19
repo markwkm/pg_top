@@ -1,2 +1,0 @@
-.SH "DC/OSX CREDITS"
-The DC/OSX port was written by Phillip Wu.

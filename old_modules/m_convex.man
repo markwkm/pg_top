@@ -1,7 +1,0 @@
-.SH "CONVEX DIFFERENCES"
-The size field may be smaller then that of ps.  I believe the 
-difference is due to mmap memory.  
-
-The Convex OS 11.X port was done by William L. Jones.  Most of it was
-was taken from the SunOS 4 port written by William LeFebvre.
-Minor formatting changes by Warren Vosper <warrenv@convex.com>

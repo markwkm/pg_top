@@ -1,3 +1,0 @@
-.SH "SVR42 CREDITS"
-The SVR42 port was hacked by David Cutter from the SVR4 port initially
-written by Andrew Herbert.

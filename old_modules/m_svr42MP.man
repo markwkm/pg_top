@@ -1,4 +1,0 @@
-.SH "SVR42MP CREDITS"
-The SVR42MP port was writen by Daniel Harris based on SVR42 and sunos5
-code originally for SVR5. It was modified sightly to become 
-the svr42MP (Unixware) port By Mike Hopkirk.

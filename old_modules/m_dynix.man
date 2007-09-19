@@ -1,7 +1,0 @@
-.SH "DYNIX DIFFERENCES"
-One the Sequent DYNIX operating system, there is a distinction between runable
-and running on a processor.  The STATE column reflects this by showing "run"
-when the process is runable, and "RUN" when the process is actually running
-on a processor.
-
-The DYNIX port was written by Daniel Trinkle.

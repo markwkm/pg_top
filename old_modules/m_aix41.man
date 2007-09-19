@@ -1,5 +1,0 @@
-.SH "AIX 4.1 NOTES"
-The "last pid" is not displayed, as I couldn't figure out how to 
-obtain it from the kernel.
-.LP
-The AIX4.1 port was written by Joep Vesseur <joep@fwi.uva.nl>. 

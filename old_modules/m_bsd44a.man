@@ -1,4 +1,0 @@
-.SH "4.4 BSD DIFFERENCES"
-The 4.4 BSD alpha port is said to work at least as well as ps does.
-
-The 4.4 BSD alpha port was written by Christos Zoulas.
