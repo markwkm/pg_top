@@ -73,6 +73,11 @@ static char *err_listem =
 			errs[errcnt++].errnum = (e); \
 		    }
 
+#define CURRENT_QUERY \
+		"SELECT current_query\n" \
+		"FROM pg_stat_activity\n" \
+		"WHERE procpid = %d;"
+
 /*
  *  err_compar(p1, p2) - comparison routine used by "qsort"
  *	for sorting errors.
@@ -491,4 +496,30 @@ renice_procs(char *str)
 #else
     return(" operation not supported");
 #endif
+}
+
+void
+show_current_query(PGconn *pgconn, int procpid)
+{
+	int i;
+	int rows;
+	char *sql;
+	char info[64];
+	PGresult *pgresult;
+
+	sql = (char *) malloc(strlen(CURRENT_QUERY) + 7);
+	sprintf(sql, CURRENT_QUERY, procpid);
+	sprintf(info, "Current query for procpid %d:\n\n", procpid);
+	display_pager(info);
+
+	/* Get the currently running query. */
+	pgresult = PQexec(pgconn, sql);
+	rows = PQntuples(pgresult);
+	for (i = 0; i < rows; i++) {
+		display_pager(PQgetvalue(pgresult, i, 0));
+	}
+	display_pager("\n\n");
+
+	free(sql);
+	PQclear(pgresult);
 }
