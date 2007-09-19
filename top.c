@@ -34,6 +34,8 @@ char *copyright =
 #include <setjmp.h>
 #include <ctype.h>
 
+#include <libpq-fe.h>
+
 /* determine which type of signal functions to use */
 #ifdef HAVE_SIGACTION
 #undef HAVE_SIGHOLD
@@ -231,6 +233,8 @@ int
 main(int argc, char *argv[])
 
 {
+	PGconn *pgconn;
+
     register int i;
     register int active_procs;
     register int change;
@@ -460,6 +464,9 @@ Usage: %s [-ISTbcinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 		exit(1);
 	    }
 	}
+
+	/* connect to the database */
+	pgconn = PQconnectdb("host=localhost port=5432 dbname=postgres");
 
 	/* get count of top processes to display (if any) */
 	if (optind < ac && *av[optind])
@@ -1190,6 +1197,7 @@ Usage: %s [-ISTbcinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 	}
     }
 
+    PQfinish(pgconn);
     quit(0);
     /*NOTREACHED*/
 }

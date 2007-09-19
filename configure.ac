@@ -1,5 +1,5 @@
 # configure.ac
-AC_INIT(top, 3.6.1)
+AC_INIT(pgsqltop, 3.6.1)
 
 echo "Configuring $PACKAGE_STRING"
 
@@ -23,6 +23,10 @@ AC_ARG_WITH(ext, AC_HELP_STRING([--with-ext=EXT],
      else
         AC_MSG_ERROR([No such extension $withval])
      fi])
+
+AC_ARG_WITH(postgresql, [AC_HELP_STRING([--with-postgresql=DIR],
+		[Default on. Set to the path of the PostgreSQL's installation.])],
+		[pgsql_path=$withval])
 
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug],
     [enable support for debugging output]))
@@ -68,6 +72,27 @@ else
    AC_DEFINE(OSREV, "")
 fi
 AC_MSG_RESULT($osrev)
+
+# checks for postgresql
+if test -z "$pgsql_path"; then
+	AC_PATH_PROGS(PG_CONFIG, pg_config, no)
+else
+	AC_PATH_PROGS(PG_CONFIG, pg_config, no, "$pgsql_path/bin")
+fi
+if test -z "$PG_CONFIG" || test ! -r "$PG_CONFIG"; then
+	AC_MSG_ERROR([pg_config not found.])
+fi
+AC_MSG_CHECKING([for PostgreSQL libraries])
+BINDIR=`$PG_CONFIG --bindir`
+INCLUDEDIR=`$PG_CONFIG --includedir`
+PKGINCLUDEDIR=`$PG_CONFIG --pkgincludedir`
+
+DBCFLAGS="-I$INCLUDEDIR -I$PKGINCLUDEDIR"
+LIBDIR=`$PG_CONFIG --libdir`
+DBLDFLAGS="-L$LIBDIR -Wl,-R$LIBDIR -lpq"
+
+AC_SUBST(DBCFLAGS)
+AC_SUBST(DBLDFLAGS)
 
 # checks for libraries
 AC_CHECK_LIB(kstat, kstat_open)
