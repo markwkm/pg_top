@@ -7,3 +7,4 @@ void show_errors();
 char *kill_procs(char *str);
 char *renice_procs(char *str);
 void show_current_query(PGconn *pgconn, int procpid);
+void show_locks(PGconn *pgconn, int procpid);

@@ -285,7 +285,7 @@ main(int argc, char *argv[])
     sigset_t signalset;
 #endif
 
-    static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQ";
+    static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQL";
 
 /* these defines enumerate the "strchr"s of the commands in command_chars */
 #define CMD_redraw	0
@@ -312,6 +312,7 @@ main(int argc, char *argv[])
 #define CMD_order_mem   20
 #define CMD_order_time  21
 #define CMD_current_query 22
+#define CMD_locks 23
 
     /* set the buffer for stdout */
     setbuffer(stdout, stdoutbuf, Buffersize);
@@ -1189,6 +1190,16 @@ Usage: %s [-ISTbcinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 			    reset_display();
 			    display_pagerstart();
 			    show_current_query(pgconn, newval);
+			    display_pagerend();
+			    break;
+
+			case CMD_locks:
+			    new_message(MT_standout,
+					"Show locks held by process : ");
+			    newval = readline(tempbuf1, 8, Yes);
+			    reset_display();
+			    display_pagerstart();
+			    show_locks(pgconn, newval);
 			    display_pagerend();
 			    break;
 

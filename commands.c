@@ -78,6 +78,12 @@ static char *err_listem =
 		"FROM pg_stat_activity\n" \
 		"WHERE procpid = %d;"
 
+#define GET_LOCKS \
+		"SELECT datname, relname, mode, granted\n" \
+		"FROM pg_stat_activity, pg_locks, pg_class\n" \
+		"WHERE procpid = %d\n" \
+		"  AND pg_class.oid = relation;"
+
 /*
  *  err_compar(p1, p2) - comparison routine used by "qsort"
  *	for sorting errors.
@@ -520,6 +526,67 @@ show_current_query(PGconn *pgconn, int procpid)
 	}
 	display_pager("\n\n");
 
+	free(sql);
+	PQclear(pgresult);
+}
+
+void
+show_locks(PGconn *pgconn, int procpid)
+{
+	int i;
+	int rows;
+	char *sql;
+	char info[64];
+	int width[5] = {0, 0, 0, 0, 0};
+	PGresult *pgresult;
+	char *header_format;
+	char *line_format;
+	char *prefix;
+	char *line;
+
+	sql = (char *) malloc(strlen(GET_LOCKS) + 7);
+	sprintf(sql, GET_LOCKS, procpid);
+	sprintf(info, "Locks held by procpid %d:\n\n", procpid);
+	display_pager(info);
+
+	/* Get the locks helf by the process. */
+	pgresult = PQexec(pgconn, sql);
+	rows = PQntuples(pgresult);
+
+	/* Determine column sizes. */
+	asprintf(&prefix, "%d", rows);
+	width[0] = strlen(prefix);
+	free(prefix);
+	for (i = 0; i < rows; i++) {
+		if (strlen(PQgetvalue(pgresult, i, 0)) > width[1])
+			width[1] = strlen(PQgetvalue(pgresult, i, 0));
+		if (strlen(PQgetvalue(pgresult, i, 1)) > width[2])
+			width[2] = strlen(PQgetvalue(pgresult, i, 1));
+		if (strlen(PQgetvalue(pgresult, i, 2)) > width[3])
+			width[3] = strlen(PQgetvalue(pgresult, i, 2));
+		if (strlen(PQgetvalue(pgresult, i, 3)) > width[4])
+			width[4] = strlen(PQgetvalue(pgresult, i, 3));
+	}
+	asprintf(&header_format, "%%-%ds | %%-%ds | %%-%ds | %%-%ds | %%-%ds\n\n",
+			width[0], width[1], width[2], width[3], width[4]);
+	asprintf(&line_format, "%%%dd | %%-%ds | %%-%ds | %%-%ds | %%-%ds\n",
+			width[0], width[1], width[2], width[3], width[4]);
+
+	/* Display data. */
+	asprintf(&line, header_format, "", "database", "table", "type", "granted");
+	free(header_format);
+	display_pager(line);
+	free(line);
+	for (i = 0; i < rows; i++) {
+		asprintf(&line, line_format, i + 1, PQgetvalue(pgresult, i, 0),
+				PQgetvalue(pgresult, i, 1), PQgetvalue(pgresult, i, 2),
+				PQgetvalue(pgresult, i, 3));
+		display_pager(line);
+		free(line);
+	}
+	display_pager("\n");
+
+	free(line_format);
 	free(sql);
 	PQclear(pgresult);
 }
