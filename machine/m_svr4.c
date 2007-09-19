@@ -18,7 +18,7 @@
  * 	     Jeff Janvrin       <jeff.janvrinColumbiaSC.NCR.COM>
  */
 
-#include "top.h"
+#include "ptop.h"
 #include "machine.h"
 #include "utils.h"
 #include <stdio.h>

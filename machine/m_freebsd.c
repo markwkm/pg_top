@@ -48,7 +48,7 @@
 
 #include <osreldate.h> /* for changes in kernel structures */
 
-#include "top.h"
+#include "ptop.h"
 #include "machine.h"
 #include "utils.h"
 

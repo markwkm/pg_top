@@ -30,7 +30,7 @@
 #include <sys/times.h>
 #include <sys/param.h>
 #include <pwd.h>
-#include "top.h"
+#include "ptop.h"
 #include "machine.h"
 #include "utils.h"
 

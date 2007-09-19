@@ -30,7 +30,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 
-#include "top.h"
+#include "ptop.h"
 #include "machine.h"
 #include "screen.h"		/* interface to screen package */
 #include "layout.h"		/* defines for screen position layout */

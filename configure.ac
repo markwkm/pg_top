@@ -1,5 +1,5 @@
 # configure.ac
-AC_INIT(pgsqltop, 3.6.1)
+AC_INIT(ptop, 3.6.1-pre1)
 
 echo "Configuring $PACKAGE_STRING"
 
@@ -324,5 +324,5 @@ AC_SUBST(INSTALL_OPTS_PROG)
 
 # wrapup
 
-AC_CONFIG_FILES(Makefile top.1)
+AC_CONFIG_FILES(Makefile ptop.1)
 AC_OUTPUT

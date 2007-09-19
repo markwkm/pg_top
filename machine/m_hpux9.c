@@ -59,7 +59,7 @@
 # endif /* __hp9000s700 */
 #endif /* hpux */
 
-#include "top.h"
+#include "ptop.h"
 #include "machine.h"
 #include "utils.h"
 

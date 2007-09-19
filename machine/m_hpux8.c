@@ -46,7 +46,7 @@
 # define P_SSIZE(p) __PST2P(p, pst_ssize)
 #endif
 
-#include "top.h"
+#include "ptop.h"
 #include "machine.h"
 #include "utils.h"
 

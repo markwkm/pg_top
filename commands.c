@@ -25,7 +25,7 @@
 #endif
 
 #include "sigdesc.h"		/* generated automatically */
-#include "top.h"
+#include "ptop.h"
 #include "boolean.h"
 #include "utils.h"
 #include "version.h"

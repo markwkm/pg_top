@@ -42,7 +42,7 @@
 #define PROC_SUPER_MAGIC 0x9fa0
 #endif
 
-#include "top.h"
+#include "ptop.h"
 #include "machine.h"
 #include "utils.h"
 

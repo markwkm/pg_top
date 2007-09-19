@@ -31,7 +31,7 @@
 #include <sys/file.h>
 #include <sys/time.h>
 
-#include "top.h"
+#include "ptop.h"
 #include "machine.h"
 #include "utils.h"
 

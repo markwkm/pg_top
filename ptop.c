@@ -45,7 +45,7 @@ char *copyright =
 
 /* includes specific to top */
 
-#include "top.h"
+#include "ptop.h"
 #include "machine.h"
 #include "commands.h"
 #include "display.h"		/* interface to display package */

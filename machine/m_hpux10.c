@@ -37,7 +37,7 @@
 #include <sys/stat.h>
 #include <sys/dirent.h>
 
-#include "top.h"
+#include "ptop.h"
 #include "machine.h"
 #include "utils.h"
 

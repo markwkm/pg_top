@@ -37,7 +37,7 @@
 #include <pwd.h>
 #include <errno.h>
 #include <libperfstat.h>
-#include "top.h"
+#include "ptop.h"
 #include "machine.h"
 #include "utils.h"
 

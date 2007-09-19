@@ -32,7 +32,7 @@
 
 #include <pwd.h>
 
-#include "top.h"
+#include "ptop.h"
 #include "utils.h"
 
 struct hash_el {

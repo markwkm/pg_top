@@ -20,7 +20,7 @@
 #else
 #undef DEBUG
 #endif
-#include "top.h"
+#include "ptop.h"
 #include "utils.h"
 
 static int

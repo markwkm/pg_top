@@ -52,7 +52,7 @@
 #include <fcntl.h>
 #include <dlfcn.h>
 
-#include "top.h"
+#include "ptop.h"
 #include "machine.h"
 #include "utils.h"
 

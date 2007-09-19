@@ -72,7 +72,7 @@ struct mbuf;
 #include <sys/syscall.h> /* for SYS_setpriority, in setpriority(), below */
 
 
-#include "top.h"
+#include "ptop.h"
 #include "machine.h"
 #include "utils.h"
 

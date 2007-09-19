@@ -64,7 +64,7 @@
 #include <unistd.h>
 
 #include "os.h"
-#include "top.h"
+#include "ptop.h"
 #include "machine.h"
 #include "utils.h"
 #include "display.h"
