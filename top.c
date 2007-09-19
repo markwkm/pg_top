@@ -34,8 +34,6 @@ char *copyright =
 #include <setjmp.h>
 #include <ctype.h>
 
-#include <libpq-fe.h>
-
 /* determine which type of signal functions to use */
 #ifdef HAVE_SIGACTION
 #undef HAVE_SIGHOLD
@@ -695,7 +693,7 @@ Usage: %s [-ISTbcinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
     if (statics.flags.warmup)
     {
 	get_system_info(&system_info);
-	(void)get_process_info(&system_info, &ps, 0);
+	(void)get_process_info(&system_info, &ps, 0, pgconn);
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;
 	select(0, NULL, NULL, NULL, &timeout);
@@ -718,7 +716,8 @@ Usage: %s [-ISTbcinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 	processes =
 	    get_process_info(&system_info,
 			     &ps,
-			     order_index);
+			     order_index,
+			     pgconn);
 
 	/* display the load averages */
 	(*d_loadave)(system_info.last_pid,

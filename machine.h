@@ -4,6 +4,12 @@
  *  for any specific machine.
  */
 
+#include <libpq-fe.h>
+
+#define QUERY_PROCESSES \
+		"SELECT procpid\n" \
+		"FROM pg_stat_activity;"
+
 /*
  * The statics struct is filled in by machine_init.  Fields marked as
  * "optional" are not filled in by every module.
@@ -67,7 +73,8 @@ struct process_select
 /* routines defined by the machine dependent module */
 int machine_init(struct statics *);
 void get_system_info(struct system_info *);
-caddr_t get_process_info(struct system_info *, struct process_select *, int);
+caddr_t get_process_info(struct system_info *, struct process_select *, int,
+		PGconn *);
 char *format_header(char *);
 char *format_next_process(caddr_t, char *(*)(int));
 int proc_owner(int);

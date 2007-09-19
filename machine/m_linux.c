@@ -656,7 +656,7 @@ read_one_proc_stat(pid_t pid, struct top_proc *proc, struct process_select *sel)
 caddr_t
 get_process_info(struct system_info *si,
 		 struct process_select *sel,
-		 int compare_index)
+		 int compare_index, PGconn *pgconn)
 {
     struct timeval thistime;
     double timediff, alpha, beta;
@@ -717,17 +717,21 @@ get_process_info(struct system_info *si,
 	int show_idle = sel->idle;
 	int show_uid = sel->uid != -1;
 
+	int i;
+	int rows;
+	PGresult *pgresult;
+
 	memset(process_states, 0, sizeof(process_states));
 
-	while ((ent = readdir(dir)) != NULL)
+	pgresult = PQexec(pgconn, QUERY_PROCESSES);
+	rows = PQntuples(pgresult);
+	for (i = 0; i < rows; i++)
 	{
+	    char *procpid = PQgetvalue(pgresult, i, 0);
 	    struct top_proc *pp;
 	    unsigned long otime;
 
-	    if (!isdigit(ent->d_name[0]))
-		continue;
-
-	    pid = atoi(ent->d_name);
+	    pid = atoi(procpid);
 
 	    /* look up hash table entry */
 	    proc = pp = ptable[HASH(pid)];
