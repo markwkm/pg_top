@@ -709,7 +709,6 @@ get_process_info(struct system_info *si,
 
     /* read the process information */
     {
-	DIR *dir = opendir(".");
 	struct dirent *ent;
 	int total_procs = 0;
 	struct top_proc **active;
@@ -782,7 +781,7 @@ get_process_info(struct system_info *si,
 		proc->wcpu = proc->pcpu = 0.0;
 	    }
 	}
-	closedir(dir);
+	PQclear(pgresult);
 
 	/* make sure we have enough slots for the active procs */
 	if (activesize < total_procs)
