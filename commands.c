@@ -82,6 +82,7 @@ static char *err_listem =
 		"SELECT datname, relname, mode, granted\n" \
 		"FROM pg_stat_activity, pg_locks, pg_class\n" \
 		"WHERE procpid = %d\n" \
+		"  AND procpid = pid\n" \
 		"  AND pg_class.oid = relation;"
 
 /*
@@ -537,7 +538,7 @@ show_locks(PGconn *pgconn, int procpid)
 	int rows;
 	char *sql;
 	char info[64];
-	int width[5] = {0, 0, 0, 0, 0};
+	int width[5] = {1, 8, 5, 4, 7};
 	PGresult *pgresult;
 	char *header_format;
 	char *line_format;
