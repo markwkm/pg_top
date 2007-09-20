@@ -1185,7 +1185,7 @@ Usage: %s [-ISTbcinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 #endif
 			case CMD_current_query:
 			    new_message(MT_standout,
-					"Current query of processes to show: ");
+					"Current query of process: ");
 			    newval = readline(tempbuf1, 8, Yes);
 			    reset_display();
 			    display_pagerstart();
