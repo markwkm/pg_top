@@ -13,6 +13,7 @@ display.o
 m_linux.o
 screen.o
 sigdesc.h
+sprompt.o
 top
 top.1
 top.o

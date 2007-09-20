@@ -57,6 +57,7 @@ char *copyright =
 #ifdef ENABLE_COLOR
 #include "color.h"
 #endif
+#include "port.h"
 
 /* Size of the stdio buffer given to stdout */
 #define Buffersize	2048
@@ -285,6 +286,13 @@ main(int argc, char *argv[])
     sigset_t signalset;
 #endif
 
+    char *conninfo = NULL;
+    char *dbname = NULL;
+    char *dbusername = NULL;
+    char *password = NULL;
+    char *password_prompt = NULL;
+    int dbport = 5432;
+
     static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQL";
 
 /* these defines enumerate the "strchr"s of the commands in command_chars */
@@ -360,7 +368,7 @@ main(int argc, char *argv[])
 	    optind = 1;
 	}
 
-	while ((i = getopt(ac, av, "CDSITbcinquvs:d:U:o:")) != EOF)
+	while ((i = getopt(ac, av, "CDSITbcinquvs:d:U:o:Wx:y:z:")) != EOF)
 	{
 	    switch(i)
 	    {
@@ -456,17 +464,61 @@ main(int argc, char *argv[])
 		order_name = optarg;
 		break;
 
+	    case 'x':		/* database post */
+		if ((i = atoiwi(optarg)) == Invalid || i == 0)
+		{
+		    new_message(MT_standout | MT_delayed,
+				" Bad port number (ignored)");
+		}
+		else
+		{
+		    dbport = i;
+		}
+		break;
+
+	    case 'W':		/* prompt for database password */
+		asprintf(&password_prompt, "Password: ");
+		password = simple_prompt(password_prompt, 1000, 0);
+		free(password_prompt);
+		/* get the password in the format we want for the connect
+		 * string */
+		asprintf(&password_prompt, "password=%s", password);
+		free(password);
+		password = password_prompt;
+		break;
+
+	    case 'y':		/* database user name */
+		asprintf(&dbusername, "user=%s", optarg);
+		break;
+
+	    case 'z':		/* database name */
+		asprintf(&dbname, "%s", optarg);
+		break;
+
 	    default:
 		fprintf(stderr, "\
 Top version %s\n\
-Usage: %s [-ISTbcinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
+Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
+          [-x dbport] [-y dbusername] [-z dbname] [number]\n",
 			version_string(), myname);
 		exit(1);
 	    }
 	}
 
 	/* connect to the database */
-	pgconn = PQconnectdb("host=localhost port=5432 dbname=postgres");
+	if (dbname == NULL)
+		asprintf(&dbname, "postgres");
+	if (dbusername == NULL)
+		asprintf(&dbusername, "");
+	if (password == NULL)
+		asprintf(&password, "");
+	asprintf(&conninfo, "host=localhost port=%d dbname=%s %s %s", dbport,
+			dbname, dbusername, password);
+	pgconn = PQconnectdb(conninfo);
+	free(conninfo);
+	free(dbname);
+	free(dbusername);
+	free(password);
 
 	/* get count of top processes to display (if any) */
 	if (optind < ac && *av[optind])
