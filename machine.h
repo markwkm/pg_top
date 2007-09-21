@@ -74,7 +74,7 @@ struct process_select
 int machine_init(struct statics *);
 void get_system_info(struct system_info *);
 caddr_t get_process_info(struct system_info *, struct process_select *, int,
-		PGconn *);
+		char *);
 char *format_header(char *);
 char *format_next_process(caddr_t, char *(*)(int));
 int proc_owner(int);

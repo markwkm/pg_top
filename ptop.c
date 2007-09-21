@@ -232,8 +232,6 @@ int
 main(int argc, char *argv[])
 
 {
-	PGconn *pgconn;
-
     register int i;
     register int active_procs;
     register int change;
@@ -514,8 +512,6 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 		asprintf(&password, "");
 	asprintf(&conninfo, "host=localhost port=%d dbname=%s %s %s", dbport,
 			dbname, dbusername, password);
-	pgconn = PQconnectdb(conninfo);
-	free(conninfo);
 	free(dbname);
 	free(dbusername);
 	free(password);
@@ -747,7 +743,7 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
     if (statics.flags.warmup)
     {
 	get_system_info(&system_info);
-	(void)get_process_info(&system_info, &ps, 0, pgconn);
+	(void)get_process_info(&system_info, &ps, 0, conninfo);
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;
 	select(0, NULL, NULL, NULL, &timeout);
@@ -771,7 +767,7 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 	    get_process_info(&system_info,
 			     &ps,
 			     order_index,
-			     pgconn);
+			     conninfo);
 
 	/* display the load averages */
 	(*d_loadave)(system_info.last_pid,
@@ -1241,7 +1237,7 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 			    newval = readline(tempbuf1, 8, Yes);
 			    reset_display();
 			    display_pagerstart();
-			    show_current_query(pgconn, newval);
+			    show_current_query(conninfo, newval);
 			    display_pagerend();
 			    break;
 
@@ -1251,7 +1247,7 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 			    newval = readline(tempbuf1, 8, Yes);
 			    reset_display();
 			    display_pagerstart();
-			    show_locks(pgconn, newval);
+			    show_locks(conninfo, newval);
 			    display_pagerend();
 			    break;
 
@@ -1269,7 +1265,7 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 	}
     }
 
-    PQfinish(pgconn);
+	free(conninfo);
     quit(0);
     /*NOTREACHED*/
 }
