@@ -31,6 +31,7 @@
 #include "version.h"
 #include "machine.h"
 #include "help.h"
+#include "pg.h"
 
 extern int  errno;
 
@@ -521,7 +522,7 @@ show_current_query(char *conninfo, int procpid)
 	display_pager(info);
 
 	/* Get the currently running query. */
-	pgconn = PQconnectdb(conninfo);
+	pgconn = connect_to_db(conninfo);
 	pgresult = PQexec(pgconn, sql);
 	rows = PQntuples(pgresult);
 	for (i = 0; i < rows; i++) {
@@ -555,7 +556,7 @@ show_locks(char *conninfo, int procpid)
 	display_pager(info);
 
 	/* Get the locks helf by the process. */
-	pgconn = PQconnectdb(conninfo);
+	pgconn = connect_to_db(conninfo);
 	pgresult = PQexec(pgconn, sql);
 	rows = PQntuples(pgresult);
 

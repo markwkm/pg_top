@@ -4,7 +4,14 @@
  *  for any specific machine.
  */
 
-#include <libpq-fe.h>
+#ifndef _MACHINE_H_
+#define _MACHINE_H_
+
+#include <time.h>
+#include <sys/types.h>
+
+#include "ptop.h"
+#include "pg.h"
 
 #define QUERY_PROCESSES \
 		"SELECT procpid\n" \
@@ -78,3 +85,5 @@ caddr_t get_process_info(struct system_info *, struct process_select *, int,
 char *format_header(char *);
 char *format_next_process(caddr_t, char *(*)(int));
 int proc_owner(int);
+
+#endif /* _MACHINE_H_ */

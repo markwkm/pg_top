@@ -3,6 +3,8 @@
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
 
+#include "machine.h"
+
 /* "type" argument for new_message function */
 
 #define  MT_standout  1

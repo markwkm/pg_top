@@ -4,6 +4,9 @@
  *  General (global) definitions
  */
 
+#ifndef _PTOP_H_
+#define _PTOP_H_
+
 /* Maximum number of columns allowed for display */
 #define MAX_COLS	255
 
@@ -77,3 +80,5 @@ struct ext_decl {
 #if RANDOM_PW == 0
 #undef RANDOM_PW
 #endif
+
+#endif /* _PTOP_H_ */

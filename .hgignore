@@ -11,6 +11,7 @@ config.status
 configure
 display.o
 m_linux.o
+pg.o
 screen.o
 sigdesc.h
 sprompt.o

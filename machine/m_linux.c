@@ -723,7 +723,7 @@ get_process_info(struct system_info *si,
 
 	memset(process_states, 0, sizeof(process_states));
 
-	pgconn = PQconnectdb(conninfo);
+	pgconn = connect_to_db(conninfo);
 	pgresult = PQexec(pgconn, QUERY_PROCESSES);
 	rows = PQntuples(pgresult);
 	for (i = 0; i < rows; i++)
