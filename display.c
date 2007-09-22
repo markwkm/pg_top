@@ -322,7 +322,7 @@ display_write(int x, int y, int newcolor, int eol, char *new)
     colorp = &colorbuf[lineindex(y) + x];
 
     /* main loop */
-    while (new != NULL && (ch = *new++) != '\0')
+    while ((ch = *new++) != '\0')
     {
 	/* if either character or color are different, an update is needed */
 	/* but only when the screen is wide enough */
@@ -502,7 +502,7 @@ summary_format(int x, int y, int *numbers, char **names)
 
     /* if the last string has a separator on the end, it has to be
        written with care */
-    if (lastname != NULL && (num = strlen(lastname)) > 1 &&
+    if ((num = strlen(lastname)) > 1 &&
 	lastname[num-2] == ',' && lastname[num-1] == ' ')
     {
 	display_fmt(-1, -1, 0, 1, "%.*s", num-2, lastname);
@@ -564,7 +564,7 @@ summary_format_memory(int x, int y, long *numbers, char **names, int *cidx)
 
     /* if the last string has a separator on the end, it has to be
        written with care */
-    if (lastname != NULL && (num = strlen(lastname)) > 1 &&
+    if ((num = strlen(lastname)) > 1 &&
 	lastname[num-2] == ',' && lastname[num-1] == ' ')
     {
 	display_fmt(-1, -1, 0, 1, "%.*s", num-2, lastname);

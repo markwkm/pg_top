@@ -514,7 +514,7 @@ show_current_query(char *conninfo, int procpid)
 	char *sql;
 	char info[64];
 	PGconn *pgconn;
-	PGresult *pgresult;
+	PGresult *pgresult = NULL;
 
 	sql = (char *) malloc(strlen(CURRENT_QUERY) + 7);
 	sprintf(sql, CURRENT_QUERY, procpid);
@@ -523,15 +523,20 @@ show_current_query(char *conninfo, int procpid)
 
 	/* Get the currently running query. */
 	pgconn = connect_to_db(conninfo);
-	pgresult = PQexec(pgconn, sql);
-	rows = PQntuples(pgresult);
+	if (pgconn != NULL) {
+		pgresult = PQexec(pgconn, sql);
+		rows = PQntuples(pgresult);
+	} else {
+		rows = 0;
+	}
 	for (i = 0; i < rows; i++) {
 		display_pager(PQgetvalue(pgresult, i, 0));
 	}
 	display_pager("\n\n");
 
 	free(sql);
-	PQclear(pgresult);
+	if (pgresult != NULL) 
+		PQclear(pgresult);
 	PQfinish(pgconn);
 }
 
@@ -544,7 +549,7 @@ show_locks(char *conninfo, int procpid)
 	char info[64];
 	int width[5] = {1, 8, 5, 4, 7};
 	PGconn *pgconn;
-	PGresult *pgresult;
+	PGresult *pgresult = NULL;
 	char *header_format;
 	char *line_format;
 	char *prefix;
@@ -557,6 +562,11 @@ show_locks(char *conninfo, int procpid)
 
 	/* Get the locks helf by the process. */
 	pgconn = connect_to_db(conninfo);
+	if (pgconn == NULL) {
+		PQfinish(pgconn);
+		return;
+	}
+
 	pgresult = PQexec(pgconn, sql);
 	rows = PQntuples(pgresult);
 

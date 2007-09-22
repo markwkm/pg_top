@@ -719,13 +719,17 @@ get_process_info(struct system_info *si,
 	int i;
 	int rows;
 	PGconn *pgconn;
-	PGresult *pgresult;
+	PGresult *pgresult = NULL;
 
 	memset(process_states, 0, sizeof(process_states));
 
 	pgconn = connect_to_db(conninfo);
-	pgresult = PQexec(pgconn, QUERY_PROCESSES);
-	rows = PQntuples(pgresult);
+	if (pgconn != NULL) {
+		pgresult = PQexec(pgconn, QUERY_PROCESSES);
+		rows = PQntuples(pgresult);
+	} else {
+		rows = 0;
+	}
 	for (i = 0; i < rows; i++)
 	{
 	    char *procpid = PQgetvalue(pgresult, i, 0);
@@ -783,7 +787,8 @@ get_process_info(struct system_info *si,
 		proc->wcpu = proc->pcpu = 0.0;
 	    }
 	}
-	PQclear(pgresult);
+	if (pgresult != NULL)
+		PQclear(pgresult);
 	PQfinish(pgconn);
 
 	/* make sure we have enough slots for the active procs */
