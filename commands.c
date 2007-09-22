@@ -79,6 +79,10 @@ static char *err_listem =
 		"FROM pg_stat_activity\n" \
 		"WHERE procpid = %d;"
 
+#define EXPLAIN \
+		"EXPLAIN\n" \
+		"%s"
+
 #define GET_LOCKS \
 		"SELECT datname, relname, mode, granted\n" \
 		"FROM pg_stat_activity, pg_locks, pg_class\n" \
@@ -537,6 +541,60 @@ show_current_query(char *conninfo, int procpid)
 	free(sql);
 	if (pgresult != NULL) 
 		PQclear(pgresult);
+	PQfinish(pgconn);
+}
+
+void
+show_explain(char *conninfo, int procpid)
+{
+	int i, j;
+	int rows, r;
+	char *sql;
+	char *info;
+	PGconn *pgconn;
+	PGresult *pgresult_query = NULL;
+	PGresult *pgresult_explain = NULL;
+
+	sql = (char *) malloc(strlen(CURRENT_QUERY) + 7);
+	sprintf(sql, CURRENT_QUERY, procpid);
+	asprintf(&info,
+			"Current query plan for procpid %d:\n\nSELECT statement:\n\n",
+			procpid);
+	display_pager(info);
+	free(info);
+
+	/* Get the currently running query. */
+	pgconn = connect_to_db(conninfo);
+	if (pgconn != NULL) {
+		pgresult_query = PQexec(pgconn, sql);
+		rows = PQntuples(pgresult_query);
+	} else {
+		rows = 0;
+	}
+	free(sql);
+	for (i = 0; i < rows; i++) {
+		/* Display the query before the query plan. */
+		display_pager(PQgetvalue(pgresult_query, i, 0));
+
+		/* Execute the EXPLAIN. */
+		asprintf(&sql, EXPLAIN, PQgetvalue(pgresult_query, i, 0));
+		pgresult_explain = PQexec(pgconn, sql);
+		free(sql);
+		r = PQntuples(pgresult_explain);
+		/* This will display an error if the EXPLAIN fails. */
+		display_pager("\n\nQuery Plan:\n\n");
+		display_pager(PQresultErrorMessage(pgresult_explain));
+		for (j = 0; j < r; j++) {
+			display_pager(PQgetvalue(pgresult_explain, j, 0));
+			display_pager("\n");
+		}
+		if (pgresult_explain != NULL) 
+			PQclear(pgresult_explain);
+	}
+	display_pager("\n\n");
+
+	if (pgresult_query != NULL) 
+		PQclear(pgresult_query);
 	PQfinish(pgconn);
 }
 

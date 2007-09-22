@@ -291,7 +291,7 @@ main(int argc, char *argv[])
     char *password_prompt = NULL;
     int dbport = 5432;
 
-    static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQL";
+    static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLE";
 
 /* these defines enumerate the "strchr"s of the commands in command_chars */
 #define CMD_redraw	0
@@ -319,6 +319,7 @@ main(int argc, char *argv[])
 #define CMD_order_time  21
 #define CMD_current_query 22
 #define CMD_locks 23
+#define CMD_explain 24
 
     /* set the buffer for stdout */
     setbuffer(stdout, stdoutbuf, Buffersize);
@@ -1243,7 +1244,7 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 
 			case CMD_locks:
 			    new_message(MT_standout,
-					"Show locks held by process : ");
+					"Show locks held by process: ");
 			    newval = readline(tempbuf1, 8, Yes);
 			    reset_display();
 			    display_pagerstart();
@@ -1251,11 +1252,21 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 			    display_pagerend();
 			    break;
 
+			case CMD_explain:
+			    new_message(MT_standout,
+					"Query plan for process: ");
+			    newval = readline(tempbuf1, 8, Yes);
+			    reset_display();
+			    display_pagerstart();
+			    show_explain(conninfo, newval);
+			    display_pagerend();
+			    break;
+
 			default:
 			    new_message(MT_standout, " Unsupported command");
 			    putchar('\r');
 			    no_command = Yes;
-			}
+		        }
 		    }
 
 		    /* flush out stuff that may have been written */
