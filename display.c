@@ -29,6 +29,7 @@
 #include "os.h"
 #include <ctype.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "ptop.h"
 #include "machine.h"
@@ -64,8 +65,6 @@ static int x_uptime = X_UPTIME;
 static int y_uptime = Y_UPTIME;
 static int x_procstate = X_PROCSTATE;
 static int y_procstate = Y_PROCSTATE;
-static int x_brkdn = X_BRKDN;
-static int y_brkdn = Y_BRKDN;
 static int x_cpustates = X_CPUSTATES;
 static int y_cpustates = Y_CPUSTATES;
 static int x_mem = X_MEM;
@@ -156,7 +155,9 @@ void
 display_clear()
 
 {
+#ifdef DEBUG
     dprintf("display_clear\n");
+#endif /* DEBUG */
     clear();
     memzero(screenbuf, bufsize);
     memzero(colorbuf, bufsize);
@@ -183,7 +184,9 @@ display_move(int x, int y)
     int cnt = 0;
     int color = curr_color;
 
+#ifdef DEBUG
     dprintf("display_move(%d, %d): curr_x %d, curr_y %d\n", x, y, curr_x, curr_y);
+#endif /* DEBUG */
 
     /* are we in a position to do this without cursor addressing? */
     if (curr_y < y || (curr_y == y && curr_x <= x))
@@ -274,8 +277,10 @@ display_write(int x, int y, int newcolor, int eol, char *new)
     int ch;
     int diff;
 
+#ifdef DEBUG
     dprintf("display_write(%d, %d, %d, %d, \"%s\")\n",
 	    x, y, newcolor, eol, new);
+#endif /* DEBUG */
 
     /* dumb terminal handling here */
     if (!smart_terminal)
@@ -357,7 +362,9 @@ display_write(int x, int y, int newcolor, int eol, char *new)
     /* eol handling */
     if (eol && *bufp != '\0')
     {
+#ifdef DEBUG
 	dprintf("display_write: clear-eol (bufp = \"%s\")\n", bufp);
+#endif /* DEBUG */
 	/* make sure we are color 0 */
 	if (curr_color != 0)
 	{
@@ -429,7 +436,9 @@ display_cte()
 
     if (need_clear)
     {
+#ifdef DEBUG
 	dprintf("display_cte: clearing\n");
+#endif /* DEBUG */
 
 	/* different method when there's no clear_to_end */
 	if (clear_to_end)
@@ -1388,7 +1397,9 @@ void
 clear_message()
 
 {
+#ifdef DEBUG
     dprintf("clear_message: msglen = %d, x = %d, y = %d\n", msglen, curr_x, curr_y);
+#endif /* DEBUG */
     if (clear_eol(msglen) == 1)
     {
 	putchar('\r');

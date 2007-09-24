@@ -709,7 +709,6 @@ get_process_info(struct system_info *si,
 
     /* read the process information */
     {
-	struct dirent *ent;
 	int total_procs = 0;
 	struct top_proc **active;
 
@@ -776,10 +775,12 @@ get_process_info(struct system_info *si,
 	    }
 	    else if ((elapsed = (now - boottime)*HZ - proc->start_time) > 0)
 	    {
+		/* What's with the noop statement?
 		if ((proc->pcpu = (double)proc->time / (double)elapsed) < 0.0001)
 		{
 		    proc->pcpu;
 		}
+		*/
 		proc->wcpu = proc->pcpu;
 	    }
 	    else

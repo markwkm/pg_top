@@ -23,6 +23,7 @@
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
+#include <unistd.h>
 
 #include "sigdesc.h"		/* generated automatically */
 #include "ptop.h"
@@ -31,6 +32,7 @@
 #include "version.h"
 #include "machine.h"
 #include "help.h"
+#include "display.h"
 #include "pg.h"
 
 extern int  errno;
@@ -549,19 +551,17 @@ show_explain(char *conninfo, int procpid)
 {
 	int i, j;
 	int rows, r;
-	char *sql;
-	char *info;
+	char sql[4096];
+	char info[1024];
 	PGconn *pgconn;
 	PGresult *pgresult_query = NULL;
 	PGresult *pgresult_explain = NULL;
 
-	sql = (char *) malloc(strlen(CURRENT_QUERY) + 7);
 	sprintf(sql, CURRENT_QUERY, procpid);
-	asprintf(&info,
+	sprintf(info,
 			"Current query plan for procpid %d:\n\nSELECT statement:\n\n",
 			procpid);
 	display_pager(info);
-	free(info);
 
 	/* Get the currently running query. */
 	pgconn = connect_to_db(conninfo);
@@ -571,15 +571,13 @@ show_explain(char *conninfo, int procpid)
 	} else {
 		rows = 0;
 	}
-	free(sql);
 	for (i = 0; i < rows; i++) {
 		/* Display the query before the query plan. */
 		display_pager(PQgetvalue(pgresult_query, i, 0));
 
 		/* Execute the EXPLAIN. */
-		asprintf(&sql, EXPLAIN, PQgetvalue(pgresult_query, i, 0));
+		sprintf(sql, EXPLAIN, PQgetvalue(pgresult_query, i, 0));
 		pgresult_explain = PQexec(pgconn, sql);
-		free(sql);
 		r = PQntuples(pgresult_explain);
 		/* This will display an error if the EXPLAIN fails. */
 		display_pager("\n\nQuery Plan:\n\n");
@@ -608,10 +606,10 @@ show_locks(char *conninfo, int procpid)
 	int width[5] = {1, 8, 5, 4, 7};
 	PGconn *pgconn;
 	PGresult *pgresult = NULL;
-	char *header_format;
-	char *line_format;
-	char *prefix;
-	char *line;
+	char header_format[1024];
+	char line_format[1024];
+	char prefix[21]; /* Should hold any 64 bit integer. */
+	char line[1024];
 
 	sql = (char *) malloc(strlen(GET_LOCKS) + 7);
 	sprintf(sql, GET_LOCKS, procpid);
@@ -626,12 +624,12 @@ show_locks(char *conninfo, int procpid)
 	}
 
 	pgresult = PQexec(pgconn, sql);
+	free(sql);
 	rows = PQntuples(pgresult);
 
 	/* Determine column sizes. */
-	asprintf(&prefix, "%d", rows);
+	sprintf(prefix, "%d", rows);
 	width[0] = strlen(prefix);
-	free(prefix);
 	for (i = 0; i < rows; i++) {
 		if (strlen(PQgetvalue(pgresult, i, 0)) > width[1])
 			width[1] = strlen(PQgetvalue(pgresult, i, 0));
@@ -642,27 +640,22 @@ show_locks(char *conninfo, int procpid)
 		if (strlen(PQgetvalue(pgresult, i, 3)) > width[4])
 			width[4] = strlen(PQgetvalue(pgresult, i, 3));
 	}
-	asprintf(&header_format, "%%-%ds | %%-%ds | %%-%ds | %%-%ds | %%-%ds\n\n",
+	sprintf(header_format, "%%-%ds | %%-%ds | %%-%ds | %%-%ds | %%-%ds\n\n",
 			width[0], width[1], width[2], width[3], width[4]);
-	asprintf(&line_format, "%%%dd | %%-%ds | %%-%ds | %%-%ds | %%-%ds\n",
+	sprintf(line_format, "%%%dd | %%-%ds | %%-%ds | %%-%ds | %%-%ds\n",
 			width[0], width[1], width[2], width[3], width[4]);
 
 	/* Display data. */
-	asprintf(&line, header_format, "", "database", "table", "type", "granted");
-	free(header_format);
+	sprintf(line, header_format, "", "database", "table", "type", "granted");
 	display_pager(line);
-	free(line);
 	for (i = 0; i < rows; i++) {
-		asprintf(&line, line_format, i + 1, PQgetvalue(pgresult, i, 0),
+		sprintf(line, line_format, i + 1, PQgetvalue(pgresult, i, 0),
 				PQgetvalue(pgresult, i, 1), PQgetvalue(pgresult, i, 2),
 				PQgetvalue(pgresult, i, 3));
 		display_pager(line);
-		free(line);
 	}
 	display_pager("\n");
 
-	free(line_format);
-	free(sql);
 	PQclear(pgresult);
 	PQfinish(pgconn);
 }

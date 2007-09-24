@@ -33,6 +33,7 @@ char *copyright =
 #include <signal.h>
 #include <setjmp.h>
 #include <ctype.h>
+#include <unistd.h>
 
 /* determine which type of signal functions to use */
 #ifdef HAVE_SIGACTION
@@ -150,7 +151,6 @@ tstop(int i)	/* SIGTSTP handler */
 {
 #ifdef HAVE_SIGACTION
     sigset_t set;
-    struct sigaction sa;
 #endif
 
     /* move to the lower left */
@@ -242,7 +242,9 @@ main(int argc, char *argv[])
 
     static char tempbuf1[50];
     static char tempbuf2[50];
+#ifdef BSD_SIGNALS
     int old_sigmask;		/* only used for BSD-style signals */
+#endif /* BSD_SIGNALS */
     int topn = Default_TOPN;
     int delay = Default_DELAY;
     int displays = 0;		/* indicates unspecified */
@@ -284,11 +286,11 @@ main(int argc, char *argv[])
     sigset_t signalset;
 #endif
 
-    char *conninfo = NULL;
-    char *dbname = NULL;
-    char *dbusername = NULL;
-    char *password = NULL;
-    char *password_prompt = NULL;
+    char conninfo[4096];
+    char dbname[1024] = "";
+    char dbusername[1024] = "";
+    char password[1001] = "";
+	char *password_tmp;
     int dbport = 5432;
 
     static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLE";
@@ -476,22 +478,18 @@ main(int argc, char *argv[])
 		break;
 
 	    case 'W':		/* prompt for database password */
-		asprintf(&password_prompt, "Password: ");
-		password = simple_prompt(password_prompt, 1000, 0);
-		free(password_prompt);
+		password_tmp = simple_prompt("Password: ", 1000, 0);
 		/* get the password in the format we want for the connect
 		 * string */
-		asprintf(&password_prompt, "password=%s", password);
-		free(password);
-		password = password_prompt;
+		sprintf(password, "password=%s", password_tmp);
 		break;
 
 	    case 'y':		/* database user name */
-		asprintf(&dbusername, "user=%s", optarg);
+		sprintf(dbusername, "user=%s", optarg);
 		break;
 
 	    case 'z':		/* database name */
-		asprintf(&dbname, "%s", optarg);
+		sprintf(dbname, "%s", optarg);
 		break;
 
 	    default:
@@ -505,17 +503,8 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 	}
 
 	/* connect to the database */
-	if (dbname == NULL)
-		asprintf(&dbname, "postgres");
-	if (dbusername == NULL)
-		asprintf(&dbusername, "");
-	if (password == NULL)
-		asprintf(&password, "");
-	asprintf(&conninfo, "host=localhost port=%d dbname=%s %s %s", dbport,
+	sprintf(conninfo, "host=localhost port=%d dbname=%s %s %s", dbport,
 			dbname, dbusername, password);
-	free(dbname);
-	free(dbusername);
-	free(password);
 
 	/* get count of top processes to display (if any) */
 	if (optind < ac && *av[optind])
@@ -1276,8 +1265,7 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 	}
     }
 
-	free(conninfo);
     quit(0);
     /*NOTREACHED*/
+    return 0;
 }
-

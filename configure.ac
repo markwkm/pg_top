@@ -230,6 +230,8 @@ case $MODULE in
     ;;
 esac
 
+CFLAGS="-Wall -g"
+
 # if we are 64-bit, try to turn on the appropriate flags
 AC_MSG_CHECKING(address space size)
 if test "$bits" = "64"; then
