@@ -9,6 +9,7 @@ config.h
 config.log
 config.status
 configure
+cscope.out
 display.o
 m_linux.o
 pg.o
