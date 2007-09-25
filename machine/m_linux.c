@@ -166,7 +166,7 @@ static long swap_stats[NSWAPSTATS];
 
 /* usefull macros */
 #define bytetok(x)	(((x) + 512) >> 10)
-#define pagetok(x)	((x) << (getpagesize() - 10))
+#define pagetok(x)	((x) * sysconf(_SC_PAGESIZE) >> 10)
 #define HASH(x)		(((x) * 1686629713U) % HASH_SIZE)
 
 /*======================================================================*/
@@ -575,7 +575,7 @@ read_one_proc_stat(pid_t pid, struct top_proc *proc, struct process_select *sel)
 
     proc->uid = (uid_t)proc_owner((int)pid);
 
-    /* parse out the status */
+    /* parse out the status, described in 'man proc' */
     
     /* skip pid and locate command, which is in parentheses */
     if ((p = strchr(buffer, '(')) == NULL)
@@ -611,7 +611,7 @@ read_one_proc_stat(pid_t pid, struct top_proc *proc, struct process_select *sel)
     p = skip_token(p);				/* skip ppid */
     p = skip_token(p);				/* skip pgrp */
     p = skip_token(p);				/* skip session */
-    p = skip_token(p);				/* skip tty */
+    p = skip_token(p);				/* skip tty nr */
     p = skip_token(p);				/* skip tty pgrp */
     p = skip_token(p);				/* skip flags */
     p = skip_token(p);				/* skip min flt */
@@ -627,13 +627,12 @@ read_one_proc_stat(pid_t pid, struct top_proc *proc, struct process_select *sel)
 
     proc->pri = strtol(p, &p, 10);		/* priority */
     proc->nice = strtol(p, &p, 10);		/* nice */
-
-    p = skip_token(p);				/* skip timeout */
-    p = skip_token(p);				/* skip it_real_val */
+    p = skip_token(p);				/* skip num_threads */
+    p = skip_token(p);				/* skip itrealvalue, 0 */
     proc->start_time = strtoul(p, &p, 10);	/* start_time */
-
     proc->size = bytetok(strtoul(p, &p, 10));	/* vsize */
     proc->rss = pagetok(strtoul(p, &p, 10));	/* rss */
+
 
 #if 0
     /* for the record, here are the rest of the fields */
@@ -641,13 +640,19 @@ read_one_proc_stat(pid_t pid, struct top_proc *proc, struct process_select *sel)
     p = skip_token(p);				/* skip start_code */
     p = skip_token(p);				/* skip end_code */
     p = skip_token(p);				/* skip start_stack */
-    p = skip_token(p);				/* skip sp */
-    p = skip_token(p);				/* skip pc */
+    p = skip_token(p);				/* skip esp */
+    p = skip_token(p);				/* skip eip */
     p = skip_token(p);				/* skip signal */
     p = skip_token(p);				/* skip sigblocked */
     p = skip_token(p);				/* skip sigignore */
     p = skip_token(p);				/* skip sigcatch */
     p = skip_token(p);				/* skip wchan */
+    p = skip_token(p);				/* skip nswap, not maintained */
+    p = skip_token(p);				/* exit signal */
+    p = skip_token(p);				/* processor */
+    p = skip_token(p);				/* rt_priority */
+    p = skip_token(p);				/* policy */
+    p = skip_token(p);				/* delayacct_blkio_ticks */
 #endif
 
 }
