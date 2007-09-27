@@ -81,4 +81,6 @@ struct ext_decl {
 #undef RANDOM_PW
 #endif
 
+void quit(int);
+
 #endif /* _PTOP_H_ */

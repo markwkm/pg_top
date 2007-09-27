@@ -48,7 +48,6 @@
 
 #include <osreldate.h> /* for changes in kernel structures */
 
-#include "ptop.h"
 #include "machine.h"
 #include "utils.h"
 
@@ -481,7 +480,8 @@ static int show_fullcmd;
 caddr_t
 get_process_info(struct system_info *si,
 			 struct process_select *sel,
-			 int compare_index)
+			 int compare_index,
+			 char *conninfo)
 
 {
     register int i;
@@ -496,16 +496,22 @@ get_process_info(struct system_info *si,
     int show_system;
     int show_uid;
 
-    
-#ifdef KERN_PROC_PROC
-    pbase = kvm_getprocs(kd, KERN_PROC_PROC, 0, &nproc);
-#else
-    pbase = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nproc);
-#endif
+    PGconn *pgconn;
+    PGresult *pgresult = NULL;
+
+    nproc = 0;
+    pgconn = connect_to_db(conninfo);
+    if (pgconn != NULL) {
+	pgresult = PQexec(pgconn, QUERY_PROCESSES);
+	nproc = PQntuples(pgresult);
+	pbase = (struct kinfo_proc *) malloc(sizeof(struct kinfo_proc *));
+    }
+    PQfinish(pgconn);
+
     if (nproc > onproc)
 	pref = (struct kinfo_proc **) realloc(pref, sizeof(struct kinfo_proc *)
 		* (onproc = nproc));
-    if (pref == NULL || pbase == NULL) {
+    if (pref == NULL) {
 	(void) fprintf(stderr, "top: Out of memory.\n");
 	quit(23);
     }
@@ -526,6 +532,24 @@ get_process_info(struct system_info *si,
     prefp = pref;
     for (pp = pbase, i = 0; i < nproc; pp++, i++)
     {
+	struct kinfo_proc *junk2;
+	int junk;
+	/*
+	 * FIXME: How do we keep 'kvm_open: kvm_getprocs: No such process'
+	 * from displaying when the process doesn't exist when we get here?
+	 */
+    	junk2 = kvm_getprocs(kd, KERN_PROC_PID,
+		atoi(PQgetvalue(pgresult, i, 0)), &junk);
+	if (junk2 == NULL) {
+	    continue;
+	}
+
+	/*
+	 * FIXME: This memcpy is so not elegent and the reason why I'm donig
+	 * it...
+	 */
+	memcpy(&pbase[i], &junk2[0], sizeof(struct kinfo_proc));
+
 	/*
 	 *  Place pointers to each valid proc structure in pref[].
 	 *  Process slots that are actually in use have a non-zero
@@ -548,6 +572,8 @@ get_process_info(struct system_info *si,
 	    }
 	}
     }
+    free(pbase);
+    PQclear(pgresult);
 
     /* if requested, sort the "interesting" processes */
     qsort((char *)pref, active_procs, sizeof(struct kinfo_proc *),

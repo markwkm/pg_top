@@ -358,7 +358,9 @@ extern void unsetenv(const char *name);
 #endif
 
 #ifndef HAVE_SRANDOM
+/*
 extern void srandom(unsigned int seed);
+*/
 #endif
 
 /* thread.h */
