@@ -599,7 +599,7 @@ show_explain(char *conninfo, int procpid)
 void
 show_locks(char *conninfo, int procpid)
 {
-	int i;
+	int i, j, k;
 	int rows;
 	char *sql;
 	char info[64];
@@ -640,14 +640,26 @@ show_locks(char *conninfo, int procpid)
 		if (strlen(PQgetvalue(pgresult, i, 3)) > width[4])
 			width[4] = strlen(PQgetvalue(pgresult, i, 3));
 	}
-	sprintf(header_format, "%%-%ds | %%-%ds | %%-%ds | %%-%ds | %%-%ds\n\n",
+	sprintf(header_format, "%%-%ds | %%-%ds | %%-%ds | %%-%ds | %%-%ds\n",
 			width[0], width[1], width[2], width[3], width[4]);
 	sprintf(line_format, "%%%dd | %%-%ds | %%-%ds | %%-%ds | %%-%ds\n",
 			width[0], width[1], width[2], width[3], width[4]);
 
-	/* Display data. */
+	/* Display the header. */
 	sprintf(line, header_format, "", "database", "table", "type", "granted");
 	display_pager(line);
+	for (i = 0, k = 0; i < 5; i++) {
+		for (j = 0; j < width[i]; j++, k++) {
+			line[k] = '-';
+		}
+		line[k++] = '-';
+		line[k++] = '+';
+		line[k++] = '-';
+	}
+	line[k - 3] = '\0';
+	display_pager(line);
+
+	/* Display data. */
 	for (i = 0; i < rows; i++) {
 		sprintf(line, line_format, i + 1, PQgetvalue(pgresult, i, 0),
 				PQgetvalue(pgresult, i, 1), PQgetvalue(pgresult, i, 2),
