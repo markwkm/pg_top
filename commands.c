@@ -656,7 +656,8 @@ show_locks(char *conninfo, int procpid)
 		line[k++] = '+';
 		line[k++] = '-';
 	}
-	line[k - 3] = '\0';
+	line[k - 3] = '\n';
+	line[k - 2] = '\0';
 	display_pager(line);
 
 	/* Display data. */
