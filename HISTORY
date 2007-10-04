@@ -1,3 +1,22 @@
+Release Notes
+
+Release 3.6.1
+
+Changes
+     * Add support for Solaris 10.
+     * Add support for FreeBSD.
+     * Add 'E' command to show query plan of a running query.
+     * Add parameters to specify database connection information.
+     * Add 'L' command to show locks held by a process.
+     * Add 'Q' command to show current query of a process.
+     * Rename 'top' to 'ptop'.
+     * Add support for Linux.
+     * Configure support for PostgreSQL libpq client libraries.
+     * Remove old_modules directory.
+     * Update RES calculation for Linux 2.6.x.
+
+Unix Top Release 3.6.1
+
 Wed Apr 18 2007 - wnl (3.6.1)
 	Fixed a few bugs in sigconv.awk that were causing incorrect
 	results on FreeBSD.  Changed configure.ac to fix a few linux
