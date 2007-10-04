@@ -203,54 +203,7 @@ OBJ="$OBJ m_$MODULE.o"
 AC_SUBST(SRC)
 AC_SUBST(OBJ)
 
-# extra things that need to be done for certain systems
-# also handle setup for 64-bit detection
-bits="default"
-case $MODULE in
-    aix5)
-	AC_CHECK_LIB(perfstat, perfstat_cpu_total)
-	if test -f /usr/sbin/bootinfo; then
-	    bits="`/usr/sbin/bootinfo -K`"
-	    extra_flag="-q64"
-	fi
-    ;;
-    svr5)
-        # -lmas
-        AC_CHECK_LIB(mas, mas_open)
-    ;;
-    sunos5)
-	if test -f /usr/bin/isainfo; then
-	    bits="`/usr/bin/isainfo -b`"
-	    if test -d /kernel/amd64; then
-		extra_flag="-xarch=amd64"
-	    else
-		extra_flag="-xarch=v9"
-	    fi
-	fi
-    ;;
-esac
-
 CFLAGS="-Wall -g"
-
-# if we are 64-bit, try to turn on the appropriate flags
-AC_MSG_CHECKING(address space size)
-if test "$bits" = "64"; then
-    AC_MSG_RESULT(64 bit)
-    if test `basename $CC` = "gcc"; then
-        extra_flag="-m64"
-    fi
-    AC_MSG_CHECKING(whether $CC accepts $extra_flag)
-    echo "main() { exit(0); }" >conftest.c
-    if $CC -c $extra_flag conftest.c >/dev/null 2>&1; then
-        AC_MSG_RESULT(yes)
-	CFLAGS="$CFLAGS $extra_flag"
-    else
-	AC_MSG_RESULT(no)
-    fi
-    rm -f conftest.c conftest.o
-else
-    AC_MSG_RESULT($bits)
-fi
 
 AC_MSG_CHECKING(for installation settings)
 # calculate appropriate settings

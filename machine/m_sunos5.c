@@ -314,7 +314,7 @@ extern char *myname;
 extern int check_nlist ();
 extern int gettimeofday ();
 extern void perror ();
-extern void getptable ();
+extern void getptable (struct prpsinfo *, PGresult *);
 extern void quit ();
 extern int nlist ();
 
@@ -1084,7 +1084,8 @@ caddr_t
 get_process_info (
 		   struct system_info *si,
 		   struct process_select *sel,
-		   int compare_index)
+		   int compare_index,
+		   char *conninfo)
 {
     register int i;
     register int total_procs;
@@ -1097,15 +1098,25 @@ get_process_info (
     int show_system;
     int show_uid;
 
+    PGconn *pgconn;
+    PGresult *pgresult = NULL;
+
     /* allocate enough space for twice our current needs */
-    nproc = get_nproc();
+    nproc = 20;
+    pgconn = connect_to_db(conninfo);
+    if (pgconn != NULL) {
+	pgresult = PQexec(pgconn, QUERY_PROCESSES);
+	nproc = PQntuples(pgresult);
+    }
+    PQfinish(pgconn);
     if (nproc > maxprocs)
     {
 	reallocproc(2 * nproc);
     }
 
     /* read all the proc structures */
-    getptable (pbase);
+    getptable (pbase, pgresult);
+    PQclear(pgresult);
 
     /* get a pointer to the states summary array */
     si->procstates = process_states;
@@ -1397,7 +1408,7 @@ get process table
  table
 */
 void
-getptable (struct prpsinfo *baseptr)
+getptable (struct prpsinfo *baseptr, PGresult *pgresult)
 {
     struct prpsinfo *currproc;	/* pointer to current proc structure	*/
 #ifndef USE_NEW_PROC
@@ -1405,7 +1416,6 @@ getptable (struct prpsinfo *baseptr)
 #endif
     int numprocs = 0;
     int i;
-    struct dirent *direntp;
     struct oldproc *op;
     static struct timeval lasttime =
 	{0, 0};
@@ -1453,17 +1463,15 @@ getptable (struct prpsinfo *baseptr)
     seteuid(0);
 #endif
 
-    for (rewinddir (procdir); (direntp = readdir (procdir));)
+    for (i = 0; i < nproc; i++)
     {
 	int fd;
 	char buf[30];
-
-	if (direntp->d_name[0] == '.')
-	    continue;
+	char *procpid = PQgetvalue(pgresult, i, 0);
 
 #ifdef USE_NEW_PROC
 #ifdef HAVE_SNPRINTF
-	snprintf(buf, sizeof(buf), "%s/psinfo", direntp->d_name);
+	snprintf(buf, sizeof(buf), "%s/%s/psinfo", PROCFS, procpid);
 #else
 	sprintf(buf, "%s/psinfo", direntp->d_name);
 #endif
