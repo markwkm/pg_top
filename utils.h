@@ -9,6 +9,9 @@
  *  Copyright (c) 1989, 1990, 1992, William LeFebvre, Northwestern University
  */
 
+#ifndef _UTILS_H_
+#define _UTILS_H_
+
 /* prototypes for functions found in utils.c */
 
 int atoiwi(char *);
@@ -33,3 +36,5 @@ void xdprintf(char *fmt, ...);
 #else
 #define dprintf if (0)
 #endif
+
+#endif /* _UTILS_H_ */

@@ -4,6 +4,9 @@
  * Definition of the color interface.
  */
 
+#ifndef _COLOR_H_
+#define _COLOR_H_
+
 int color_env_parse(char *env);
 int color_tag(char *tag);
 int color_test(int tagidx, int value);
@@ -49,3 +52,5 @@ void color_dump(FILE *f);
  * 46	Cyan
  * 47	White
  */
+
+#endif /* _COLOR_H_ */

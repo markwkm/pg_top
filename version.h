@@ -9,4 +9,9 @@
  *  Copyright (c) 1989, 1990, 1992, William LeFebvre, Northwestern University
  */
 
+#ifndef _VERSION_H_
+#define _VERSION_H_
+
 char *version_string();
+
+#endif /* _VERSION_H_ */

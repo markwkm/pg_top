@@ -5,6 +5,9 @@
  *  screen package in "screen.c"
  */
 
+#ifndef _SCREEN_H_
+#define _SCREEN_H_
+
 /* includes for termcap */
 #ifdef HAVE_TERMCAP_H
 #include <termcap.h>
@@ -45,3 +48,5 @@ void standout(char *msg);
 void clear();
 int clear_eol(int len);
 void go_home();
+
+#endif /* _SCREEN_H_ */

@@ -12,6 +12,9 @@
  *	intload(i)     - convert integer to load_avg.
  */
 
+#ifndef _LOADAVG_H_
+#define _LOADAVG_H_
+
 /*
  * We assume that if FSCALE is defined, then avenrun and ccpu are type long.
  * If your machine is an exception (mips, perhaps?) then make adjustments
@@ -55,3 +58,5 @@ typedef double pctcpu;
 # define loaddouble(la) (la)
 # define intload(i) ((double)(i))
 #endif
+
+#endif /* _LOADAVG_H_ */

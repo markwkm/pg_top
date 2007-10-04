@@ -1,3 +1,6 @@
+#ifndef _OS_H_
+#define _OS_H_
+
 #include "config.h"
 
 #include <sys/types.h>
@@ -57,3 +60,5 @@ caddr_t malloc();
 #if defined (__sun) && defined (__SVR4)
 #include <unistd.h>
 #endif
+
+#endif /* _OS_H_ */

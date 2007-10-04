@@ -6,6 +6,9 @@
  *  for cursor addressing.
  */
 
+#ifndef _LAYOUT_H_
+#define _LAYOUT_H_
+
 #define  X_LASTPID	10
 #define  Y_LASTPID	0
 #define  X_LASTPIDWIDTH 13
@@ -33,3 +36,4 @@
 #define  Y_IDLECURSOR	4
 #define  Y_PROCS	6
 
+#endif /* _LAYOUT_H_ */

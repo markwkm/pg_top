@@ -1,5 +1,8 @@
 /* Simple help text displayed by "show_help" */
 
+#ifndef _HELP_H_
+#define _HELP_H_
+
 char *help_text = "\n\
 A top users display for Unix\n\
 \n\
@@ -30,3 +33,5 @@ u       - display processes for only one user (+ selects all users)\n\
 \n\
 Not all commands are available on all systems.\n\
 ";
+
+#endif /* _HELP_H_ */
