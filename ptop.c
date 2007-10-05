@@ -63,6 +63,10 @@ char *copyright =
 /* Size of the stdio buffer given to stdout */
 #define Buffersize	2048
 
+/* Display modes. */
+#define MODE_PROCESSES 0
+#define MODE_TABLE_STATS 1
+
 /* The buffer that stdio will use */
 char stdoutbuf[Buffersize];
 
@@ -293,7 +297,12 @@ main(int argc, char *argv[])
 	char *password_tmp;
     int dbport = 5432;
 
-    static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLE";
+    int mode = MODE_PROCESSES;
+    char *header_processes;
+    char header_table_stats[80] =
+	"SEQ_SCANS SEQ_READS   I_SCANS I_FETCHES   INSERTS   UPDATES   DELETES RELNAME";
+
+    static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLER";
 
 /* these defines enumerate the "strchr"s of the commands in command_chars */
 #define CMD_redraw	0
@@ -322,6 +331,7 @@ main(int argc, char *argv[])
 #define CMD_current_query 22
 #define CMD_locks 23
 #define CMD_explain 24
+#define CMD_tables 25
 
     /* set the buffer for stdout */
     setbuffer(stdout, stdoutbuf, Buffersize);
@@ -595,7 +605,7 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
     init_termcap(interactive);
 
     /* get the string to use for the process area header */
-    header_text = format_header(uname_field);
+    header_text = header_processes = format_header(uname_field);
 
 #ifdef ENABLE_COLOR
     /* Disable colours on non-smart terminals */
@@ -826,9 +836,16 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 	    }
 
 	    /* now show the top "n" processes. */
-	    for (i = 0; i < active_procs; i++)
-	    {
-		(*d_process)(i, format_next_process(processes, get_userid));
+	    switch (mode) {
+	    case MODE_TABLE_STATS:
+		pg_display_table_stats(conninfo);
+		break;
+	    case MODE_PROCESSES:
+	    default:
+		for (i = 0; i < active_procs; i++)
+		{
+		    (*d_process)(i, format_next_process(processes, get_userid));
+		}
 	    }
 	}
 	else
@@ -1249,6 +1266,17 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 			    display_pagerstart();
 			    show_explain(conninfo, newval);
 			    display_pagerend();
+			    break;
+
+			case CMD_tables:
+			    if (mode == MODE_TABLE_STATS) {
+				mode = MODE_PROCESSES;
+    				header_text = header_processes;
+			    } else {
+				mode = MODE_TABLE_STATS;
+    				header_text = header_table_stats;
+			    }
+			    reset_display();
 			    break;
 
 			default:

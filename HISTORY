@@ -3,6 +3,7 @@ Release Notes
 Release 3.6.1
 
 Changes
+     * Add view for monitoring table statistics.
      * Add support for Solaris 10.
      * Add support for FreeBSD.
      * Add 'E' command to show query plan of a running query.
