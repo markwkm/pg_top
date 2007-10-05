@@ -82,5 +82,6 @@ struct ext_decl {
 #endif
 
 void quit(int);
+void reset_display();
 
 #endif /* _PTOP_H_ */
