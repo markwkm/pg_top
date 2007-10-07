@@ -66,6 +66,7 @@ char *copyright =
 /* Display modes. */
 #define MODE_PROCESSES 0
 #define MODE_TABLE_STATS 1
+#define MODE_INDEX_STATS 2
 
 /* The buffer that stdio will use */
 char stdoutbuf[Buffersize];
@@ -299,10 +300,12 @@ main(int argc, char *argv[])
 
     int mode = MODE_PROCESSES;
     char *header_processes;
+    char header_index_stats[80] =
+	"  I_SCANS   I_READS I_FETCHES INDEXRELNAME";
     char header_table_stats[80] =
 	"SEQ_SCANS SEQ_READS   I_SCANS I_FETCHES   INSERTS   UPDATES   DELETES RELNAME";
 
-    static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLER";
+    static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLERX";
 
 /* these defines enumerate the "strchr"s of the commands in command_chars */
 #define CMD_redraw	0
@@ -332,6 +335,7 @@ main(int argc, char *argv[])
 #define CMD_locks 23
 #define CMD_explain 24
 #define CMD_tables 25
+#define CMD_indexes 26
 
     /* set the buffer for stdout */
     setbuffer(stdout, stdoutbuf, Buffersize);
@@ -837,6 +841,9 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 
 	    /* now show the top "n" processes. */
 	    switch (mode) {
+	    case MODE_INDEX_STATS:
+		pg_display_index_stats(conninfo);
+		break;
 	    case MODE_TABLE_STATS:
 		pg_display_table_stats(conninfo);
 		break;
@@ -1276,6 +1283,18 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 				mode = MODE_TABLE_STATS;
     				header_text = header_table_stats;
 			    }
+			    reset_display();
+			    break;
+
+			case CMD_indexes:
+			    if (mode == MODE_INDEX_STATS) {
+				mode = MODE_PROCESSES;
+    				header_text = header_processes;
+			    } else {
+				mode = MODE_INDEX_STATS;
+    				header_text = header_index_stats;
+			    }
+			    /* Reset display to show changed header text. */
 			    reset_display();
 			    break;
 

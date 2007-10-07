@@ -31,6 +31,37 @@ PGconn *connect_to_db(char *conninfo)
 	return pgconn;
 }
 
+void pg_display_index_stats(char *conninfo)
+{
+	int i;
+	int rows;
+	PGconn *pgconn;
+	PGresult *pgresult = NULL;
+	static char line[512];
+
+	/* Get the currently running query. */
+	pgconn = connect_to_db(conninfo);
+	if (pgconn != NULL) {
+		pgresult = PQexec(pgconn, SELECT_INDEX_STATS);
+		rows = PQntuples(pgresult);
+	} else {
+		PQfinish(pgconn);
+		return;
+	}
+
+	for (i = 0; i < rows; i++) {
+		snprintf(line, sizeof(line), "%9s %9s %9s %-9s",
+				PQgetvalue(pgresult, i, 1),
+				PQgetvalue(pgresult, i, 2),
+				PQgetvalue(pgresult, i, 3),
+				PQgetvalue(pgresult, i, 0));
+		u_process(i, line);
+	}
+
+	if (pgresult != NULL) 
+		PQclear(pgresult);
+	PQfinish(pgconn);
+}
 void pg_display_table_stats(char *conninfo)
 {
 	int i;
