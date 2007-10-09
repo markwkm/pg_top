@@ -146,8 +146,10 @@ char *memorynames[] =
 {"K phys, ", "K used, ", "K free, ", "K swapUsed, ", "K swapFree", NULL};
 
 /* these are names given to allowed sorting orders -- first is default */
-char *ordernames[] = 
-{"state", "cpu", "size", "res", "time", "pid", "uid", "rpid", "ruid", NULL};
+char *ordernames[] = {
+    "state", "cpu", "size", "res", "time", "pid", "uid", "rpid", "ruid",
+    "idx_scan", "idx_tup_read", "idx_tup_fetch", NULL
+};
 
 /* forward definitions for comparison functions */
 int proc_compare();
@@ -170,6 +172,9 @@ int (*proc_compares[])() = {
     compare_uid,
     compare_rpid,
     compare_ruid,
+    compare_idx_scan,
+    compare_idx_tup_fetch,
+    compare_idx_tup_read,
     NULL };
 
 

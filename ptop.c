@@ -842,7 +842,7 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 	    /* now show the top "n" processes. */
 	    switch (mode) {
 	    case MODE_INDEX_STATS:
-		pg_display_index_stats(conninfo);
+		pg_display_index_stats(conninfo, order_index);
 		break;
 	    case MODE_TABLE_STATS:
 		pg_display_table_stats(conninfo);

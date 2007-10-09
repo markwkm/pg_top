@@ -164,6 +164,9 @@ char *ordernames[] = {
 	"size",
 	"state",
 	"time",
+    "idx_scan",
+    "idx_tup_read",
+    "idx_tup_fetch", 
 	NULL
 };
 
@@ -182,6 +185,9 @@ int (*proc_compares[]) __P((struct proc **, struct proc **)) = {
 	compare_size,
 	compare_state,
 	compare_time,
+    compare_idx_scan,
+    compare_idx_tup_fetch,
+    compare_idx_tup_read,
 	NULL
 };
 

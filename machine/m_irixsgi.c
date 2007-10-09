@@ -672,7 +672,8 @@ char *ordernames[] = {
 	 *	rss == res
 	 */
 	"cpu", "size", "mem", "res", "rss",
-	"time", "state", "command", "prio", NULL
+	"time", "state", "command", "prio", "idx_scan", "idx_tup_read",
+    "idx_tup_fetch", NULL
 };
 
 /* forward definitions for comparison functions */
@@ -694,6 +695,9 @@ int (*proc_compares[])() = {
 	compare_state,
 	compare_cmd,
 	compare_prio,
+    compare_idx_scan,
+    compare_idx_tup_fetch,
+    compare_idx_tup_read,
 	NULL
 };
 

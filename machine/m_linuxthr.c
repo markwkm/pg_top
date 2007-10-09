@@ -121,8 +121,10 @@ static char fmt_header[] =
 "  PID X        THR PRI NICE  SIZE   RES STATE   TIME    CPU COMMAND";
 
 /* these are names given to allowed sorting orders -- first is default */
-char *ordernames[] = 
-{"cpu", "size", "res", "time", "command", NULL};
+char *ordernames[] = {
+    "cpu", "size", "res", "time", "command", "idx_scan", "idx_tup_read",
+    "idx_tup_fetch", NULL
+};
 
 /* forward definitions for comparison functions */
 int compare_cpu();
@@ -137,6 +139,9 @@ int (*proc_compares[])() = {
     compare_res,
     compare_time,
     compare_cmd,
+    compare_idx_scan,
+    compare_idx_tup_fetch,
+    compare_idx_tup_read,
     NULL };
 	
 /*=SYSTEM STATE INFO====================================================*/

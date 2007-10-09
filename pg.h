@@ -6,7 +6,8 @@
 #include <libpq-fe.h>
 
 #define SELECT_INDEX_STATS \
-		"SELECT indexrelname, idx_scan, idx_tup_read, idx_tup_fetch\n" \
+		"SELECT indexrelid, indexrelname, idx_scan, idx_tup_read,\n" \
+		"       idx_tup_fetch\n" \
 		"FROM pg_stat_user_indexes\n" \
 		"ORDER BY indexrelname"
 
@@ -16,8 +17,13 @@
 		"FROM pg_stat_user_tables\n" \
 		"ORDER BY relname"
 
+int compare_idx_scan(const void *, const void *);
+int compare_idx_tup_fetch(const void *, const void *);
+int compare_idx_tup_read(const void *, const void *);
+
 PGconn *connect_to_db(char *);
-void pg_display_index_stats(char *);
+
+void pg_display_index_stats(char *, int);
 void pg_display_table_stats(char *);
 
 #endif /* _PG_H_ */

@@ -181,10 +181,16 @@ int (*proc_compares[])() = {
     compare_size,   /* size, cpu, time, state pri  */
     compare_time,   /* time, cpu, state, pri, size */
 /* compare_res,     /* res,  cpu, time, state pri  */
+    compare_idx_scan,
+    compare_idx_tup_fetch,
+    compare_idx_tup_read,
     NULL };
 
 /* these are names given to allowed sorting orders -- first is default */
-char *ordernames[]={"state", "cpu", "size", "time", NULL}; /*hops*/
+char *ordernames[]={
+    "state", "cpu", "size", "time", "idx_scan", "idx_tup_read",
+    "idx_tup_fetch", NULL
+}; /*hops*/
 
 /* useful externals */
 extern int errno;

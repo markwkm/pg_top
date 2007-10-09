@@ -247,7 +247,8 @@ long percentages();
 
 /* sorting orders. first is default */
 char *ordernames[] = {
-    "cpu", "size", "res", "time", "pri", NULL
+    "cpu", "size", "res", "time", "pri", "idx_scan", "idx_tup_read",
+    "idx_tup_fetch", NULL
 };
 
 /* compare routines */
@@ -259,6 +260,9 @@ int (*proc_compares[])() = {
     compare_res,
     compare_time,
     compare_prio,
+    compare_idx_scan,
+    compare_idx_tup_fetch,
+    compare_idx_tup_read,
     NULL
 };
 
