@@ -1,5 +1,5 @@
 # configure.ac
-AC_INIT(ptop, 3.6.1-pre9)
+AC_INIT(ptop, 3.6.1-beta1)
 
 echo "Configuring $PACKAGE_STRING"
 
