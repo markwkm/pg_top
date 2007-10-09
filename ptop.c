@@ -277,6 +277,7 @@ main(int argc, char *argv[])
     char *order_name = NULL;
     int order_index = 0;
     int index_order_index = 0;
+    int table_order_index = 0;
 #ifndef FD_SET
     /* FD_SET and friends are not present:  fake it */
     typedef int fd_set;
@@ -846,7 +847,7 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 		pg_display_index_stats(conninfo, index_order_index, max_topn);
 		break;
 	    case MODE_TABLE_STATS:
-		pg_display_table_stats(conninfo);
+		pg_display_table_stats(conninfo, table_order_index, max_topn);
 		break;
 	    case MODE_PROCESSES:
 	    default:
@@ -1172,6 +1173,26 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 				}
 				break;
 	    		    case MODE_TABLE_STATS:
+				new_message(MT_standout,
+				    "Order to sort: ");
+				if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
+				{
+				    if ((i = string_index(tempbuf2, index_ordernames)) == -1)
+				    {
+					new_message(MT_standout,
+					    " %s: unrecognized sorting order", tempbuf2);
+					no_command = Yes;
+				    }
+				    else
+				    {
+					table_order_index = i;
+				    }
+				    putchar('\r');
+				}
+				else
+				{
+				    clear_message();
+				}
 				break;
 	    		    case MODE_PROCESSES:
 	    		    default:
