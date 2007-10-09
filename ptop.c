@@ -519,7 +519,7 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 	}
 
 	/* connect to the database */
-	sprintf(conninfo, "host=localhost port=%d dbname=%s %s %s", dbport,
+	sprintf(conninfo, "port=%d dbname=%s %s %s", dbport,
 			dbname, dbusername, password);
 
 	/* get count of top processes to display (if any) */
