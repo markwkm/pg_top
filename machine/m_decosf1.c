@@ -182,10 +182,7 @@ char *swapnames[] = {
 };
 
 /* these are names given to allowed sorting orders -- first is default */
-char *ordernames[] = {
-    "cpu", "size", "res", "time", "idx_scan", "idx_tup_read",
-    "idx_tup_fetch",  NULL
-};
+char *ordernames[] = { "cpu", "size", "res", "time", NULL };
 
 /* forward definitions for comparison functions */
 int compare_cpu();
@@ -198,9 +195,6 @@ int (*proc_compares[])() = {
     compare_size,
     compare_res,
     compare_time,
-    compare_idx_scan,
-    compare_idx_tup_fetch,
-    compare_idx_tup_read,
     NULL
 };
 

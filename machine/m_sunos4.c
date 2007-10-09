@@ -215,9 +215,7 @@ char *memorynames[] = {
 };
 
 /* these are names given to allowed sorting orders -- first is default */
-char *ordernames[] = {
-    "cpu", "size", "res", "idx_scan", "idx_tup_read", "idx_tup_fetch", NULL
-};
+char *ordernames[] = { "cpu", "size", "res", NULL };
 
 /* forward definitions for comparison functions */
 int compare_cpu();
@@ -228,9 +226,6 @@ int (*proc_compares[])() = {
     compare_cpu,
     compare_size,
     compare_res,
-    compare_idx_scan,
-    compare_idx_tup_fetch,
-    compare_idx_tup_read,
     NULL };
 
 

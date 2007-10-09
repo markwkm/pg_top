@@ -23,7 +23,9 @@ int compare_idx_tup_read(const void *, const void *);
 
 PGconn *connect_to_db(char *);
 
-void pg_display_index_stats(char *, int);
+void pg_display_index_stats(char *, int, int);
 void pg_display_table_stats(char *);
+
+extern char *index_ordernames[];
 
 #endif /* _PG_H_ */

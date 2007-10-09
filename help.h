@@ -28,6 +28,7 @@ i or I  - toggle the displaying of idle processes\n\
 k       - kill processes; send a signal to a list of processes\n\
 n or #  - change number of processes to display\n\
 o       - specify sort order (%s)\n\
+          index stats (idx_scan, idx_tup_fetch, idx_tup_read)\n\
 q       - quit\n\
 r       - renice a process\n\
 s       - change number of seconds to delay between updates\n\

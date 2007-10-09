@@ -276,6 +276,7 @@ main(int argc, char *argv[])
     struct process_select ps;
     char *order_name = NULL;
     int order_index = 0;
+    int index_order_index = 0;
 #ifndef FD_SET
     /* FD_SET and friends are not present:  fake it */
     typedef int fd_set;
@@ -842,7 +843,7 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 	    /* now show the top "n" processes. */
 	    switch (mode) {
 	    case MODE_INDEX_STATS:
-		pg_display_index_stats(conninfo, order_index);
+		pg_display_index_stats(conninfo, index_order_index, max_topn);
 		break;
 	    case MODE_TABLE_STATS:
 		pg_display_table_stats(conninfo);
@@ -1147,33 +1148,61 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 			    break;
 
 			case CMD_order:
-			    if (statics.order_names == NULL)
-			    {
-				new_message(MT_standout, " Ordering not supported.");
-				putchar('\r');
-				no_command = Yes;
-			    }
-			    else
-			    {
+	    		    switch (mode) {
+	    		    case MODE_INDEX_STATS:
 				new_message(MT_standout,
-					    "Order to sort: ");
+				    "Order to sort: ");
 				if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
 				{
-				    if ((i = string_index(tempbuf2, statics.order_names)) == -1)
+				    if ((i = string_index(tempbuf2, index_ordernames)) == -1)
 				    {
 					new_message(MT_standout,
-						    " %s: unrecognized sorting order", tempbuf2);
+					    " %s: unrecognized sorting order", tempbuf2);
 					no_command = Yes;
 				    }
 				    else
 				    {
-					order_index = i;
+					index_order_index = i;
 				    }
 				    putchar('\r');
 				}
 				else
 				{
 				    clear_message();
+				}
+				break;
+	    		    case MODE_TABLE_STATS:
+				break;
+	    		    case MODE_PROCESSES:
+	    		    default:
+				if (statics.order_names == NULL)
+				{
+				    new_message(MT_standout, " Ordering not supported.");
+				    putchar('\r');
+				    no_command = Yes;
+				}
+				else
+				{
+				    new_message(MT_standout,
+					    "Order to sort: ");
+				    if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
+				    {
+					if ((i = string_index(tempbuf2, statics.order_names)) == -1)
+					{
+					    new_message(MT_standout,
+						    " %s: unrecognized sorting order", tempbuf2);
+					    no_command = Yes;
+					}
+					else
+					{
+					    order_index = i;
+					}
+					putchar('\r');
+				    }
+				    else
+				    {
+					clear_message();
+				    }
 				}
 			    }
 			    break;

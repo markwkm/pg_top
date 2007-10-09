@@ -5,6 +5,17 @@
 #include "display.h"
 #include "pg.h"
 
+char *index_ordernames[] = {
+		"idx_scan", "idx_tup_fetch", "idx_tup_read", NULL
+};
+
+int (*index_compares[])() = {
+		compare_idx_scan,
+		compare_idx_tup_fetch,
+		compare_idx_tup_read,
+		NULL
+};
+
 struct index_node {
 	long long indexrelid;
 
@@ -121,7 +132,7 @@ struct index_node *get_index_stats(struct index_node *head,
 	return c;
 }
 
-void pg_display_index_stats(char *conninfo, int order_index)
+void pg_display_index_stats(char *conninfo, int compare_index, int max_topn)
 {
 	int i;
 	int rows;
@@ -132,6 +143,8 @@ void pg_display_index_stats(char *conninfo, int order_index)
 	static struct index_node *head = NULL;
 	static struct index_node **procs = NULL;
 
+	int max_lines;
+
 	/* Get the currently running query. */
 	pgconn = connect_to_db(conninfo);
 	if (pgconn != NULL) {
@@ -141,6 +154,8 @@ void pg_display_index_stats(char *conninfo, int order_index)
 		PQfinish(pgconn);
 		return;
 	}
+
+	max_lines = rows < max_topn ? rows : max_topn;
 
 	procs = (struct index_node **) realloc(procs,
 			rows * sizeof(struct index_node *));
@@ -159,16 +174,17 @@ void pg_display_index_stats(char *conninfo, int order_index)
 		procs[i] = get_index_stats(head, atoll(PQgetvalue(pgresult, i, 0)));
 		procs[i]->name_index = i;
 	}
-	qsort(procs, rows, sizeof(struct index_node *), compare_idx_scan);
+	qsort(procs, rows, sizeof(struct index_node *),
+			index_compares[compare_index]);
 
 	/* Display stats. */
-	for (i = rows - 1; i > -1; i--) {
+	for (i = max_lines - 1; i > -1; i--) {
 		snprintf(line, sizeof(line), "%9lld %9lld %9lld %s",
 				procs[i]->diff_idx_scan,
 				procs[i]->diff_idx_tup_read,
 				procs[i]->diff_idx_tup_fetch,
 				PQgetvalue(pgresult, procs[i]->name_index, 1));
-		u_process(rows - i - 1, line);
+		u_process(max_lines - i - 1, line);
 	}
 
 	if (pgresult != NULL) 
