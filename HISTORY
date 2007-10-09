@@ -3,8 +3,8 @@ Release Notes
 Release 3.6.1
 
 Changes
-     * Add view for monitoring use index statistics.
-     * Add view for monitoring user table statistics.
+     * Add 'X' command to view user index statistics.
+     * Add 'R' command to view user table statistics.
      * Add support for Solaris 10.
      * Add support for FreeBSD.
      * Add 'E' command to show query plan of a running query.
