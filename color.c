@@ -30,6 +30,7 @@
 
 #include "os.h"
 #include "message.h"
+#include "display.h"
 
 typedef struct color_entry {
     char *tag;
@@ -133,7 +134,7 @@ color_env_parse(char *env)
 		{
 		    len = strlen(p);
 		}
-		error_message(" %.*s: bad color entry", len, p);
+		display_error_message(" %.*s: bad color entry", len, p);
 	    }
 	    p = strtok(NULL, ":");
 	}

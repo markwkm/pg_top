@@ -37,7 +37,7 @@ void u_process(int line, char *newline);
 void u_endscreen(int hi);
 void display_header(int t);
 void new_message(int type, char *msgfmt, ...);
-void error_message(char *msgfmt, ...);
+void display_error_message(char *msgfmt, ...);
 void clear_message();
 int readline(char *buffer, int size, int numeric);
 void display_pagerstart();

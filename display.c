@@ -1383,7 +1383,7 @@ new_message(int type, char *msgfmt, ...)
 }
 
 void
-error_message(char *msgfmt, ...)
+display_error_message(char *msgfmt, ...)
 
 {
     va_list ap;

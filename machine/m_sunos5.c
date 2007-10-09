@@ -1106,16 +1106,19 @@ get_process_info (
     if (pgconn != NULL) {
 	pgresult = PQexec(pgconn, QUERY_PROCESSES);
 	nproc = PQntuples(pgresult);
-    }
-    PQfinish(pgconn);
-    if (nproc > maxprocs)
-    {
-	reallocproc(2 * nproc);
-    }
+	if (nproc > maxprocs)
+	{
+	    reallocproc(2 * nproc);
+	}
 
-    /* read all the proc structures */
-    getptable (pbase, pgresult);
-    PQclear(pgresult);
+	/* read all the proc structures */
+	getptable (pbase, pgresult);
+	PQclear(pgresult);
+	PQfinish(pgconn);
+    }
+    else
+	nproc = 0;
+
 
     /* get a pointer to the states summary array */
     si->procstates = process_states;
