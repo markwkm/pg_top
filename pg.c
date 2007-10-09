@@ -333,7 +333,7 @@ void pg_display_index_stats(char *conninfo, int compare_index, int max_topn)
 			rows * sizeof(struct index_node *));
 
 	/* Calculate change in values. */
-	for (i = max_lines - 1; i > -1; i--) {
+	for (i = 0; i < rows; i++) {
 		head = upsert_index_stats(head,
 				atoll(PQgetvalue(pgresult, i, 0)),
 				atoll(PQgetvalue(pgresult, i, 2)),
@@ -350,13 +350,13 @@ void pg_display_index_stats(char *conninfo, int compare_index, int max_topn)
 			index_compares[compare_index]);
 
 	/* Display stats. */
-	for (i = max_lines - 1; i > -1; i--) {
+	for (i = rows - 1; i > rows - max_lines - 1; i--) {
 		snprintf(line, sizeof(line), "%9lld %9lld %9lld %s",
 				procs[i]->diff_idx_scan,
 				procs[i]->diff_idx_tup_read,
 				procs[i]->diff_idx_tup_fetch,
 				PQgetvalue(pgresult, procs[i]->name_index, 1));
-		u_process(max_lines - i - 1, line);
+		u_process(rows - i - 1, line);
 	}
 
 	if (pgresult != NULL) 
@@ -413,7 +413,7 @@ void pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
 	qsort(procs, rows, sizeof(struct table_node *),
 			table_compares[compare_index]);
 
-	for (i = max_lines - 1; i > -1; i--) {
+	for (i = rows - 1; i > rows - max_lines - 1; i--) {
 		snprintf(line, sizeof(line),
 				"%9lld %9lld %9lld %9lld %9lld %9lld %9lld %s",
 				procs[i]->diff_seq_scan,
@@ -424,7 +424,7 @@ void pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
 				procs[i]->diff_n_tup_upd,
 				procs[i]->diff_n_tup_del,
 				PQgetvalue(pgresult, procs[i]->name_index, 1));
-		u_process(max_lines - i - 1, line);
+		u_process(rows - i - 1, line);
 	}
 
 	if (pgresult != NULL) 
