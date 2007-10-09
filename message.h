@@ -6,7 +6,7 @@
 #ifndef _MESSAGE_H_
 #define _MESSAGE_H_
 
-void new_message(int type, char *msgfmt, ...);
-void clear_message();
+void		new_message(int type, char *msgfmt,...);
+void		clear_message();
 
-#endif /* _MESSAGE_H_ */
+#endif   /* _MESSAGE_H_ */

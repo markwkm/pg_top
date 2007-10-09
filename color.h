@@ -7,11 +7,11 @@
 #ifndef _COLOR_H_
 #define _COLOR_H_
 
-int color_env_parse(char *env);
-int color_tag(char *tag);
-int color_test(int tagidx, int value);
-char *color_set(int color);
-void color_dump(FILE *f);
+int			color_env_parse(char *env);
+int			color_tag(char *tag);
+int			color_test(int tagidx, int value);
+char	   *color_set(int color);
+void		color_dump(FILE *f);
 
 
 /*
@@ -27,12 +27,12 @@ void color_dump(FILE *f);
  * 0	Reset all attributes
  * 1	Bright
  * 2	Dim
- * 4	Underscore	
+ * 4	Underscore
  * 5	Blink
  * 7	Reverse
  * 8	Hidden
- * 
- * 	Foreground Colours
+ *
+ *	Foreground Colours
  * 30	Black
  * 31	Red
  * 32	Green
@@ -41,8 +41,8 @@ void color_dump(FILE *f);
  * 35	Magenta
  * 36	Cyan
  * 37	White
- * 
- * 	Background Colours
+ *
+ *	Background Colours
  * 40	Black
  * 41	Red
  * 42	Green
@@ -53,4 +53,4 @@ void color_dump(FILE *f);
  * 47	White
  */
 
-#endif /* _COLOR_H_ */
+#endif   /* _COLOR_H_ */

@@ -1,7 +1,7 @@
 /*
- *  Top - a top users display for Berkeley Unix
+ *	Top - a top users display for Berkeley Unix
  *
- *  General (global) definitions
+ *	General (global) definitions
  */
 
 #ifndef _PTOP_H_
@@ -24,33 +24,34 @@
  * The entire display is based on these next numbers being defined as is.
  */
 
-#define NUM_AVERAGES    3
+#define NUM_AVERAGES	3
 
-struct ext_decl {
-    int (*f_minibar)(char *, int);
-    int (*f_display)(char *, int);
+struct ext_decl
+{
+	int			(*f_minibar) (char *, int);
+	int			(*f_display) (char *, int);
 };
 
 /*
- *  Definitions for things that might vary between installations.
+ *	Definitions for things that might vary between installations.
  */
 
 /*
- *  "Table_size" defines the size of the hash tables used to map uid to
- *  username.  Things will work best if the number is a prime number.
- *  We use a number that should be suitable for most installations.
+ *	"Table_size" defines the size of the hash tables used to map uid to
+ *	username.  Things will work best if the number is a prime number.
+ *	We use a number that should be suitable for most installations.
  */
 #ifndef Table_size
 #define Table_size	8191
 #endif
 
 /*
- *  "Nominal_TOPN" is used as the default TOPN when Default_TOPN is Infinity
- *  and the output is a dumb terminal.  If we didn't do this, then
- *  installations who use a default TOPN of Infinity will get every
- *  process in the system when running top on a dumb terminal (or redirected
- *  to a file).  Note that Nominal_TOPN is a default:  it can still be
- *  overridden on the command line, even with the value "infinity".
+ *	"Nominal_TOPN" is used as the default TOPN when Default_TOPN is Infinity
+ *	and the output is a dumb terminal.	If we didn't do this, then
+ *	installations who use a default TOPN of Infinity will get every
+ *	process in the system when running top on a dumb terminal (or redirected
+ *	to a file).  Note that Nominal_TOPN is a default:  it can still be
+ *	overridden on the command line, even with the value "infinity".
  */
 #ifndef Nominal_TOPN
 #define Nominal_TOPN	40
@@ -65,15 +66,15 @@ struct ext_decl {
 #endif
 
 /*
- *  If the local system's getpwnam interface uses random access to retrieve
- *  a record (i.e.: 4.3 systems, Sun "yellow pages"), then defining
- *  RANDOM_PW will take advantage of that fact.  If RANDOM_PW is defined,
- *  then getpwnam is used and the result is cached.  If not, then getpwent
- *  is used to read and cache the password entries sequentially until the
- *  desired one is found.
+ *	If the local system's getpwnam interface uses random access to retrieve
+ *	a record (i.e.: 4.3 systems, Sun "yellow pages"), then defining
+ *	RANDOM_PW will take advantage of that fact.  If RANDOM_PW is defined,
+ *	then getpwnam is used and the result is cached.  If not, then getpwent
+ *	is used to read and cache the password entries sequentially until the
+ *	desired one is found.
  *
- *  We initially set RANDOM_PW to something which is controllable by the
- *  Configure script.  Then if its value is 0, we undef it.
+ *	We initially set RANDOM_PW to something which is controllable by the
+ *	Configure script.  Then if its value is 0, we undef it.
  */
 
 #define RANDOM_PW	1
@@ -81,7 +82,7 @@ struct ext_decl {
 #undef RANDOM_PW
 #endif
 
-void quit(int);
-void reset_display();
+void		quit(int);
+void		reset_display();
 
-#endif /* _PTOP_H_ */
+#endif   /* _PTOP_H_ */

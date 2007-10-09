@@ -4,7 +4,7 @@
  * AUTHOR:	Andrew S. Townley
  *		based on m_bsd44.c and m_next32.c
  *		by Christos Zoulas and Tim Pugh
- * CREATED:	Tue Aug 11 01:51:35 CDT 1998
+ * CREATED: Tue Aug 11 01:51:35 CDT 1998
  * SYNOPSIS:  MacOS X Server (Rhapsody Developer Release 2)
  * DESCRIPTION:
  *	MacOS X Server (Rhapsody Developer Release 2)
@@ -59,7 +59,7 @@
 
 /* define what weighted cpu is */
 #define weighted_cpu(pct, s) (s == 0 ? 0.0 : \
-                         ((pct) / (1.0 - exp(s * logcpu)))) 
+						 ((pct) / (1.0 - exp(s * logcpu))))
 
 /* what we consider to be process size: */
 #ifdef notdef
@@ -80,21 +80,21 @@
  * globals
  */
 
-static kvm_t		*kd = NULL;
-static int		nproc;
-static int		onproc = -1;
-static int		pref_len;
-static int		maxmem;
-static char		fmt[MAX_COLS];
-static double		logcpu = 1.0;
+static kvm_t *kd = NULL;
+static int	nproc;
+static int	onproc = -1;
+static int	pref_len;
+static int	maxmem;
+static char fmt[MAX_COLS];
+static double logcpu = 1.0;
 
 /* process array stuff */
 
-static struct kinfo_proc	*kproc_list = NULL;
-static struct macos_proc	*proc_list = NULL;
-static struct macos_proc	**proc_ref = NULL;
-static int			process_states[7];
-static struct handle		handle;
+static struct kinfo_proc *kproc_list = NULL;
+static struct macos_proc *proc_list = NULL;
+static struct macos_proc **proc_ref = NULL;
+static int	process_states[7];
+static struct handle handle;
 
 /*
  * The mach information hopefully will not be necessary
@@ -105,60 +105,61 @@ static struct handle		handle;
  * as many task and thread structures as needed.
  */
 
-static struct task_basic_info	*task_list = NULL;
+static struct task_basic_info *task_list = NULL;
 
 /* memory statistics */
 
-static int 		pageshift 	= 0;
-static int		pagesize	= 0;
+static int	pageshift = 0;
+static int	pagesize = 0;
+
 #define pagetok(size)	((size) << pageshift)
 
-static int		swappgsin	= -1;
-static int		swappgsout	= -1;
-static vm_statistics_data_t	vm_stats;
-static long		memory_stats[7];
+static int	swappgsin = -1;
+static int	swappgsout = -1;
+static vm_statistics_data_t vm_stats;
+static long memory_stats[7];
 
 /* CPU state percentages */
 
 host_cpu_load_info_data_t cpuload;
 
-static long	cp_time[CPU_STATE_MAX];
-static long	cp_old[CPU_STATE_MAX];
-static long	cp_diff[CPU_STATE_MAX];
-static int		cpu_states[CPU_STATE_MAX];
+static long cp_time[CPU_STATE_MAX];
+static long cp_old[CPU_STATE_MAX];
+static long cp_diff[CPU_STATE_MAX];
+static int	cpu_states[CPU_STATE_MAX];
 
 /*
  * types
  */
 
-typedef long 		pctcpu;
+typedef long pctcpu;
 
-//struct statics
-//{
-//	char	**procstate_names;
-//	char	**cpustate_names;
-//	char	**memory_names;
-//	char	**order_names;
-//};
-//
-//struct system_info
-//{
-//	int	last_pid;
-//	double	load_avg[NUM_AVERAGES];
-//	int	p_total;	/* total # of processes */
-//	int	p_active;	/* number processes considered active */
-//	int	*procstates;
-//	int	*cpustates;
-//	int	*memory;
-//};
-//
-//struct process_select
-//{
-//	int	idle;		/* show idle processes */
-//	int	system;		/* show system processes */
-//	int	uid;		/* show only this uid (unless -1) */
-//	char	*command;	/* only this command (unless NULL) */
-//};
+/* struct statics */
+/* { */
+/*	char	**procstate_names; */
+/*	char	**cpustate_names; */
+/*	char	**memory_names; */
+/*	char	**order_names; */
+/* }; */
+/*	*/
+/* struct system_info */
+/* { */
+/*	int last_pid; */
+/*	double	load_avg[NUM_AVERAGES]; */
+ /*  int p_total;	 /* total # of processes */ */
+ /*  int p_active;	 /* number processes considered active */ */
+/*	int *procstates; */
+/*	int *cpustates; */
+/*	int *memory; */
+/* }; */
+/*	*/
+/* struct process_select */
+/* { */
+ /*  int idle;		 /* show idle processes */ */
+ /*  int system;	 /* show system processes */ */
+ /*  int uid;		 /* show only this uid (unless -1) */ */
+ /*  char	 *command;	 /* only this command (unless NULL) */ */
+/* }; */
 
 /*
  * We need to declare a hybrid structure which will store all
@@ -167,29 +168,30 @@ typedef long 		pctcpu;
 
 struct macos_proc
 {
-	struct kinfo_proc		*kproc;
-	task_t				the_task;
-	struct task_basic_info		task_info;
-	unsigned int			thread_count;
-	struct thread_basic_info	thread_summary;
+	struct kinfo_proc *kproc;
+	task_t		the_task;
+	struct task_basic_info task_info;
+	unsigned int thread_count;
+	struct thread_basic_info thread_summary;
 };
 
 struct handle
 {
-	struct macos_proc		**next_proc;
-	int				remaining;
+	struct macos_proc **next_proc;
+	int			remaining;
 };
 
 static char header[] =
-  "  PID X        PRI THRD  SIZE   RES STATE   TIME    MEM    CPU COMMAND";
-/* 0123456   -- field to fill in starts at header+6 */
+"  PID X        PRI THRD  SIZE   RES STATE   TIME    MEM    CPU COMMAND";
+
+/* 0123456	 -- field to fill in starts at header+6 */
 #define UNAME_START 6
-     
+
 #define Proc_format \
-        "%5d %-8.8s %3d %4d %5s %5s %-5s %6s %5.2f%% %5.2f%% %.16s"
+		"%5d %-8.8s %3d %4d %5s %5s %-5s %6s %5.2f%% %5.2f%% %.16s"
 
 
-int proc_compare(const void *, const void *);
+int			proc_compare(const void *, const void *);
 
 
 /*
@@ -198,9 +200,11 @@ int proc_compare(const void *, const void *);
  * This function is used to report errors to stderr.
  */
 
-static void puke(const char* fmt, ...)
+static void
+puke(const char *fmt,...)
 {
-	va_list	args;
+	va_list		args;
+
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	va_end(args);
@@ -218,17 +222,18 @@ static void puke(const char* fmt, ...)
  * All other behavior is per kvm_read except the error reporting.
  */
 
-static ssize_t kread(u_long addr, void *buf, 
-	size_t nbytes, const char *errstr)
+static ssize_t
+kread(u_long addr, void *buf,
+	  size_t nbytes, const char *errstr)
 {
-	ssize_t	s = 0;
+	ssize_t		s = 0;
 
 	s = kvm_read(kd, addr, buf, nbytes);
-	if(s == -1)
-		{
+	if (s == -1)
+	{
 		puke("error:  kvm_read() failed for '%s' (%s)\n",
-			errstr, strerror(errno));
-		}
+			 errstr, strerror(errno));
+	}
 
 	return s;
 }
@@ -237,7 +242,7 @@ static ssize_t kread(u_long addr, void *buf,
  * prototypes for functions which top needs
  */
 
-char *printable();
+char	   *printable();
 
 /*
  * definitions for offsets
@@ -249,12 +254,12 @@ char *printable();
 
 #define NLIST_LAST	3
 
-static struct nlist	nlst[] =
+static struct nlist nlst[] =
 {
-	{ "_maxproc" },		/* 0 *** maximum processes */
-	{ "_hz" },		/* 1 */
-	{ "_mem_size" },	/* 2 */
-	{ 0 }
+	{"_maxproc"},				/* 0 *** maximum processes */
+	{"_hz"},					/* 1 */
+	{"_mem_size"},				/* 2 */
+	{0}
 };
 
 static char *procstates[] =
@@ -334,15 +339,16 @@ static char *memnames[] =
  * header information.
  */
 
-char *format_header(register char *uname_field)
+char *
+format_header(register char *uname_field)
 {
 	register char *ptr;
 
 	ptr = header + UNAME_START;
-	while(*uname_field != '\0')
+	while (*uname_field != '\0')
 		*ptr++ = *uname_field++;
 
-	return(header);
+	return (header);
 }
 
 /*
@@ -352,20 +358,21 @@ char *format_header(register char *uname_field)
  * each row which is displayed.
  */
 
-char *format_next_process(caddr_t handle, char *(*getuserid)())
+char *
+format_next_process(caddr_t handle, char *(*getuserid) ())
 {
-	register struct macos_proc	*pp;
-	register long			cputime;
-	register double			pct;
-	register int			vsize;
-	register int			rsize;
-	struct handle			*hp;
+	register struct macos_proc *pp;
+	register long cputime;
+	register double pct;
+	register int vsize;
+	register int rsize;
+	struct handle *hp;
 
 	/*
 	 * we need to keep track of the next proc structure.
 	 */
 
-	hp = (struct handle*)handle;
+	hp = (struct handle *) handle;
 	pp = *(hp->next_proc++);
 	hp->remaining--;
 
@@ -373,74 +380,73 @@ char *format_next_process(caddr_t handle, char *(*getuserid)())
 	 * get the process structure and take care of the cputime
 	 */
 
-	if((MPP(pp, p_flag) & P_INMEM) == 0)
-		{
+	if ((MPP(pp, p_flag) & P_INMEM) == 0)
+	{
 		/* we want to print swapped processes as <pname> */
-		char	*comm = MPP(pp, p_comm);
+		char	   *comm = MPP(pp, p_comm);
+
 #define COMSIZ	sizeof(MPP(pp, p_comm))
-		char	buf[COMSIZ];
+		char		buf[COMSIZ];
+
 		strncpy(buf, comm, COMSIZ);
 		comm[0] = '<';
 		strncpy(&comm[1], buf, COMSIZ - 2);
 		comm[COMSIZ - 2] = '\0';
 		strncat(comm, ">", COMSIZ - 1);
 		comm[COMSIZ - 1] = '\0';
-		}
+	}
 
 	/*
 	 * count the cpu time, but ignore the interrupts
 	 *
-	 * At the present time (DR2 8/1998), MacOS X doesn't
-	 * correctly report this information through the
-	 * kinfo_proc structure.  We need to get it from the
-	 * task threads.
+	 * At the present time (DR2 8/1998), MacOS X doesn't correctly report this
+	 * information through the kinfo_proc structure.  We need to get it from
+	 * the task threads.
 	 *
 	 * cputime = PP(pp, p_rtime).tv_sec;
 	 */
-	
+
 	cputime = RP(pp, user_time).seconds + RP(pp, system_time).seconds;
 
 	/*
 	 * calculate the base cpu percentages
 	 *
-	 * Again, at the present time, MacOS X doesn't report
-	 * this information through the kinfo_proc.  We need
-	 * to talk to the threads.
+	 * Again, at the present time, MacOS X doesn't report this information
+	 * through the kinfo_proc.	We need to talk to the threads.
 	 */
 
-//	pct = pctdouble(PP(pp, p_pctcpu));
-	pct = (double)(RP(pp, cpu_usage))/TH_USAGE_SCALE;
+/*	pct = pctdouble(PP(pp, p_pctcpu)); */
+	pct = (double) (RP(pp, cpu_usage)) / TH_USAGE_SCALE;
 
 	/*
 	 * format the entry
 	 */
 
 	/*
-	 * In the final version, I would expect this to work correctly,
-	 * but it seems that not all of the fields in the proc
-	 * structure are being used.
+	 * In the final version, I would expect this to work correctly, but it
+	 * seems that not all of the fields in the proc structure are being used.
 	 *
-	 * For now, we'll attempt to get some of the things we need
-	 * from the mach task info.
+	 * For now, we'll attempt to get some of the things we need from the mach
+	 * task info.
 	 */
 
 	sprintf(fmt,
-		Proc_format,
-		MPP(pp, p_pid),
-		(*getuserid)(MEP(pp, e_pcred.p_ruid)),
-//		TP(pp, base_priority),
-		0,
-		pp->thread_count,
-		format_k(TASKSIZE(pp) / 1024),
-		format_k(pagetok(RSSIZE(pp))),
-		state_abbrev[(u_char)MPP(pp, p_stat)],
-		format_time(cputime),
-		100.0 * TP(pp, resident_size) / maxmem,
-//		100.0 * weighted_cpu(pct, (RP(pp, user_time).seconds + RP(pp, system_time).seconds)),
-		100.0 * pct,
-		printable(MPP(pp, p_comm)));
+			Proc_format,
+			MPP(pp, p_pid),
+			(*getuserid) (MEP(pp, e_pcred.p_ruid)),
+/*		TP(pp, base_priority), */
+			0,
+			pp->thread_count,
+			format_k(TASKSIZE(pp) / 1024),
+			format_k(pagetok(RSSIZE(pp))),
+			state_abbrev[(u_char) MPP(pp, p_stat)],
+			format_time(cputime),
+			100.0 * TP(pp, resident_size) / maxmem,
+/*		100.0 * weighted_cpu(pct, (RP(pp, user_time).seconds + RP(pp, system_time).seconds)), */
+			100.0 * pct,
+			printable(MPP(pp, p_comm)));
 
-	return(fmt);
+	return (fmt);
 }
 
 /*
@@ -450,97 +456,96 @@ char *format_next_process(caddr_t handle, char *(*getuserid)())
  * on the system.
  */
 
-caddr_t get_process_info(struct system_info *si,
-		struct process_select *sel, int x)
+caddr_t
+get_process_info(struct system_info * si,
+				 struct process_select * sel, int x)
 
 {
-	register int 				i;
-	register int 				total_procs;
-	register int 				active_procs;
-	register struct macos_proc 		**prefp;
-	register struct macos_proc 		*pp;
-	register struct kinfo_proc		*pp2;
-	register struct kinfo_proc		**prefp2;
-	register struct thread_basic_info 	*thread;
+	register int i;
+	register int total_procs;
+	register int active_procs;
+	register struct macos_proc **prefp;
+	register struct macos_proc *pp;
+	register struct kinfo_proc *pp2;
+	register struct kinfo_proc **prefp2;
+	register struct thread_basic_info *thread;
 
 	/*
 	 * these are copied out of sel for speed
 	 */
 
-	int show_idle;
-	int show_system;
-	int show_uid;
-	int show_command;
+	int			show_idle;
+	int			show_system;
+	int			show_uid;
+	int			show_command;
 
 	kproc_list = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nproc);
 
-	if(nproc > onproc)
-		{
-		proc_list = (struct macos_proc*)realloc(proc_list, sizeof(struct macos_proc) * nproc);
-		proc_ref = (struct macos_proc **)realloc(proc_ref, sizeof(struct macos_proc *) * (onproc = nproc));
-		}
+	if (nproc > onproc)
+	{
+		proc_list = (struct macos_proc *) realloc(proc_list, sizeof(struct macos_proc) * nproc);
+		proc_ref = (struct macos_proc **) realloc(proc_ref, sizeof(struct macos_proc *) * (onproc = nproc));
+	}
 
-	if(proc_ref == NULL || proc_list == NULL || kproc_list == NULL)
-		{
+	if (proc_ref == NULL || proc_list == NULL || kproc_list == NULL)
+	{
 		puke("error:  out of memory (%s)", strerror(errno));
-		return(NULL);
-		}
+		return (NULL);
+	}
 
 	/*
-	 * now, our task is to build the array of information we
-	 * need to function correctly.  This involves setting a pointer
-	 * to each real kinfo_proc structure returned by kvm_getprocs()
-	 * in addition to getting the mach information for each of
-	 * those processes.
+	 * now, our task is to build the array of information we need to function
+	 * correctly.  This involves setting a pointer to each real kinfo_proc
+	 * structure returned by kvm_getprocs() in addition to getting the mach
+	 * information for each of those processes.
 	 */
 
-	for(pp2 = kproc_list, i = 0; i < nproc; pp2++, i++)
-		{
-		kern_return_t	rc;
+	for (pp2 = kproc_list, i = 0; i < nproc; pp2++, i++)
+	{
+		kern_return_t rc;
 		u_int		info_count = TASK_BASIC_INFO_COUNT;
 
 		/*
-		 * first, we set the pointer to the reference in
-		 * the kproc list.
+		 * first, we set the pointer to the reference in the kproc list.
 		 */
-		
+
 		proc_list[i].kproc = pp2;
 
 		/*
 		 * then, we load all of the task info for the process
 		 */
 
-		if(PP(pp2, p_stat) != SZOMB)
-			{
-			rc = task_for_pid(mach_task_self(), 
-				PP(pp2, p_pid), 
-				&(proc_list[i].the_task));
+		if (PP(pp2, p_stat) != SZOMB)
+		{
+			rc = task_for_pid(mach_task_self(),
+							  PP(pp2, p_pid),
+							  &(proc_list[i].the_task));
 
-			if(rc != KERN_SUCCESS)
-				{
+			if (rc != KERN_SUCCESS)
+			{
 				puke("error:  get task info for pid %d failed with rc = %d", PP(pp2, p_pid), rc);
-				}
+			}
 
 			/*
 			 * load the task information
 			 */
 
-			rc = task_info(proc_list[i].the_task, TASK_BASIC_INFO, 
-				(task_info_t)&(proc_list[i].task_info),
-				&info_count);
+			rc = task_info(proc_list[i].the_task, TASK_BASIC_INFO,
+						   (task_info_t) & (proc_list[i].task_info),
+						   &info_count);
 
-			if(rc != KERN_SUCCESS)
-				{
+			if (rc != KERN_SUCCESS)
+			{
 				puke("error:  couldn't get task info (%s); rc = %d", strerror(errno), rc);
-				}
+			}
 
 			/*
 			 * load the thread summary information
 			 */
 
 			load_thread_info(&proc_list[i]);
-			}
 		}
+	}
 
 	/* get a pointer to the states summary array */
 	si->procstates = process_states;
@@ -554,38 +559,37 @@ caddr_t get_process_info(struct system_info *si,
 	/* count up process states and get pointers to interesting procs */
 	total_procs = 0;
 	active_procs = 0;
-	memset((char *)process_states, 0, sizeof(process_states));
+	memset((char *) process_states, 0, sizeof(process_states));
 	prefp = proc_ref;
-	for(pp = proc_list, i = 0; i < nproc; pp++, i++)
-		{
+	for (pp = proc_list, i = 0; i < nproc; pp++, i++)
+	{
 		/*
-		 *  Place pointers to each valid proc structure in 
-		 * proc_ref[].  Process slots that are actually in use 
-		 * have a non-zero status field.  Processes with
-		 * P_SYSTEM set are system processes---these get 
+		 * Place pointers to each valid proc structure in proc_ref[].  Process
+		 * slots that are actually in use have a non-zero status field.
+		 * Processes with P_SYSTEM set are system processes---these get
 		 * ignored unless show_sysprocs is set.
 		 */
-		if(MPP(pp, p_stat) != 0 && 
-				(show_system || ((MPP(pp, p_flag) & P_SYSTEM) == 0)))
-			{
+		if (MPP(pp, p_stat) != 0 &&
+			(show_system || ((MPP(pp, p_flag) & P_SYSTEM) == 0)))
+		{
 			total_procs++;
 			process_states[(unsigned char) MPP(pp, p_stat)]++;
-			if((MPP(pp, p_stat) != SZOMB) &&
-					(show_idle || (MPP(pp, p_pctcpu) != 0) || 
-			 		(MPP(pp, p_stat) == SRUN)) &&
-					(!show_uid || MEP(pp, e_pcred.p_ruid) == (uid_t)sel->uid))
-				{
+			if ((MPP(pp, p_stat) != SZOMB) &&
+				(show_idle || (MPP(pp, p_pctcpu) != 0) ||
+				 (MPP(pp, p_stat) == SRUN)) &&
+				(!show_uid || MEP(pp, e_pcred.p_ruid) == (uid_t) sel->uid))
+			{
 				*prefp++ = pp;
 				active_procs++;
-				}
 			}
 		}
-	
-	/* 
+	}
+
+	/*
 	 * if requested, sort the "interesting" processes
 	 */
 
-	qsort((char *)proc_ref, active_procs, sizeof(struct macos_proc *), proc_compare);
+	qsort((char *) proc_ref, active_procs, sizeof(struct macos_proc *), proc_compare);
 
 	/* remember active and total counts */
 	si->p_total = total_procs;
@@ -594,7 +598,7 @@ caddr_t get_process_info(struct system_info *si,
 	/* pass back a handle */
 	handle.next_proc = proc_ref;
 	handle.remaining = active_procs;
-	return((caddr_t)&handle);
+	return ((caddr_t) &handle);
 }
 
 /*
@@ -604,19 +608,20 @@ caddr_t get_process_info(struct system_info *si,
  * system information snapshot.
  */
 
-void get_system_info(struct system_info *si)
+void
+get_system_info(struct system_info * si)
 {
-	register long	total;
-	register int	i;
+	register long total;
+	register int i;
 	unsigned int count = HOST_CPU_LOAD_INFO_COUNT;
 
 	if (host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO,
-			    (host_info_t)&cpuload, &count) == KERN_SUCCESS)
+						(host_info_t) & cpuload, &count) == KERN_SUCCESS)
 	{
-	    for (i = 0; i < CPU_STATE_MAX; i++)
-	    {
-		cp_time[i] = cpuload.cpu_ticks[i];
-	    }
+		for (i = 0; i < CPU_STATE_MAX; i++)
+		{
+			cp_time[i] = cpuload.cpu_ticks[i];
+		}
 	}
 
 #ifdef MAX_VERBOSE
@@ -625,51 +630,51 @@ void get_system_info(struct system_info *si)
 	 * print out the entries
 	 */
 
-	for(i = 0; i < CPU_STATE_MAX; i++)
+	for (i = 0; i < CPU_STATE_MAX; i++)
 		printf("cp_time[%d] = %d\n", i, cp_time[i]);
 	fflush(stdout);
-
-#endif /* MAX_VERBOSE */
+#endif   /* MAX_VERBOSE */
 
 	/*
 	 * get the load averages
 	 */
 
-	if(kvm_getloadavg(kd, si->load_avg, NUM_AVERAGES) == -1)
-		{
+	if (kvm_getloadavg(kd, si->load_avg, NUM_AVERAGES) == -1)
+	{
 		puke("error:  kvm_getloadavg() failed (%s)", strerror(errno));
 		return;
-		}
+	}
 
 #ifdef MAX_VERBOSE
-	printf("%-30s%03.2f, %03.2f, %03.2f\n", 
-			"load averages:", 
-			si->load_avg[0],
-			si->load_avg[1],
-			si->load_avg[2]);
-#endif /* MAX_VERBOSE */
+	printf("%-30s%03.2f, %03.2f, %03.2f\n",
+		   "load averages:",
+		   si->load_avg[0],
+		   si->load_avg[1],
+		   si->load_avg[2]);
+#endif   /* MAX_VERBOSE */
 
 	total = percentages(CPU_STATE_MAX, cpu_states, cp_time, cp_old, cp_diff);
+
 	/*
 	 * get the memory statistics
 	 */
 
 	{
-		kern_return_t	status;
+		kern_return_t status;
 
 		count = HOST_VM_INFO_COUNT;
 		status = host_statistics(mach_host_self(), HOST_VM_INFO,
-					 (host_info_t)&vm_stats, &count);
+								 (host_info_t) & vm_stats, &count);
 
-		if(status != KERN_SUCCESS)
-			{
+		if (status != KERN_SUCCESS)
+		{
 			puke("error:  vm_statistics() failed (%s)", strerror(errno));
 			return;
-			}
+		}
 
 		/*
-		 * we already have the total memory, we just need
-		 * to get it in the right format.
+		 * we already have the total memory, we just need to get it in the
+		 * right format.
 		 */
 
 		memory_stats[0] = pagetok(maxmem / pagesize);
@@ -678,20 +683,20 @@ void get_system_info(struct system_info *si)
 		memory_stats[3] = pagetok(vm_stats.inactive_count);
 		memory_stats[4] = pagetok(vm_stats.wire_count);
 
-		if(swappgsin < 0)
-			{
+		if (swappgsin < 0)
+		{
 			memory_stats[5] = 1;
 			memory_stats[6] = 1;
-			}
+		}
 		else
-			{
+		{
 			memory_stats[5] = pagetok(((vm_stats.pageins - swappgsin)));
 			memory_stats[6] = pagetok(((vm_stats.pageouts - swappgsout)));
-			}
+		}
 		swappgsin = vm_stats.pageins;
 		swappgsout = vm_stats.pageouts;
 	}
-	
+
 	si->cpustates = cpu_states;
 	si->memory = memory_stats;
 	si->last_pid = -1;
@@ -706,11 +711,12 @@ void get_system_info(struct system_info *si)
  * statics structure.
  */
 
-int machine_init(struct statics *stat)
+int
+machine_init(struct statics * stat)
 {
 	register int rc = 0;
 	register int i = 0;
-	size_t size;
+	size_t		size;
 
 	size = sizeof(maxmem);
 	sysctlbyname("hw.physmem", &maxmem, &size, NULL, 0);
@@ -720,7 +726,7 @@ int machine_init(struct statics *stat)
 
 #ifdef MAX_VERBOSE
 	printf("%-30s%10d\n", "total system memory:", maxmem);
-#endif /* MAX_VERBOSE */
+#endif   /* MAX_VERBOSE */
 
 	/*
 	 * calculate the pageshift from the system page size
@@ -728,7 +734,7 @@ int machine_init(struct statics *stat)
 
 	pagesize = getpagesize();
 	pageshift = 0;
-	while((pagesize >>= 1) > 0)
+	while ((pagesize >>= 1) > 0)
 		pageshift++;
 
 	pageshift -= LOG1024;
@@ -742,75 +748,76 @@ int machine_init(struct statics *stat)
 	stat->memory_names = memnames;
 
 	if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "kvm_open")) == NULL)
-	  return -1;
+		return -1;
 
-	return(0);
+	return (0);
 }
 
 /* comparison routine for qsort */
 
 /*
- *  proc_compare - comparison function for "qsort"
+ *	proc_compare - comparison function for "qsort"
  *	Compares the resource consumption of two processes using five
- *  	distinct keys.  The keys (in descending order of importance) are:
- *  	percent cpu, cpu ticks, state, resident set size, total virtual
- *  	memory usage.  The process states are ordered as follows (from least
- *  	to most important):  WAIT, zombie, sleep, stop, start, run.  The
- *  	array declaration below maps a process state index into a number
- *  	that reflects this ordering.
+ *		distinct keys.	The keys (in descending order of importance) are:
+ *		percent cpu, cpu ticks, state, resident set size, total virtual
+ *		memory usage.  The process states are ordered as follows (from least
+ *		to most important):  WAIT, zombie, sleep, stop, start, run.  The
+ *		array declaration below maps a process state index into a number
+ *		that reflects this ordering.
  */
 
 static unsigned char sorted_state[] =
 {
-    0,	/* not used		*/
-    3,	/* sleep		*/
-    1,	/* ABANDONED (WAIT)	*/
-    6,	/* run			*/
-    5,	/* start		*/
-    2,	/* zombie		*/
-    4	/* stop			*/
+	0,							/* not used		*/
+	3,							/* sleep		*/
+	1,							/* ABANDONED (WAIT) */
+	6,							/* run			*/
+	5,							/* start		*/
+	2,							/* zombie		*/
+	4							/* stop			*/
 };
- 
-int proc_compare(const void *pp1, const void *pp2)
+
+int
+proc_compare(const void *pp1, const void *pp2)
 {
-    register struct macos_proc *p1;
-    register struct macos_proc *p2;
-    register int result;
-    register pctcpu lresult;
+	register struct macos_proc *p1;
+	register struct macos_proc *p2;
+	register int result;
+	register pctcpu lresult;
 
-    /* remove one level of indirection */
-    p1 = *(struct macos_proc **) pp1;
-    p2 = *(struct macos_proc **) pp2;
+	/* remove one level of indirection */
+	p1 = *(struct macos_proc **) pp1;
+	p2 = *(struct macos_proc **) pp2;
 
-    /* compare percent cpu (pctcpu) */
-    if ((lresult = RP(p2, cpu_usage) - RP(p1, cpu_usage)) == 0)
-    {
-	/* use cpticks to break the tie */
-	if ((result = MPP(p2, p_cpticks) - MPP(p1, p_cpticks)) == 0)
+	/* compare percent cpu (pctcpu) */
+	if ((lresult = RP(p2, cpu_usage) - RP(p1, cpu_usage)) == 0)
 	{
-	    /* use process state to break the tie */
-	    if ((result = sorted_state[(unsigned char) MPP(p2, p_stat)] -
-			  sorted_state[(unsigned char) MPP(p1, p_stat)])  == 0)
-	    {
-		/* use priority to break the tie */
-		if ((result = MPP(p2, p_priority) - MPP(p1, p_priority)) == 0)
+		/* use cpticks to break the tie */
+		if ((result = MPP(p2, p_cpticks) - MPP(p1, p_cpticks)) == 0)
 		{
-		    /* use resident set size (rssize) to break the tie */
-		    if ((result = RSSIZE(p2) - RSSIZE(p1)) == 0)
-		    {
-			/* use total memory to break the tie */
-			result = PROCSIZE(p2->kproc) - PROCSIZE(p1->kproc);
-		    }
+			/* use process state to break the tie */
+			if ((result = sorted_state[(unsigned char) MPP(p2, p_stat)] -
+				 sorted_state[(unsigned char) MPP(p1, p_stat)]) == 0)
+			{
+				/* use priority to break the tie */
+				if ((result = MPP(p2, p_priority) - MPP(p1, p_priority)) == 0)
+				{
+					/* use resident set size (rssize) to break the tie */
+					if ((result = RSSIZE(p2) - RSSIZE(p1)) == 0)
+					{
+						/* use total memory to break the tie */
+						result = PROCSIZE(p2->kproc) - PROCSIZE(p1->kproc);
+					}
+				}
+			}
 		}
-	    }
 	}
-    }
-    else
-    {
-	result = lresult < 0 ? -1 : 1;
-    }
+	else
+	{
+		result = lresult < 0 ? -1 : 1;
+	}
 
-    return(result);
+	return (result);
 }
 
 
@@ -824,26 +831,27 @@ int proc_compare(const void *pp1, const void *pp2)
  *		and "renice" commands.
  */
 
-int proc_owner(pid)
+int
+proc_owner(pid)
 
-int pid;
+int			pid;
 
 {
-    register int cnt;
-    register struct macos_proc **prefp;
-    register struct macos_proc *pp;
+	register int cnt;
+	register struct macos_proc **prefp;
+	register struct macos_proc *pp;
 
-    prefp = proc_ref;
-    cnt = pref_len;
-    while (--cnt >= 0)
-    {
-	pp = *prefp++;	
-	if (MPP(pp, p_pid) == (pid_t)pid)
+	prefp = proc_ref;
+	cnt = pref_len;
+	while (--cnt >= 0)
 	{
-	    return((int)MEP(pp, e_pcred.p_ruid));
+		pp = *prefp++;
+		if (MPP(pp, p_pid) == (pid_t) pid)
+		{
+			return ((int) MEP(pp, e_pcred.p_ruid));
+		}
 	}
-    }
-    return(-1);
+	return (-1);
 }
 
 /*
@@ -857,59 +865,59 @@ int pid;
  * if everything works.
  */
 
-int load_thread_info(struct macos_proc *mp)
+int
+load_thread_info(struct macos_proc * mp)
 {
-	register kern_return_t		rc = 0;
-	register int			i = 0;
-	register int			t_utime = 0;
-	register int			t_stime = 0;
-	register int			t_cpu = 0;
-	register int			t_state = 0;
-	register task_t			the_task = mp->the_task;
+	register kern_return_t rc = 0;
+	register int i = 0;
+	register int t_utime = 0;
+	register int t_stime = 0;
+	register int t_cpu = 0;
+	register int t_state = 0;
+	register task_t the_task = mp->the_task;
 
-	thread_array_t			thread_list = NULL;
+	thread_array_t thread_list = NULL;
 
 	/*
-	 * We need to load all of the threads for the 
-	 * given task so we can get the performance 
-	 * data from them.
+	 * We need to load all of the threads for the given task so we can get the
+	 * performance data from them.
 	 */
 
 	mp->thread_count = 0;
 	rc = task_threads(the_task, &thread_list, &(mp->thread_count));
 
-	if(rc != KERN_SUCCESS)
-		{
-//		puke("error:  unable to load threads for task (%s); rc = %d", strerror(errno), rc);
-		return(rc);
-		}
+	if (rc != KERN_SUCCESS)
+	{
+/*		puke("error:  unable to load threads for task (%s); rc = %d", strerror(errno), rc); */
+		return (rc);
+	}
 
 	/*
-	 * now, for each of the threads, we need to sum the stats
-	 * so we can present the whole thing to the caller.
+	 * now, for each of the threads, we need to sum the stats so we can
+	 * present the whole thing to the caller.
 	 */
 
-	for(i = 0; i < mp->thread_count; i++)
+	for (i = 0; i < mp->thread_count; i++)
+	{
+		struct thread_basic_info t_info;
+		unsigned int icount = THREAD_BASIC_INFO_COUNT;
+		kern_return_t rc = 0;
+
+		rc = thread_info(thread_list[i], THREAD_BASIC_INFO,
+						 (thread_info_t) & t_info, &icount);
+
+		if (rc != KERN_SUCCESS)
 		{
-		struct thread_basic_info	t_info;
-		unsigned int			icount = THREAD_BASIC_INFO_COUNT;
-		kern_return_t			rc = 0;
-
-		rc = thread_info(thread_list[i], THREAD_BASIC_INFO, 
-				(thread_info_t)&t_info, &icount);
-
-		if(rc != KERN_SUCCESS)
-			{
 			puke("error:  unable to load thread info for task (%s); rc = %d", strerror(errno), rc);
-			return(rc);
-			}
+			return (rc);
+		}
 
 		t_utime += t_info.user_time.seconds;
 		t_stime += t_info.system_time.seconds;
 		t_cpu += t_info.cpu_usage;
-		}
+	}
 
-	vm_deallocate(mach_task_self(), (vm_address_t)thread_list, sizeof(thread_array_t)*(mp->thread_count));
+	vm_deallocate(mach_task_self(), (vm_address_t) thread_list, sizeof(thread_array_t) * (mp->thread_count));
 
 	/*
 	 * Now, we load the values in the structure above.
@@ -919,6 +927,5 @@ int load_thread_info(struct macos_proc *mp)
 	RP(mp, system_time).seconds = t_stime;
 	RP(mp, cpu_usage) = t_cpu;
 
-	return(KERN_SUCCESS);
+	return (KERN_SUCCESS);
 }
-
