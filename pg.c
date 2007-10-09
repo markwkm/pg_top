@@ -326,6 +326,7 @@ void pg_display_index_stats(char *conninfo, int compare_index, int max_topn)
 		PQfinish(pgconn);
 		return;
 	}
+	PQfinish(pgconn);
 
 	max_lines = rows < max_topn ? rows : max_topn;
 
@@ -361,7 +362,6 @@ void pg_display_index_stats(char *conninfo, int compare_index, int max_topn)
 
 	if (pgresult != NULL) 
 		PQclear(pgresult);
-	PQfinish(pgconn);
 }
 
 void pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
@@ -386,6 +386,7 @@ void pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
 		PQfinish(pgconn);
 		return;
 	}
+	PQfinish(pgconn);
 
 	max_lines = rows < max_topn ? rows : max_topn;
 
@@ -429,7 +430,6 @@ void pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
 
 	if (pgresult != NULL) 
 		PQclear(pgresult);
-	PQfinish(pgconn);
 }
 
 struct index_node *insert_index_stats(struct index_node *head,
