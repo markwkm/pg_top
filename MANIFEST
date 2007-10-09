@@ -3,7 +3,7 @@ INSTALL
 FAQ
 LICENSE
 Y2K
-Changes
+HISTORY
 Porting
 Makefile.in
 configure
@@ -11,7 +11,7 @@ configure.ac
 config.guess
 config.sub
 install-sh
-top.c
+ptop.c
 color.c
 commands.c
 display.c
@@ -32,12 +32,12 @@ machine.h
 message.h
 os.h
 screen.h
-top.h
+ptop.h
 username.h
 utils.h
 version.h
 sigconv.awk
-top.1.in
+ptop.1.in
 machine/*.c
 machine/*.h
 machine/*.man
