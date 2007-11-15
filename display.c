@@ -586,7 +586,14 @@ summary_format_memory(int x, int y, long *numbers, char **names, int *cidx)
 	 * if the last string has a separator on the end, it has to be written
 	 * with care
 	 */
-	if ((num = strlen(lastname)) > 1 &&
+	if (lastname == NULL)
+	{
+		/*
+		 * Don't show anything if the data doesn't exist.
+		 */
+		return;
+	}
+	else if ((num = strlen(lastname)) > 1 &&
 		lastname[num - 2] == ',' && lastname[num - 1] == ' ')
 	{
 		display_fmt(-1, -1, 0, 1, "%.*s", num - 2, lastname);
