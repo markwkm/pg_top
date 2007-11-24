@@ -87,10 +87,11 @@ static char *err_listem =
 
 #define GET_LOCKS \
 		"SELECT datname, relname, mode, granted\n" \
-		"FROM pg_stat_activity, pg_locks, pg_class\n" \
+		"FROM pg_stat_activity, pg_locks\n" \
+		"LEFT OUTER JOIN pg_class\n" \
+		"ON relation = pg_class.oid\n"\
 		"WHERE procpid = %d\n" \
-		"  AND procpid = pid\n" \
-		"  AND pg_class.oid = relation;"
+		"  AND procpid = pid;" \
 
 /*
  *	err_compar(p1, p2) - comparison routine used by "qsort"
