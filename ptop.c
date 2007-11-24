@@ -590,6 +590,11 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 	{
 		exit(1);
 	}
+        /* Default to full commands rather than showing just postgres */
+	if (statics.flags.fullcmds)
+	{
+		ps.fullcmd = Yes;
+	}
 
 	/* determine sorting order index, if necessary */
 	if (order_name != NULL)
