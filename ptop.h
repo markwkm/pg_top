@@ -57,10 +57,6 @@ struct ext_decl
 #define Nominal_TOPN	40
 #endif
 
-#ifndef Default_TOPN
-#define Default_TOPN	15
-#endif
-
 #ifndef Default_DELAY
 #define Default_DELAY	5
 #endif
