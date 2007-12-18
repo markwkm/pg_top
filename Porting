@@ -1,10 +1,10 @@
-Instructions for porting top to other architectures.
+Instructions for porting ptop to other architectures.
 
 This is still a preliminary document.  Suggestions for improvement are
 most welcome.
 
 Before you embark on a port, please send me a mail message telling me
-what platform you are porting top to.  There are three reasons for
+what platform you are porting ptop to.  There are three reasons for
 this: (1) I may already have a port, (2) module naming needs to be
 centralized, (3) I want to loosely track the various porting efforts.
 You do not need to wait for an "okay", but I do want to know that you
@@ -14,13 +14,13 @@ the module files so that I can add them to the main distribution!
 ----------
 
 There is one set of functions which extract all the information that
-top needs for display.  These functions are collected in to one file.
-To make top work on a different architecture simply requires a
+ptop needs for display.  These functions are collected in to one file.
+To make ptop work on a different architecture simply requires a
 different implementation of these functions.  The functions for a
 given architecture "foo" are stored in a file called "m_foo.c".  The
 Configure script looks for these files and lets the configurer choose
 one of them.  This file is called a "module".  The idea is that making
-top work on a different machine only requires one additional file and
+ptop work on a different machine only requires one additional file and
 does not require changes to any existing files.
 
 A module template is included in the distribution, called "m-template".
@@ -41,8 +41,8 @@ definition of the Makefile (thus in every compilation step).  This is
 used for rare circumstances only:  please don't abuse this hook.
 
 Some operating systems have idiosyncrasies which will affect the form
-and/or content of the information top displays.  You may wish to
-document such anomalies in the top man page.  This can be done by adding
+and/or content of the information ptop displays.  You may wish to
+document such anomalies in the ptop man page.  This can be done by adding
 a file called m_{modulename}.man (where {modulename} is replaced with
 the name of the module).  Configure will automatically add this file to
 the end of the man page.  See m_sunos4.man for an example.
@@ -120,7 +120,7 @@ uid_t proc_owner(pid_t)
 
 	Returns the uid owner of the process specified by the pid argument.
 	This function is VERY IMPORTANT.  If it fails to do its job, then
-	top may pose a security risk.
+	ptop may pose a security risk.
 
 
 get_process_info is called immediately after get_system_info.  In
@@ -135,7 +135,7 @@ module.  It is defined as follows:
 
 	int setpriority (int dummy, int who, int niceval)
 
-	For the purposes of top, the first argument is meaningless.
+	For the purposes of ptop, the first argument is meaningless.
 	The second is the pid and the third is the new nice value.
 	This function should behave just like a kernel call, setting
 	errno and returning -1 in case of an error.  This function MUST
@@ -146,13 +146,13 @@ module.  It is defined as follows:
 	EPERM when the invoker is not root and not the same as the
 	process owner.
 
-Note that top checks process ownership and should never call setpriority
+Note that ptop checks process ownership and should never call setpriority
 when the invoker's uid is not root and not the same as the process's owner
 uid.
 
 
 The file "machine.h" contains definitions which are useful to modules
-and to top.c (such as the structure definitions).  You SHOULD NOT need
+and to ptop.c (such as the structure definitions).  You SHOULD NOT need
 to change it when porting to a new platform.
 
 Porting to a new platform should NOT require any changes to existing
