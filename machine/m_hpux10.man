@@ -8,7 +8,7 @@ The definition of an
 idle process has been relaxed to include those processes that have only
 just gone to sleep.
 
-This version of top does not display a per-cpu breakdown of processor
+This version of ptop does not display a per-cpu breakdown of processor
 state.  Perhaps a later version will add this sophistication across
 all platforms.
 
