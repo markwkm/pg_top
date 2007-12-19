@@ -364,7 +364,7 @@ main(int argc, char *argv[])
 	/* initialize some selection options */
 	ps.idle = Yes;
 	ps.system = No;
-	ps.fullcmd = No;
+	ps.fullcmd = Yes;
 	ps.uid = -1;
 	ps.command = NULL;
 
@@ -443,7 +443,7 @@ main(int argc, char *argv[])
 					break;
 
 				case 'c':
-					ps.fullcmd = Yes;
+					ps.fullcmd = No;
 					break;
 
 				case 'n':		/* batch, or non-interactive */
