@@ -252,7 +252,7 @@ main(int argc, char *argv[])
 #ifdef BSD_SIGNALS
 	int			old_sigmask;	/* only used for BSD-style signals */
 #endif   /* BSD_SIGNALS */
-	int			topn = Default_TOPN;
+	int			topn = 0;
 	int			delay = Default_DELAY;
 	int			displays = 0;	/* indicates unspecified */
 	time_t		curr_time;
@@ -269,9 +269,6 @@ main(int argc, char *argv[])
 	char		interactive = Maybe;
 	char		show_tags = No;
 
-#if Default_TOPN == Infinity
-	char		topn_specified = No;
-#endif
 	char		ch;
 	char	   *iptr;
 	char		no_command = 1;
@@ -544,9 +541,6 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 			}
 			else
 			{
-#if Default_TOPN == Infinity
-				topn_specified = Yes;
-#endif
 				topn = i;
 			}
 		}
@@ -649,32 +643,21 @@ Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
 		exit(0);
 	}
 
+	/*
+	 * Set topn based on the current screensize when starting up if it was
+	 * not specified on the command line.
+	 */
+	if (topn == 0) {
+		get_screensize();
+		topn = display_resize();
+	}
+
 	/* print warning if user requested more processes than we can display */
 	if (topn > max_topn)
 	{
 		new_message(MT_standout | MT_delayed,
 					" This terminal can only display %d processes.",
 					max_topn);
-	}
-
-	/* adjust for topn == Infinity */
-	if (topn == Infinity)
-	{
-		/*
-		 * For smart terminals, infinity really means everything that can be
-		 * displayed, or Largest. On dumb terminals, infinity means every
-		 * process in the system! We only really want to do that if it was
-		 * explicitly specified. This is always the case when "Default_TOPN !=
-		 * Infinity".  But if topn wasn't explicitly specified and we are on a
-		 * dumb terminal and the default is Infinity, then (and only then) we
-		 * use "Nominal_TOPN" instead.
-		 */
-#if Default_TOPN == Infinity
-		topn = smart_terminal ? Largest :
-			(topn_specified ? Largest : Nominal_TOPN);
-#else
-		topn = Largest;
-#endif
 	}
 
 	/* set header display accordingly */

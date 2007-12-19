@@ -313,8 +313,7 @@ connect_to_db(char *conninfo)
 	if (PQstatus(pgconn) != CONNECTION_OK)
 	{
 		refresh = 1;
-		new_message(MT_standout | MT_delayed,
-					" Could not connect to PostgreSQL...");
+		new_message(MT_standout | MT_delayed, " %s", PQerrorMessage(pgconn));
 
 		PQfinish(pgconn);
 		return NULL;

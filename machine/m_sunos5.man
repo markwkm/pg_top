@@ -12,7 +12,7 @@ amount of physical memory that can be allocated for use by processes
 the amount of unallocated physical memory, "total swap" is the amount
 of swap area on disk that is being used, "free swap" is the amount of
 swap area on disk that is still available.  Unlike previous versions of
-.IR top ,
+.IR ptop ,
 The swap figures will differ 
 from the summary output of
 .IR swap (1M)
