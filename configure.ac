@@ -1,5 +1,5 @@
 # configure.ac
-AC_INIT(ptop, 3.6.1-beta1)
+AC_INIT(ptop, 3.6.1-beta3)
 
 echo "Configuring $PACKAGE_STRING"
 
@@ -85,11 +85,10 @@ fi
 AC_MSG_CHECKING([for PostgreSQL libraries])
 BINDIR=`$PG_CONFIG --bindir`
 INCLUDEDIR=`$PG_CONFIG --includedir`
-PKGINCLUDEDIR=`$PG_CONFIG --pkgincludedir`
 
-DBCFLAGS="-I$INCLUDEDIR -I$PKGINCLUDEDIR"
+DBCFLAGS="-I$INCLUDEDIR"
 LIBDIR=`$PG_CONFIG --libdir`
-DBLDFLAGS="-L$LIBDIR -Wl,-R$LIBDIR -lpq"
+DBLDFLAGS="-L$LIBDIR -lpq"
 
 AC_SUBST(DBCFLAGS)
 AC_SUBST(DBLDFLAGS)
