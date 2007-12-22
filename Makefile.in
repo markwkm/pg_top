@@ -69,15 +69,17 @@ configure: configure.ac
 	autoheader
 	autoconf
 
+color.o: display.h message.h os.h
 commands.o: os.h config.h sigdesc.h ptop.h boolean.h utils.h version.h help.h \
 	pg.h
 display.o: os.h config.h ptop.h machine.h screen.h layout.h \
     display.h boolean.h utils.h color.h pg.h
 screen.o: os.h config.h ptop.h screen.h boolean.h
 sprompt.o: c.h pg_trace.h port.h
+pg.o: display.h pg.h
 ptop.o: os.h config.h ptop.h machine.h commands.h display.h \
     screen.h boolean.h username.h utils.h version.h color.h pg.h
-username.o: ptop.h utils.h
-utils.o: ptop.h os.h config.h utils.h
-version.o: ptop.h
+username.o: config.h ptop.h os.h utils.h
+utils.o: config.h ptop.h os.h utils.h
+version.o: config.h ptop.h
 m_@MODULE@.o: config.h ptop.h machine.h loadavg.h pg.h
