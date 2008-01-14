@@ -391,7 +391,7 @@ main(int argc, char *argv[])
 			optind = 1;
 		}
 
-		while ((i = getopt(ac, av, "CDSITbcinquvs:d:U:o:Wx:y:z:")) != EOF)
+		while ((i = getopt(ac, av, "CDSITbcinquvs:d:U:o:Wp:x:z:")) != EOF)
 		{
 			switch (i)
 			{
@@ -415,7 +415,7 @@ main(int argc, char *argv[])
 					do_unames = !do_unames;
 					break;
 
-				case 'U':		/* display only username's processes */
+				case 'z':		/* display only username's processes */
 					if ((ps.uid = userid(optarg)) == -1)
 					{
 						fprintf(stderr, "%s: unknown user\n", optarg);
@@ -448,7 +448,7 @@ main(int argc, char *argv[])
 					interactive = No;
 					break;
 
-				case 'd':		/* number of displays to show */
+				case 'x':		/* number of displays to show */
 					if ((i = atoiwi(optarg)) == Invalid || i == 0)
 					{
 						new_message(MT_standout | MT_delayed,
@@ -487,7 +487,7 @@ main(int argc, char *argv[])
 					order_name = optarg;
 					break;
 
-				case 'x':		/* database post */
+				case 'p':		/* database port */
 					if ((i = atoiwi(optarg)) == Invalid || i == 0)
 					{
 						new_message(MT_standout | MT_delayed,
@@ -509,19 +509,19 @@ main(int argc, char *argv[])
 					sprintf(password, "password=%s", password_tmp);
 					break;
 
-				case 'y':		/* database user name */
+				case 'U':		/* database user name */
 					sprintf(dbusername, "user=%s", optarg);
 					break;
 
-				case 'z':		/* database name */
+				case 'd':		/* database name */
 					sprintf(dbname, "%s", optarg);
 					break;
 
 				default:
 					fprintf(stderr, "\
 Top version %s\n\
-Usage: %s [-ISTWbcinqu] [-d x] [-s x] [-o field] [-U username]\n\
-          [-x dbport] [-y dbusername] [-z dbname] [number]\n",
+Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
+          [-p PORT] [-U USER] [-d DBNAME] [number]\n",
 							version_string(), myname);
 					exit(1);
 			}
