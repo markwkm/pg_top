@@ -102,6 +102,9 @@ AC_CHECK_LIB(mach, vm_statistics)
 AC_SEARCH_LIBS(tgetent, termcap curses ncurses)
 AC_CHECK_LIB(m, exp)
 
+AC_CHECK_LIB(resolv, inet_aton, AC_DEFINE(HAVE_INET_ATON, 1,
+        [inet_aton is already defined]))
+
 # check for libraries required by extension
 extlibs=""
 if test -n "$with_ext" -a -f "${srcdir}/ext/$with_ext.libs"; then
@@ -119,7 +122,9 @@ fi
 
 # checks for header files
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdarg.h termcap.h sys/resource.h sys/time.h])
+AC_CHECK_HEADERS([stdarg.h termcap.h sys/resource.h sys/time.h], [], [
+        AC_MSG_ERROR([could not locate termcap or curses headers])
+])
 AC_HEADER_TIME
 AC_MSG_CHECKING(for a good signal.h)
 SIGNAL_H="no"
