@@ -13,6 +13,18 @@
 #include "ptop.h"
 #include "pg.h"
 
+/*
+#ifdef CLK_TCK
+#   define HZ CLK_TCK
+# else
+#   define HZ 60
+# endif
+*/
+
+#ifndef HZ
+#define HZ sysconf(_SC_CLK_TCK)
+#endif
+
 #define QUERY_PROCESSES \
 		"SELECT procpid\n" \
 		"FROM pg_stat_activity;"
