@@ -3,6 +3,11 @@ Release Notes
 Release 3.6.1
 
 Changes
+     * Add -h command line option to specify a socket file when connected to
+       the database..
+     * Use the same -p PORT, -U USER, and -d DBNAME options as other PostgreSQL
+       programs.
+     * Change unixtop's original -d to -x, and -U to -z.
      * Add 'X' command to view user index statistics.
      * Add 'R' command to view user table statistics.
      * Add support for Solaris 10.
