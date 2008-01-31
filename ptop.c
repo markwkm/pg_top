@@ -300,6 +300,7 @@ main(int argc, char *argv[])
 	char		dbname[1024] = "";
 	char		dbusername[1024] = "";
 	char		password[1001] = "";
+        char            socket[1024] = "";
 	char	   *password_tmp;
 	int			dbport = 5432;
 
@@ -391,7 +392,7 @@ main(int argc, char *argv[])
 			optind = 1;
 		}
 
-		while ((i = getopt(ac, av, "CDSITbcinquvs:d:U:o:Wp:x:z:")) != EOF)
+		while ((i = getopt(ac, av, "CDSITbcinquvh:s:d:U:o:Wp:x:z:")) != EOF)
 		{
 			switch (i)
 			{
@@ -516,6 +517,10 @@ main(int argc, char *argv[])
 				case 'd':		/* database name */
 					sprintf(dbname, "%s", optarg);
 					break;
+                               
+           			case 'h':               /* socket location */
+				        sprintf(socket, "host=%s", optarg);
+                                        break;
 
 				default:
 					fprintf(stderr, "\
@@ -528,8 +533,8 @@ Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 		}
 
 		/* connect to the database */
-		sprintf(conninfo, "port=%d dbname=%s %s %s", dbport,
-				dbname, dbusername, password);
+		sprintf(conninfo, "port=%d dbname=%s %s %s %s", dbport,
+				dbname, socket, dbusername, password);
 
 		/* get count of top processes to display (if any) */
 		if (optind < ac && *av[optind])
