@@ -1,5 +1,5 @@
 # configure.ac
-AC_INIT(ptop, 3.6.1-beta3)
+AC_INIT(ptop, 3.6.1-beta4)
 
 echo "Configuring $PACKAGE_STRING"
 
@@ -196,7 +196,7 @@ else
 	    echo "what module to assign to it.  Help the cause and run the"
 	    echo "following command to let the maintainers know about this"
 	    echo "deficiency!  Thanks.  Just cut and paste the following:"
-echo "uname -a | mail -s $target_os bill@lefebvre.org"
+echo "uname -a | mail -s $target_os ptop-hackers@pgfoundry.org"
 	    echo ""
 	    AC_MSG_ERROR([System type $target_os unrecognized])
     esac
