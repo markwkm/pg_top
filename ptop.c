@@ -526,7 +526,7 @@ main(int argc, char *argv[])
 					fprintf(stderr, "\
 Top version %s\n\
 Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
-          [-p PORT] [-U USER] [-d DBNAME] [number]\n",
+          [-p PORT] [-U USER] [-d DBNAME] [-h HOSTNAME] [number]\n",
 							version_string(), myname);
 					exit(1);
 			}
