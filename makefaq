@@ -1,3 +1,0 @@
-#!/bin/sh -v
-faqmaker top.faq >FAQ
-faqmaker -h -t top.faq.toc.html top.faq >top.faq.shtml
