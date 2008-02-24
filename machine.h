@@ -15,9 +15,9 @@
 
 /*
 #ifdef CLK_TCK
-#   define HZ CLK_TCK
+#	define HZ CLK_TCK
 # else
-#   define HZ 60
+#	define HZ 60
 # endif
 */
 

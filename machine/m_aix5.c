@@ -252,7 +252,7 @@ struct statics *statics;
 	vmker_offset = nlst[X_VMKER].n_value;
 	v_offset = nlst[X_V].n_value;
 
-	getkval(v_offset, (caddr_t) &v_info, sizeof v_info, "v");
+	getkval(v_offset, (caddr_t) & v_info, sizeof v_info, "v");
 #else
 	sysconfig(SYS_GETPARMS, &v_info, sizeof v_info);
 #endif
@@ -321,10 +321,10 @@ struct system_info *si;
 	getkval(avenrun_offset, (caddr_t) load_avg, sizeof load_avg, "avenrun");
 
 	/* get the sysinfo structure */
-	getkval(sysinfo_offset, (caddr_t) &s_info, sizeof s_info, "sysinfo64");
+	getkval(sysinfo_offset, (caddr_t) & s_info, sizeof s_info, "sysinfo64");
 
 	/* get vmker structure */
-	getkval(vmker_offset, (caddr_t) &m_info, sizeof m_info, "vmker");
+	getkval(vmker_offset, (caddr_t) & m_info, sizeof m_info, "vmker");
 #else
 	/* cpu stats */
 	perfstat_cpu_total(NULL, &s_info1, sizeof s_info1, 1);
@@ -533,7 +533,7 @@ int			compare_index;
 	handle.next_proc = pref;
 	handle.remaining = active_procs;
 
-	return ((caddr_t) &handle);
+	return ((caddr_t) & handle);
 }
 
 char		fmt[128];			/* static area where result is built */

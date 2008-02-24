@@ -523,7 +523,7 @@ get_process_info(struct system_info * si, struct process_select * sel, int compa
 	/* pass back a handle */
 	handle.next_proc = pref;
 	handle.remaining = active_procs;
-	return ((caddr_t) &handle);
+	return ((caddr_t) & handle);
 }
 
 /*

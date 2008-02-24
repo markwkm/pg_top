@@ -146,8 +146,8 @@ typedef long pctcpu;
 /* { */
 /*	int last_pid; */
 /*	double	load_avg[NUM_AVERAGES]; */
- /*  int p_total;	 /* total # of processes */ */
- /*  int p_active;	 /* number processes considered active */ */
+ /* int p_total;	/* total # of processes */ */
+ /* int p_active;	/* number processes considered active */ */
 /*	int *procstates; */
 /*	int *cpustates; */
 /*	int *memory; */
@@ -155,10 +155,10 @@ typedef long pctcpu;
 /*	*/
 /* struct process_select */
 /* { */
- /*  int idle;		 /* show idle processes */ */
- /*  int system;	 /* show system processes */ */
- /*  int uid;		 /* show only this uid (unless -1) */ */
- /*  char	 *command;	 /* only this command (unless NULL) */ */
+ /* int idle;		/* show idle processes */ */
+ /* int system;		/* show system processes */ */
+ /* int uid;		/* show only this uid (unless -1) */ */
+ /* char	*command;	/* only this command (unless NULL) */ */
 /* }; */
 
 /*
@@ -598,7 +598,7 @@ get_process_info(struct system_info * si,
 	/* pass back a handle */
 	handle.next_proc = proc_ref;
 	handle.remaining = active_procs;
-	return ((caddr_t) &handle);
+	return ((caddr_t) & handle);
 }
 
 /*

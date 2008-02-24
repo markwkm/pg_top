@@ -187,7 +187,7 @@ display_move(int x, int y)
 	char	   *bufp;
 	char	   *colorp;
 	int			cnt = 0;
-	int color = curr_color;
+	int			color = curr_color;
 
 #ifdef DEBUG
 	dprintf("display_move(%d, %d): curr_x %d, curr_y %d\n", x, y, curr_x, curr_y);
@@ -206,7 +206,7 @@ display_move(int x, int y)
 		/* one newline for every line */
 		while (cnt > 0 && curr_y < y)
 		{
-			if (color !=0)
+			if (color != 0)
 			{
 				p = strecpy(p, color_set(0));
 				color = 0;
@@ -224,7 +224,7 @@ display_move(int x, int y)
 		colorp = &colorbuf[lineindex(curr_y) + curr_x];
 		while (cnt > 0 && curr_x < x)
 		{
-			if (color !=*colorp)
+			if (color != *colorp)
 			{
 				color = *colorp;
 
@@ -594,7 +594,7 @@ summary_format_memory(int x, int y, long *numbers, char **names, int *cidx)
 		return;
 	}
 	else if ((num = strlen(lastname)) > 1 &&
-		lastname[num - 2] == ',' && lastname[num - 1] == ' ')
+			 lastname[num - 2] == ',' && lastname[num - 1] == ' ')
 	{
 		display_fmt(-1, -1, 0, 1, "%.*s", num - 2, lastname);
 	}
@@ -791,7 +791,7 @@ static void
 pr_loadavg(double avg, int i)
 
 {
-	int color = 0;
+	int			color = 0;
 
 #ifdef ENABLE_COLOR
 	color = color_test(load_cidx[i], (int) (avg * 100));
@@ -880,7 +880,7 @@ static int	uptime_mins;
 static int	uptime_secs;
 
 void
-i_uptime(time_t *bt, time_t *tod)
+i_uptime(time_t * bt, time_t * tod)
 
 {
 	time_t		uptime;
@@ -907,7 +907,7 @@ i_uptime(time_t *bt, time_t *tod)
 }
 
 void
-u_uptime(time_t *bt, time_t *tod)
+u_uptime(time_t * bt, time_t * tod)
 
 {
 	i_uptime(bt, tod);
@@ -915,7 +915,7 @@ u_uptime(time_t *bt, time_t *tod)
 
 
 void
-i_timeofday(time_t *tod)
+i_timeofday(time_t * tod)
 
 {
 	/*
@@ -1028,7 +1028,7 @@ i_cpustates(int *states)
 	char	  **names;
 	char	   *thisname;
 	int		   *colp;
-	int color = 0;
+	int			color = 0;
 
 #ifdef ENABLE_COLOR
 	int		   *cidx = cpustate_cidx;
@@ -1081,7 +1081,7 @@ u_cpustates(int *states)
 	char	   *thisname;
 	int		   *lp;
 	int		   *colp;
-	int color = 0;
+	int			color = 0;
 
 #ifdef ENABLE_COLOR
 	int		   *cidx = cpustate_cidx;
@@ -1484,7 +1484,7 @@ readline(char *buffer, int size, int numeric)
 			}
 		}
 		/* check for character validity and buffer overflow */
-		else if (cnt == size || (numeric &&!isdigit(ch)) ||
+		else if (cnt == size || (numeric && !isdigit(ch)) ||
 				 !isprint(ch))
 		{
 			/* not legal */

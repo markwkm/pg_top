@@ -490,7 +490,7 @@ int			compare_index;
 	/* pass back a handle */
 	handle.next_proc = pref;
 	handle.remaining = active_procs;
-	return ((caddr_t) &handle);
+	return ((caddr_t) & handle);
 }
 
 

@@ -166,9 +166,9 @@ extern int
 pg_sprintf(char *str, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 2, 3)));
-extern int	pg_vfprintf(FILE *stream, const char *fmt, va_list args);
+extern int	pg_vfprintf(FILE * stream, const char *fmt, va_list args);
 extern int
-pg_fprintf(FILE *stream, const char *fmt,...)
+pg_fprintf(FILE * stream, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 2, 3)));
 extern int
@@ -226,7 +226,7 @@ extern int	piperead(int s, char *buf, int len);
 extern int	pgkill(int pid, int sig);
 #endif
 
-extern int	pclose_check(FILE *stream);
+extern int	pclose_check(FILE * stream);
 
 /* Global variable holding time zone information. */
 #ifndef __CYGWIN__
@@ -310,8 +310,8 @@ extern char *crypt(const char *key, const char *setting);
 #endif
 
 #if defined(bsdi) || defined(netbsd)
-extern int	fseeko(FILE *stream, off_t offset, int whence);
-extern off_t ftello(FILE *stream);
+extern int	fseeko(FILE * stream, off_t offset, int whence);
+extern off_t ftello(FILE * stream);
 #endif
 
 #ifndef HAVE_FSEEKO

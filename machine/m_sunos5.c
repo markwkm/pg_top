@@ -1203,7 +1203,7 @@ get_process_info(
 	/* pass back a handle */
 	handle.next_proc = pref;
 	handle.remaining = active_procs;
-	return ((caddr_t) &handle);
+	return ((caddr_t) & handle);
 }
 
 char		fmt[MAX_COLS];		/* static area where result is built */
@@ -1444,7 +1444,7 @@ get process table
  table
 */
 void
-getptable(struct prpsinfo * baseptr, PGresult *pgresult)
+getptable(struct prpsinfo * baseptr, PGresult * pgresult)
 {
 	struct prpsinfo *currproc;	/* pointer to current proc structure	*/
 
@@ -1685,7 +1685,7 @@ setpriority(int dummy, int who, int niceval)
 	tsparms_t  *tsparms;
 
 	strcpy(pcinfo.pc_clname, "TS");
-	if (priocntl(0, 0, PC_GETCID, (caddr_t) &pcinfo) == -1)
+	if (priocntl(0, 0, PC_GETCID, (caddr_t) & pcinfo) == -1)
 		return (-1);
 
 	prio = niceval;
@@ -1699,7 +1699,7 @@ setpriority(int dummy, int who, int niceval)
 	tsparms->ts_uprilim = tsparms->ts_upri = -(scale * prio) / 20;
 	pcparms.pc_cid = pcinfo.pc_cid;
 
-	if (priocntl(P_PID, who, PC_SETPARMS, (caddr_t) &pcparms) == -1)
+	if (priocntl(P_PID, who, PC_SETPARMS, (caddr_t) & pcparms) == -1)
 		return (-1);
 
 	return (0);

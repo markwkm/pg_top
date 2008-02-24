@@ -391,7 +391,7 @@ typedef uint32 CommandId;
 typedef struct
 {
 	int			indx[MAXDIM];
-} IntArray;
+}	IntArray;
 
 /* ----------------
  *		Variable-length datatypes all share the 'struct varlena' header.
@@ -440,7 +440,7 @@ typedef struct
 	int			dim1;
 	int			lbound1;
 	int2		values[1];		/* VARIABLE LENGTH ARRAY */
-} int2vector;					/* VARIABLE LENGTH STRUCT */
+}	int2vector;			/* VARIABLE LENGTH STRUCT */
 
 typedef struct
 {
@@ -451,7 +451,7 @@ typedef struct
 	int			dim1;
 	int			lbound1;
 	Oid			values[1];		/* VARIABLE LENGTH ARRAY */
-} oidvector;					/* VARIABLE LENGTH STRUCT */
+}	oidvector;			/* VARIABLE LENGTH STRUCT */
 
 /*
  * We want NameData to have length NAMEDATALEN and int alignment,
@@ -464,7 +464,7 @@ typedef union nameData
 {
 	char		data[NAMEDATALEN];
 	int			alignmentDummy;
-} NameData;
+}	NameData;
 typedef NameData *Name;
 
 #define NameStr(name)	((name).data)

@@ -300,7 +300,7 @@ main(int argc, char *argv[])
 	char		dbname[1024] = "";
 	char		dbusername[1024] = "";
 	char		password[1001] = "";
-        char            socket[1024] = "";
+	char		socket[1024] = "";
 	char	   *password_tmp;
 	int			dbport = 5432;
 
@@ -517,10 +517,10 @@ main(int argc, char *argv[])
 				case 'd':		/* database name */
 					sprintf(dbname, "%s", optarg);
 					break;
-                               
-           			case 'h':               /* socket location */
-				        sprintf(socket, "host=%s", optarg);
-                                        break;
+
+				case 'h':		/* socket location */
+					sprintf(socket, "host=%s", optarg);
+					break;
 
 				default:
 					fprintf(stderr, "\
@@ -649,10 +649,11 @@ Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 	}
 
 	/*
-	 * Set topn based on the current screensize when starting up if it was
-	 * not specified on the command line.
+	 * Set topn based on the current screensize when starting up if it was not
+	 * specified on the command line.
 	 */
-	if (topn == 0) {
+	if (topn == 0)
+	{
 		get_screensize();
 		topn = display_resize();
 	}

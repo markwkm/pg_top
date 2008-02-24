@@ -234,7 +234,7 @@ machine_init(struct statics * statics)
 	proc_offset = nlst[X_PROC].n_value;
 	v_offset = nlst[X_V].n_value;
 
-	getkval(v_offset, (caddr_t) &v_info, sizeof v_info, "v");
+	getkval(v_offset, (caddr_t) & v_info, sizeof v_info, "v");
 
 	ncpus = v_info.v_ncpus;		/* number of cpus */
 	nprocs = PROCMASK(PIDMAX);
@@ -299,10 +299,10 @@ get_system_info(struct system_info * si)
 	getkval(avenrun_offset, (caddr_t) load_avg, sizeof load_avg, "avenrun");
 
 	/* get the sysinfo structure */
-	getkval(sysinfo_offset, (caddr_t) &s_info, sizeof s_info, "sysinfo");
+	getkval(sysinfo_offset, (caddr_t) & s_info, sizeof s_info, "sysinfo");
 
 	/* get vmker structure */
-	getkval(vmker_offset, (caddr_t) &m_info, sizeof m_info, "vmker");
+	getkval(vmker_offset, (caddr_t) & m_info, sizeof m_info, "vmker");
 
 	/* convert load avarages to doubles */
 	for (i = 0; i < 3; i++)
@@ -428,7 +428,7 @@ get_process_info(struct system_info * si, struct process_select * sel, int compa
 	handle.next_proc = pref;
 	handle.remaining = active_procs;
 
-	return ((caddr_t) &handle);
+	return ((caddr_t) & handle);
 }
 
 char		fmt[MAX_COLS];		/* static area where result is built */

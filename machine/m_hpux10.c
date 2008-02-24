@@ -424,7 +424,7 @@ int			compare_index;
 
 	/* handle is simply an index into the process structures */
 	handle = 0;
-	return (caddr_t) &handle;
+	return (caddr_t) & handle;
 }
 
 /*

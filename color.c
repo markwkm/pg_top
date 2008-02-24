@@ -37,7 +37,7 @@ typedef struct color_entry
 	char	   *tag;
 	int			min;
 	int			max;
-	char color;
+	char		color;
 	struct color_entry *next;
 	struct color_entry *tagnext;
 }	color_entry;
@@ -244,7 +244,7 @@ color_set(int color)
 	static char v[32];
 
 	v[0] = '\0';
-	if (color >=0 && color <num_color_ansi)
+	if (color >= 0 && color < num_color_ansi)
 	{
 		snprintf(v, sizeof(v), "\033[%sm", color_ansi[color]);
 	}
@@ -252,7 +252,7 @@ color_set(int color)
 }
 
 void
-color_dump(FILE *f)
+color_dump(FILE * f)
 
 {
 	color_entry *ep;
@@ -296,7 +296,7 @@ color_dump(FILE *f)
 }
 
 void
-color_debug(FILE *f)
+color_debug(FILE * f)
 
 {
 	color_entry *ep;
