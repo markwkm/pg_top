@@ -43,7 +43,9 @@
 #endif
 #endif
 char	   *getenv();
-caddr_t		malloc();
+#if !defined (__macosx) 
+caddr_t		malloc(); */
+#endif 
 #endif   /* STDC_HEADERS */
 
 /* we must have both sighold and sigrelse to use them */
