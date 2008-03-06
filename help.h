@@ -10,8 +10,9 @@ These single-character commands are available:\n\
 \n\
 ^L      - redraw screen\n\
 <sp>    - update screen\n\
+A	- EXPLAIN ANALYZE (UPDATE/DELETE SAFE)\n\
 C       - toggle the use of color\n\
-E       - show query plan of current query (SELECT only)\n\
+E       - show query plan of current query (UPDATE/DELETE SAFE)\n\
 L       - show locks held by a process\n\
 M       - sort by memory usage\n\
 N       - sort by pid\n\

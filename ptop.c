@@ -311,7 +311,7 @@ main(int argc, char *argv[])
 	char		header_table_stats[80] =
 	"SEQ_SCANS SEQ_READS   I_SCANS I_FETCHES   INSERTS   UPDATES   DELETES RELNAME";
 
-	static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLERX";
+	static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLAERX";
 
 /* these defines enumerate the "strchr"s of the commands in command_chars */
 #define CMD_redraw	0
@@ -342,6 +342,7 @@ main(int argc, char *argv[])
 #define CMD_explain 24
 #define CMD_tables 25
 #define CMD_indexes 26
+#define CMD_explain_analyze 27
 
 	/* set the buffer for stdout */
 	setbuffer(stdout, stdoutbuf, Buffersize);
@@ -1058,7 +1059,7 @@ Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 													itoa(displays));
 										if ((i = readline(tempbuf1, 10, Yes)) > 0)
 										{
-											displays = i;
+										displays = i;
 										}
 										else if (i == 0)
 										{
@@ -1377,6 +1378,16 @@ Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 										 * header text.
 										 */
 										reset_display();
+										break;
+								
+									case CMD_explain_analyze:
+										new_message(MT_standout,
+												 "Analyzed plan for process: ");
+										newval = readline(tempbuf1, 8, Yes);
+										reset_display();
+										display_pagerstart();
+										show_explain_analyze(conninfo, newval);
+										display_pagerend();
 										break;
 
 									default:
