@@ -1,5 +1,5 @@
 # configure.ac
-AC_INIT(ptop, 3.6.1-beta4)
+AC_INIT(ptop, 3.6.1, ptop-hackers@pgfoundry.org)
 
 echo "Configuring $PACKAGE_STRING"
 
