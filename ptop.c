@@ -311,7 +311,7 @@ main(int argc, char *argv[])
 	char		header_table_stats[80] =
 	"SEQ_SCANS SEQ_READS   I_SCANS I_FETCHES   INSERTS   UPDATES   DELETES RELNAME";
 
-	static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLAERX";
+	static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLERXA";
 
 /* these defines enumerate the "strchr"s of the commands in command_chars */
 #define CMD_redraw	0

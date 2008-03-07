@@ -1,5 +1,13 @@
 Release Notes
 
+Release 3.6.2
+
+Changes
+
+     * Add 'A' command to show actual query plan (EXPLAIN ANALYZE) of a
+       running query.
+     * Fixed 'E' command (EXPLAIN) to be UPDATE and INSERT safe.
+
 Release 3.6.1
 
 Changes
