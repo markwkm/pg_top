@@ -1187,7 +1187,7 @@ Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 														  "Order to sort: ");
 												if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
 												{
-													if ((i = string_index(tempbuf2, index_ordernames)) == -1)
+													if ((i = string_index(tempbuf2, table_ordernames)) == -1)
 													{
 														new_message(MT_standout,
 																	" %s: unrecognized sorting order", tempbuf2);
