@@ -2,7 +2,3 @@
 
 * Test on more platforms.  Development has primarily been on Linux and some
   attempts have been made on FreeBSD and Solaris.
-
-* Make the command line arguments for the database name, port, and username
-  conform more closely to the other PostgreSQL tools.  That will require
-  changng commands that have been traditionally used with unixtop.
