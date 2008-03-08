@@ -84,7 +84,6 @@ struct system_info
 struct process_select
 {
 	int			idle;			/* show idle processes */
-	int			system;			/* show system processes */
 	int			fullcmd;		/* show full command */
 	int			uid;			/* only this uid (unless uid == -1) */
 	char	   *command;		/* only this command (unless == NULL) */

@@ -2,22 +2,30 @@
 .\"        file "ptop.1.in" and NOT in the file "ptop.1".
 .nr N 10
 .nr D 5
-.TH TOP 1 Local
+.TH PTOP 1 Local
 .UC 4
 .SH NAME
 ptop \- display and update information about the ptop cpu PostgreSQL processes
 .SH SYNOPSIS
 .B ptop
 [
-.B \-CISTbcinquv
+.B \-ITWbcinqu
 ] [
-.BI \-d count
+.BI \-d DBNAME
 ] [
-.BI \-s time
+.BI \-h HOSTNAME
 ] [
 .BI \-o field
 ] [
-.BI \-U username
+.BI \-p PORT
+] [
+.BI \-s time
+] [
+.BI \-U USER
+] [
+.BI \-x count
+] [
+.BI \-z username
 ] [
 .I number
 ]
@@ -31,9 +39,8 @@ ptop \- display and update information about the ptop cpu PostgreSQL processes
 .if \nN==0 .nr N 10
 .if \nD==0 .nr D 5
 .I ptop
-displays the top
-.if !\nN==-1 \nN
-processes on the system and periodically updates this information.
+displays the top processes on the system and periodically updates this
+information.
 .if \nN==-1 \
 \{\
 If standard output is an intelligent terminal (see below) then
@@ -66,10 +73,6 @@ Turn off the use of color in the display.
 Do not display idle processes.
 By default, ptop displays both active and idle processes.
 .TP
-.B \-S
-Show system processes in the display.  Normally, system processes such as
-the pager and the swapper are not shown.  This option makes them visible.
-.TP
 .B \-T
 List all available color tags and the current set of tests used for
 color highlighting, then exit.
@@ -80,8 +83,8 @@ ignored.  Interrupt characters (such as ^C and ^\e) still have an effect.
 This is the default on a dumb terminal, or when the output is not a terminal.
 .TP
 .B \-c
-Show the full command line for each process. Default is to show just the
-command name.  This option is not supported on all platforms.
+Show the command name for each process. Default is to show the full
+command line.  This option is not supported on all platforms.
 .TP
 .B \-i
 Use \*(lqinteractive\*(rq mode.  In this mode, any input is immediately
@@ -116,16 +119,6 @@ Write version number information to stderr then exit immediately.
 No other processing takes place when this option is used.  To see current
 revision information while ptop is running, use the help command \*(lq?\*(rq.
 .TP
-.BI \-d count
-Show only
-.I count
-displays, then exit.  A display is considered to be one update of the
-screen.  This option allows the user to select the number of displays he
-wants to see before
-.I ptop
-automatically exits.  For intelligent terminals, no upper limit
-is set.  The default is 1 for dumb terminals.
-.TP
 .BI \-s time
 Set the delay between screen updates to
 .I time
@@ -138,7 +131,17 @@ values are \*(lqcpu\*(rq, \*(lqsize\*(rq, \*(lqres\*(rq, and \*(lqtime\*(rq,
 but may vary on different operating systems.  Note that
 not all operating systems support this option.
 .TP
-.BI \-U username
+.BI \-x count
+Show only
+.I count
+displays, then exit.  A display is considered to be one update of the
+screen.  This option allows the user to select the number of displays he
+wants to see before
+.I ptop
+automatically exits.  For intelligent terminals, no upper limit
+is set.  The default is 1 for dumb terminals.
+.TP
+.BI \-z username
 Show only those processes owned by
 .IR username .
 This option currently only accepts usernames and will not understand
@@ -161,20 +164,19 @@ on an intelligent terminal is, in fact,
 .BI infinity .
 .PP
 The environment variable
-.B TOP
+.B PTOP
 is examined for options before the command line is scanned.  This enables
 a user to set his or her own defaults.  The number of processes to display
 can also be specified in the environment variable
-.BR TOP .
+.BR PTOP .
 The options
 .BR \-C ,
 .BR \-I ,
-.BR \-S ,
 and
 .B \-u
 are actually toggles.  A second specification of any of these options
 will negate the first.  Thus a user who has the environment variable
-.B TOP
+.B PTOP
 set to \*(lq\-I\*(rq may use the command \*(lqtop \-I\*(rq to see idle processes.
 .SH "INTERACTIVE MODE"
 When
@@ -203,13 +205,16 @@ These commands are currently recognized (^L refers to control-L):
 .TP
 .B ^L
 Redraw the screen.
-.IP "\fBh\fP\ or\ \fB?\fP"
-Display a summary of the commands (help screen).  Version information
-is included in this display.
 .TP
-.B q
-Quit
-.IR ptop.
+.B A
+Display the actual query plan (EXPLAIN ANALYZE) of the currently running SQL
+statement by a backend process (prompt for process id.)
+.TP
+.B C
+Toggle the use of color in the display.
+.TP
+.B c
+Toggle the display of the full command line.
 .TP
 .B d
 Change the number of displays to show (prompt for new number).
@@ -218,34 +223,13 @@ Remember that the next display counts as one, so typing
 will make
 .I ptop
 show one final display and then immediately exit.
+.IP "\fBh\fP\ or\ \fB?\fP"
+Display a summary of the commands (help screen).  Version information
+is included in this display.
 .TP
-.B n or #
-Change the number of processes to display (prompt for new number).
-.TP
-.B s
-Change the number of seconds to delay between displays
-(prompt for new number).
-.TP
-.B k
-Send a signal (\*(lqkill\*(rq by default) to a list of processes.  This
-acts similarly to the command
-.IR kill (1)).
-.TP
-.B r
-Change the priority (the \*(lqnice\*(rq) of a list of processes.
-This acts similarly to the command
-.IR renice (8)).
-.TP
-.B u
-Display only processes owned by a specific username (prompt for username).
-If the username specified is simply \*(lq+\*(rq, then processes belonging
-to all users will be displayed.
-.TP
-.B o
-Change the order in which the display is sorted.  This command is not
-available on all systems.  The sort key names vary fron system to system
-but usually include:  \*(lqcpu\*(rq, \*(lqres\*(rq, \*(lqsize\*(rq,
-\*(lqtime\*(rq.  The default is cpu.
+.B E
+Display the estimated query plan (EXPLAIN) of the currently running SQL
+statement by a backend process (prompt for process id.)
 .TP
 .B e
 Display a list of system errors (if any) generated by the last
@@ -259,11 +243,68 @@ command.
 .BR I )
 Toggle the display of idle processes.
 .TP
-.B c
-Toggle the display of the full command line.
+.B k
+Send a signal (\*(lqkill\*(rq by default) to a list of processes.  This
+acts similarly to the command
+.IR kill (1)).
 .TP
-.B C
-Toggle the use of color in the display.
+.B L
+Display the currently held locks by a backend process (prompt for process
+id.)
+.TP
+.B M
+Order by memory utilization.
+.TP
+.B N
+Sort by process id.
+.TP
+.B n or #
+Change the number of processes to display (prompt for new number).
+.TP
+.B o
+Change the order in which the display is sorted.  This command is not
+available on all systems.  The sort key names when viewing processes vary
+fron system to system but usually include:  \*(lqcpu\*(rq, \*(lqres\*(rq,
+\*(lqsize\*(rq, \*(lqtime\*(rq.  The default is cpu.  When viewing user
+table statistics: \*(lqseq_scan\*(rq, \*(lqseq_tup_read\*(rq,
+\*(lqidx_scan\*(rq, \*(lqidx_tup_fetch\*(rq, \*(lqn_tup_ins\*(rq,
+\*(lqn_tup_upd\*(rq, \*(lqn_tup_del\*(rq.  The default is seq_scan.
+When viewing user index statistics:  \*(lqidx_scan\*(rq,
+\*(lqidx_tup_fetch\*(rq, \*(lqidx_tup_read\*(rq.  The default is idx_scan.
+.TP
+.B P
+Sort by processor utilization.
+.TP
+.B Q
+Display the currently running query of a backend process (prompt for process
+id.)
+.TP
+.B q
+Quit
+.IR ptop.
+.TP
+.B R
+Display user table statistics.
+.TP
+.B r
+Change the priority (the \*(lqnice\*(rq) of a list of processes.
+This acts similarly to the command
+.IR renice (8)).
+.TP
+.B s
+Change the number of seconds to delay between displays
+(prompt for new number).
+.TP
+.B T
+Order by time.
+.TP
+.B u
+Display only processes owned by a specific username (prompt for username).
+If the username specified is simply \*(lq+\*(rq, then processes belonging
+to all users will be displayed.
+.TP
+.B X
+Display user index statistics.
 .SH "THE DISPLAY"
 The actual display varies depending on the specific variant of Unix
 that the machine is running.  This description may not exactly match
@@ -377,10 +418,11 @@ option.  This will also show the current set of tests used for
 color highligting, as specified in the environment.
 .SH AUTHOR
 William LeFebvre
+Mark Wong
 .SH ENVIRONMENT
 .DT
-TOP		user-configurable defaults for options.
-TOPCOLORS	color specification
+PTOP		user-configurable defaults for options.
+PTOPCOLORS	color specification
 .SH BUGS
 As with
 .IR ps (1),

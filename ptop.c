@@ -362,13 +362,12 @@ main(int argc, char *argv[])
 
 	/* initialize some selection options */
 	ps.idle = Yes;
-	ps.system = No;
 	ps.fullcmd = Yes;
 	ps.uid = -1;
 	ps.command = NULL;
 
 	/* get preset options from the environment */
-	if ((env_top = getenv("TOP")) != NULL)
+	if ((env_top = getenv("PTOP")) != NULL)
 	{
 		av = preset_argv = argparse(env_top, &preset_argc);
 		ac = preset_argc;
@@ -393,7 +392,7 @@ main(int argc, char *argv[])
 			optind = 1;
 		}
 
-		while ((i = getopt(ac, av, "CDSITbcinquvh:s:d:U:o:Wp:x:z:")) != EOF)
+		while ((i = getopt(ac, av, "CDITbcinquvh:s:d:U:o:Wp:x:z:")) != EOF)
 		{
 			switch (i)
 			{
@@ -423,10 +422,6 @@ main(int argc, char *argv[])
 						fprintf(stderr, "%s: unknown user\n", optarg);
 						exit(1);
 					}
-					break;
-
-				case 'S':		/* show system processes */
-					ps.system = !ps.system;
 					break;
 
 				case 'I':		/* show idle processes */
@@ -526,7 +521,7 @@ main(int argc, char *argv[])
 				default:
 					fprintf(stderr, "\
 Top version %s\n\
-Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
+Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
           [-p PORT] [-U USER] [-d DBNAME] [-h HOSTNAME] [number]\n",
 							version_string(), myname);
 					exit(1);
@@ -576,10 +571,10 @@ Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 
 #ifdef ENABLE_COLOR
 	/* If colour has been turned on read in the settings. */
-	env_top = getenv("TOPCOLOURS");
+	env_top = getenv("PTOPCOLOURS");
 	if (!env_top)
 	{
-		env_top = getenv("TOPCOLORS");
+		env_top = getenv("PTOPCOLORS");
 	}
 	/* must do something about error messages */
 	color_env_parse(env_top);
