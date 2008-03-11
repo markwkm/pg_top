@@ -87,13 +87,13 @@
  * globals
  */
 
-static kvm_t *kd = NULL;
+/* static kvm_t *kd = NULL; */
 static int	nproc;
 static int	onproc = -1;
 static int	pref_len;
 static int	maxmem;
 static char fmt[MAX_COLS];
-static double logcpu = 1.0;
+/* static double logcpu = 1.0; */
 
 /* process array stuff */
 
@@ -113,7 +113,7 @@ static struct kinfo_proc *pbase;
  * as many task and thread structures as needed.
  */
 
-static struct task_basic_info *task_list = NULL;
+/* static struct task_basic_info *task_list = NULL; */
 
 /* memory statistics */
 
@@ -156,11 +156,13 @@ struct macos_proc
 	struct thread_basic_info thread_summary;
 };
 
+static int	show_fullcmd;
 struct handle
 {
 	struct macos_proc **next_proc;
 	int			remaining;
 };
+
 
 static char header[] =
 "  PID X        PRI THRD  SIZE   RES STATE   TIME    MEM    CPU COMMAND";
@@ -169,7 +171,7 @@ static char header[] =
 #define UNAME_START 6
 
 #define Proc_format \
-		"%5d %-8.8s %3d %4d %5s %5s %-5s %6s %5.2f%% %5.2f%% %.16s"
+		"%5d %-8.8s %3d %4d %5s %5s %-5s %6s %5.2f%% %5.2f%% %.180s"
 
 
 int			proc_compare(const void *, const void *);
@@ -194,31 +196,103 @@ puke(const char *fmt,...)
 	fflush(stderr);
 }
 
-/*
- * kread()
+
+/* 
+ * xfrm_cmdline - fix \0 at string ends
  *
- * This function is a wrapper for the kvm_read() function
- * with the addition of a message parameter per kvm_open().
  *
- * All other behavior is per kvm_read except the error reporting.
  */
 
-static ssize_t
-kread(u_long addr, void *buf,
-	  size_t nbytes, const char *errstr)
+static void
+xfrm_cmdline(char *p, int len)
 {
-/*	ssize_t		s = 0;
-
-	s = kvm_read(kd, addr, buf, nbytes);
-	if (s == -1)
+	while (--len > 0)
 	{
-		puke("error:  kvm_read() failed for '%s' (%s)\n",
-			 errstr, strerror(errno));
+		if (*p == '\0')
+		{
+			*p = ' ';
+		}
+		p++;
+	}
+}
+
+/*
+ * load_thread_info()
+ *
+ * This function will attempt to load the thread summary info
+ * for a Mach task.  The task is located as part of the macos_proc
+ * structure.
+ *
+ * returns the kern_return_t value of any failed call or KERN_SUCCESS
+ * if everything works.
+ */
+
+int
+load_thread_info(struct macos_proc * mp)
+{
+	register kern_return_t rc = 0;
+	register int i = 0;
+	register int t_utime = 0;
+	register int t_stime = 0;
+	register int t_cpu = 0;
+	register task_t the_task = mp->the_task;
+
+	thread_array_t thread_list = NULL;
+
+	/*
+	 * We need to load all of the threads for the given task so we can get the
+	 * performance data from them.
+	 */
+
+	mp->thread_count = 0;
+	rc = task_threads(the_task, &thread_list, &(mp->thread_count));
+
+	if (rc != KERN_SUCCESS)
+	{
+/*		puke("error:  unable to load threads for task (%s); rc = %d", strerror(errno), rc); */
+		return (rc);
 	}
 
-	return s;
-*/
+	/*
+	 * now, for each of the threads, we need to sum the stats so we can
+	 * present the whole thing to the caller.
+	 */
+
+	for (i = 0; i < mp->thread_count; i++)
+	{
+		struct thread_basic_info t_info;
+		unsigned int icount = THREAD_BASIC_INFO_COUNT;
+		kern_return_t rc = 0;
+
+		rc = thread_info(thread_list[i], THREAD_BASIC_INFO,
+						 (thread_info_t) & t_info, &icount);
+
+		if (rc != KERN_SUCCESS)
+		{
+			puke("error:  unable to load thread info for task (%s); rc = %d", strerror(errno), rc);
+			return (rc);
+		}
+
+		t_utime += t_info.user_time.seconds;
+		t_stime += t_info.system_time.seconds;
+		t_cpu += t_info.cpu_usage;
+	}
+
+	vm_deallocate(mach_task_self(), (vm_address_t) thread_list, sizeof(thread_array_t) * (mp->thread_count));
+
+	/*
+	 * Now, we load the values in the structure above.
+	 */
+
+	RP(mp, user_time).seconds = t_utime;
+	RP(mp, system_time).seconds = t_stime;
+	RP(mp, cpu_usage) = t_cpu;
+
+	return (KERN_SUCCESS);
 }
+
+
+
 
 /*
  * prototypes for functions which top needs
@@ -235,14 +309,6 @@ char	   *printable();
 #define X_MAXMEM	2
 
 #define NLIST_LAST	3
-
-static struct nlist nlst[] =
-{
-	{"_maxproc"},				/* 0 *** maximum processes */
-	{"_hz"},					/* 1 */
-	{"_mem_size"},				/* 2 */
-	{0}
-};
 
 static char *procstates[] =
 {
@@ -275,6 +341,7 @@ static char *state_abbrev[] =
 	"zomb"
 };
 
+/* 
 static char *mach_state[] =
 {
 	"",
@@ -284,7 +351,8 @@ static char *mach_state[] =
 	"U",
 	"H"
 };
-
+*/
+/* 
 static char *thread_state[] =
 {
 	"",
@@ -295,12 +363,16 @@ static char *thread_state[] =
 	"halted",
 };
 
+*/
+
+/* 
 static char *flags_state[] =
 {
 	"",
 	"W",
 	"I"
 };
+*/
 
 static char *memnames[] =
 {
@@ -336,9 +408,11 @@ format_header(register char *uname_field)
 /*
  * format_next_process()
  *
- * This function actuall is responsible for the formatting of
+ * This function actually is responsible for the formatting of
  * each row which is displayed.
  */
+
+char		cmd[MAX_COLS];
 
 char *
 format_next_process(caddr_t handle, char *(*getuserid) ())
@@ -346,8 +420,6 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
 	register struct macos_proc *pp;
 	register long cputime;
 	register double pct;
-	register int vsize;
-	register int rsize;
 	struct handle *hp;
 
 	/*
@@ -400,6 +472,54 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
 /*	pct = pctdouble(PP(pp, p_pctcpu)); */
 	pct = (double) (RP(pp, cpu_usage)) / TH_USAGE_SCALE;
 
+        char *args = NULL, *namePtr = NULL, *stringPtr = '\0';
+
+        /* get the process's command name in to "cmd" */
+        if (show_fullcmd)
+        {
+                size_t size = 0;
+                int mib[4], maxarg, numArgs;
+
+                mib[0] = CTL_KERN;
+                mib[1] = KERN_ARGMAX;
+
+                size = sizeof(maxarg);
+                if ( sysctl(mib, 2, &maxarg, &size, NULL, 0) == -1 ) {
+			perror("maxarg");
+                        return "1";
+		}
+		/* fix for kernel bug? */
+		maxarg = 8192;
+                args = (char *) malloc( maxarg );
+                if ( args == NULL ) {
+			perror("args");
+                        return "1";
+                }
+
+                mib[0] = CTL_KERN;
+                mib[1] = KERN_PROCARGS;
+                mib[2] = MPP(pp, p_pid);
+
+		if (mib[2] > 0) {
+			size = (size_t) maxarg;
+                	if ( sysctl(mib, 3, args, &size, NULL, 0) == -1 ) {
+				perror("sysctl args"); /* don't freak out because might just be a process that ended */
+                	}
+
+                        xfrm_cmdline(args, maxarg);
+                	memcpy ( &numArgs, args, sizeof(numArgs));
+
+
+                	stringPtr = args + sizeof(numArgs);
+
+			if ( (namePtr = strchr(stringPtr, '/')) != NULL ) {
+                        	*namePtr++;
+                	}
+
+                	stringPtr = namePtr;
+		}
+        }
+
 	/*
 	 * format the entry
 	 */
@@ -426,7 +546,7 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
 			100.0 * TP(pp, resident_size) / maxmem,
 /*		100.0 * weighted_cpu(pct, (RP(pp, user_time).seconds + RP(pp, system_time).seconds)), */
 			100.0 * pct,
-			printable(MPP(pp, p_comm)));
+			stringPtr);
 
 	return (fmt);
 }
@@ -449,8 +569,6 @@ get_process_info(struct system_info * si,
 	register struct macos_proc **prefp;
 	register struct macos_proc *pp;
 	register struct kinfo_proc *pp2;
-	register struct kinfo_proc **prefp2;
-	register struct thread_basic_info *thread;
 
 	/*
 	 * these are copied out of sel for speed
@@ -492,13 +610,12 @@ get_process_info(struct system_info * si,
 
 	for (i = 0; i < nproc ; i++) {
 
-		int size = sizeof(struct kinfo_proc);	
+		size_t size = sizeof(struct kinfo_proc);	
                 mib[3] = atoi(PQgetvalue(pgresult, i, 0));
-                /* fprintf(stderr, "pgvalue: %d\n", mib[3]); */
 		
         	if (sysctl(mib, sizeof(mib)/sizeof(int), &buffer[i], &size, NULL, 0) == -1) {
 			perror("sysctl atoi loop");
-			return 1;
+			return "1";
 		}
 
 	}
@@ -528,8 +645,6 @@ get_process_info(struct system_info * si,
 
 	for (pp2 = kproc_list, i = 0; i < nproc; pp2++, i++)
 	{
-		kern_return_t rc;
-		u_int		info_count = TASK_BASIC_INFO_COUNT;
 
 		/*
 		 * first, we set the pointer to the reference in the kproc list.
@@ -543,35 +658,6 @@ get_process_info(struct system_info * si,
 
 		if (PP(pp2, p_stat) != SZOMB)
 		{
-/* 
-			rc = task_for_pid(mach_task_self(),
-							  PP(pp2, p_pid),
-							  &(proc_list[i].the_task));
-
-			if (rc != KERN_SUCCESS)
-			{
-				puke("error:  get task info for pid %d failed with rc = %d", PP(pp2, p_pid), rc);
-			}
-*/
-
-			/*
-			 * load the task information
-			 */
-/* 
-			rc = task_info(proc_list[i].the_task, TASK_BASIC_INFO,
-						   (task_info_t) & (proc_list[i].task_info),
-						   &info_count);
-
-			if (rc != KERN_SUCCESS)
-			{
-				puke("error:  couldn't get task info (%s); rc = %d", strerror(errno), rc);
-			}
-*/
-
-			/*
-			 * load the thread summary information
-			 */
-
 			load_thread_info(&proc_list[i]);
 		}
 	}
@@ -584,6 +670,7 @@ get_process_info(struct system_info * si,
 	show_system = sel->system;
 	show_uid = sel->uid != -1;
 	show_command = sel->command != NULL;
+	show_fullcmd = sel->fullcmd;
 
 	/* count up process states and get pointers to interesting procs */
 	total_procs = 0;
@@ -745,8 +832,6 @@ get_system_info(struct system_info * si)
 int
 machine_init(struct statics * stat)
 {
-	register int rc = 0;
-	register int i = 0;
 	size_t		size;
 
 	size = sizeof(maxmem);
@@ -777,6 +862,7 @@ machine_init(struct statics * stat)
 	stat->procstate_names = procstates;
 	stat->cpustate_names = cpustates;
 	stat->memory_names = memnames;
+	stat->flags.fullcmds = 1;
 
 	/*  if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "kvm_open")) == NULL)
 		return -1;
@@ -885,78 +971,3 @@ int			pid;
 	return (-1);
 }
 
-/*
- * load_thread_info()
- *
- * This function will attempt to load the thread summary info
- * for a Mach task.  The task is located as part of the macos_proc
- * structure.
- *
- * returns the kern_return_t value of any failed call or KERN_SUCCESS
- * if everything works.
- */
-
-int
-load_thread_info(struct macos_proc * mp)
-{
-	register kern_return_t rc = 0;
-	register int i = 0;
-	register int t_utime = 0;
-	register int t_stime = 0;
-	register int t_cpu = 0;
-	register int t_state = 0;
-	register task_t the_task = mp->the_task;
-
-	thread_array_t thread_list = NULL;
-
-	/*
-	 * We need to load all of the threads for the given task so we can get the
-	 * performance data from them.
-	 */
-
-	mp->thread_count = 0;
-	rc = task_threads(the_task, &thread_list, &(mp->thread_count));
-
-	if (rc != KERN_SUCCESS)
-	{
-/*		puke("error:  unable to load threads for task (%s); rc = %d", strerror(errno), rc); */
-		return (rc);
-	}
-
-	/*
-	 * now, for each of the threads, we need to sum the stats so we can
-	 * present the whole thing to the caller.
-	 */
-
-	for (i = 0; i < mp->thread_count; i++)
-	{
-		struct thread_basic_info t_info;
-		unsigned int icount = THREAD_BASIC_INFO_COUNT;
-		kern_return_t rc = 0;
-
-		rc = thread_info(thread_list[i], THREAD_BASIC_INFO,
-						 (thread_info_t) & t_info, &icount);
-
-		if (rc != KERN_SUCCESS)
-		{
-			puke("error:  unable to load thread info for task (%s); rc = %d", strerror(errno), rc);
-			return (rc);
-		}
-
-		t_utime += t_info.user_time.seconds;
-		t_stime += t_info.system_time.seconds;
-		t_cpu += t_info.cpu_usage;
-	}
-
-	vm_deallocate(mach_task_self(), (vm_address_t) thread_list, sizeof(thread_array_t) * (mp->thread_count));
-
-	/*
-	 * Now, we load the values in the structure above.
-	 */
-
-	RP(mp, user_time).seconds = t_utime;
-	RP(mp, system_time).seconds = t_stime;
-	RP(mp, cpu_usage) = t_cpu;
-
-	return (KERN_SUCCESS);
-}
