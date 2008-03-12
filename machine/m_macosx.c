@@ -19,6 +19,9 @@
  */
 
 #include "config.h"
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -41,8 +44,12 @@
 #include <mach/mach.h>
 #include <mach/host_info.h>
 
+/* for new sysctl calls */
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #define VMUNIX		"/mach_kernel"
-#define MEM		"/dev/mem"
+/* #define MEM		"/dev/mem" */
 #define SWAP		NULL
 
 #define NUM_AVERAGES	3
@@ -95,6 +102,7 @@ static struct macos_proc *proc_list = NULL;
 static struct macos_proc **proc_ref = NULL;
 static int	process_states[7];
 static struct handle handle;
+static struct kinfo_proc *pbase;
 
 /*
  * The mach information hopefully will not be necessary
@@ -133,33 +141,6 @@ static int	cpu_states[CPU_STATE_MAX];
  */
 
 typedef long pctcpu;
-
-/* struct statics */
-/* { */
-/*	char	**procstate_names; */
-/*	char	**cpustate_names; */
-/*	char	**memory_names; */
-/*	char	**order_names; */
-/* }; */
-/*	*/
-/* struct system_info */
-/* { */
-/*	int last_pid; */
-/*	double	load_avg[NUM_AVERAGES]; */
- /* int p_total;	/* total # of processes */ */
- /* int p_active;	/* number processes considered active */ */
-/*	int *procstates; */
-/*	int *cpustates; */
-/*	int *memory; */
-/* }; */
-/*	*/
-/* struct process_select */
-/* { */
- /* int idle;		/* show idle processes */ */
- /* int system;		/* show system processes */ */
- /* int uid;		/* show only this uid (unless -1) */ */
- /* char	*command;	/* only this command (unless NULL) */ */
-/* }; */
 
 /*
  * We need to declare a hybrid structure which will store all
@@ -226,7 +207,7 @@ static ssize_t
 kread(u_long addr, void *buf,
 	  size_t nbytes, const char *errstr)
 {
-	ssize_t		s = 0;
+/*	ssize_t		s = 0;
 
 	s = kvm_read(kd, addr, buf, nbytes);
 	if (s == -1)
@@ -236,6 +217,7 @@ kread(u_long addr, void *buf,
 	}
 
 	return s;
+*/
 }
 
 /*
@@ -458,7 +440,7 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
 
 caddr_t
 get_process_info(struct system_info * si,
-				 struct process_select * sel, int x)
+				 struct process_select * sel, int x, char *conninfo)
 
 {
 	register int i;
@@ -479,7 +461,51 @@ get_process_info(struct system_info * si,
 	int			show_uid;
 	int			show_command;
 
-	kproc_list = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nproc);
+	/* begin mucking */
+	/* kproc_list = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nproc); */
+	PGconn	   *pgconn;
+	PGresult   *pgresult = NULL;
+
+	nproc = 0;
+	pgconn = connect_to_db(conninfo);
+	if (pgconn != NULL)
+	{
+		pgresult = PQexec(pgconn, QUERY_PROCESSES);
+		nproc = PQntuples(pgresult);
+		pbase = (struct kinfo_proc *) malloc(sizeof(struct kinfo_proc *));
+	}
+	PQfinish(pgconn);
+
+	int mib[4];
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_PROC;
+	mib[2] = KERN_PROC_PID;
+
+	size_t len = nproc;
+	/* if (sysctl(mib, sizeof(mib)/ sizeof(int), NULL, &len, NULL, 0) == -1) {
+		perror("sysctl test");
+		return 1;
+	} */
+
+	struct kinfo_proc *buffer;
+	buffer = (struct kinfo_proc *) malloc( len * sizeof(struct kinfo_proc) );
+
+	for (i = 0; i < nproc ; i++) {
+
+		int size = sizeof(struct kinfo_proc);	
+                mib[3] = atoi(PQgetvalue(pgresult, i, 0));
+                /* fprintf(stderr, "pgvalue: %d\n", mib[3]); */
+		
+        	if (sysctl(mib, sizeof(mib)/sizeof(int), &buffer[i], &size, NULL, 0) == -1) {
+			perror("sysctl atoi loop");
+			return 1;
+		}
+
+	}
+
+	kproc_list = buffer;
+	len = nproc;
+	/* end selena's messing about */
 
 	if (nproc > onproc)
 	{
@@ -517,6 +543,7 @@ get_process_info(struct system_info * si,
 
 		if (PP(pp2, p_stat) != SZOMB)
 		{
+/* 
 			rc = task_for_pid(mach_task_self(),
 							  PP(pp2, p_pid),
 							  &(proc_list[i].the_task));
@@ -525,11 +552,12 @@ get_process_info(struct system_info * si,
 			{
 				puke("error:  get task info for pid %d failed with rc = %d", PP(pp2, p_pid), rc);
 			}
+*/
 
 			/*
 			 * load the task information
 			 */
-
+/* 
 			rc = task_info(proc_list[i].the_task, TASK_BASIC_INFO,
 						   (task_info_t) & (proc_list[i].task_info),
 						   &info_count);
@@ -538,6 +566,7 @@ get_process_info(struct system_info * si,
 			{
 				puke("error:  couldn't get task info (%s); rc = %d", strerror(errno), rc);
 			}
+*/
 
 			/*
 			 * load the thread summary information
@@ -638,12 +667,13 @@ get_system_info(struct system_info * si)
 	/*
 	 * get the load averages
 	 */
-
+/*
 	if (kvm_getloadavg(kd, si->load_avg, NUM_AVERAGES) == -1)
 	{
 		puke("error:  kvm_getloadavg() failed (%s)", strerror(errno));
 		return;
 	}
+*/
 
 #ifdef MAX_VERBOSE
 	printf("%-30s%03.2f, %03.2f, %03.2f\n",
@@ -677,6 +707,7 @@ get_system_info(struct system_info * si)
 		 * right format.
 		 */
 
+		pagesize = 1; /* temporary fix to div by 0 errors */
 		memory_stats[0] = pagetok(maxmem / pagesize);
 		memory_stats[1] = pagetok(vm_stats.free_count);
 		memory_stats[2] = pagetok(vm_stats.active_count);
@@ -747,9 +778,9 @@ machine_init(struct statics * stat)
 	stat->cpustate_names = cpustates;
 	stat->memory_names = memnames;
 
-	if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "kvm_open")) == NULL)
+	/*  if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "kvm_open")) == NULL)
 		return -1;
-
+	*/
 	return (0);
 }
 
