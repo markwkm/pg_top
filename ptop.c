@@ -15,7 +15,7 @@ char	   *copyright =
  */
 
 /*
- *	See the file "Changes" for information on version-to-version changes.
+ *	See the file "HISTORY" for information on version-to-version changes.
  */
 
 /*
@@ -102,6 +102,12 @@ void		(*d_swap) (long *) = i_swap;
 void		(*d_message) () = i_message;
 void		(*d_header) (char *) = i_header;
 void		(*d_process) (int, char *) = i_process;
+
+/*
+ * Mode for display cumulutive or differential stats when displaying table or
+ * index statistics.
+ */
+int			mode_stats = STATS_DIFF;
 
 /*
  *	reset_display() - reset all the display routine pointers so that entire
@@ -311,7 +317,7 @@ main(int argc, char *argv[])
 	char		header_table_stats[80] =
 	"SEQ_SCANS SEQ_READS   I_SCANS I_FETCHES   INSERTS   UPDATES   DELETES RELNAME";
 
-	static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLERX";
+	static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLERXAt";
 
 /* these defines enumerate the "strchr"s of the commands in command_chars */
 #define CMD_redraw	0
@@ -342,6 +348,8 @@ main(int argc, char *argv[])
 #define CMD_explain 24
 #define CMD_tables 25
 #define CMD_indexes 26
+#define CMD_explain_analyze 27
+#define CMD_toggle 28
 
 	/* set the buffer for stdout */
 	setbuffer(stdout, stdoutbuf, Buffersize);
@@ -361,13 +369,12 @@ main(int argc, char *argv[])
 
 	/* initialize some selection options */
 	ps.idle = Yes;
-	ps.system = No;
 	ps.fullcmd = Yes;
 	ps.uid = -1;
 	ps.command = NULL;
 
 	/* get preset options from the environment */
-	if ((env_top = getenv("TOP")) != NULL)
+	if ((env_top = getenv("PTOP")) != NULL)
 	{
 		av = preset_argv = argparse(env_top, &preset_argc);
 		ac = preset_argc;
@@ -392,7 +399,7 @@ main(int argc, char *argv[])
 			optind = 1;
 		}
 
-		while ((i = getopt(ac, av, "CDSITbcinquvh:s:d:U:o:Wp:x:z:")) != EOF)
+		while ((i = getopt(ac, av, "CDITbcinquvh:s:d:U:o:Wp:x:z:")) != EOF)
 		{
 			switch (i)
 			{
@@ -422,10 +429,6 @@ main(int argc, char *argv[])
 						fprintf(stderr, "%s: unknown user\n", optarg);
 						exit(1);
 					}
-					break;
-
-				case 'S':		/* show system processes */
-					ps.system = !ps.system;
 					break;
 
 				case 'I':		/* show idle processes */
@@ -525,7 +528,7 @@ main(int argc, char *argv[])
 				default:
 					fprintf(stderr, "\
 Top version %s\n\
-Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
+Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
           [-p PORT] [-U USER] [-d DBNAME] [-h HOSTNAME] [number]\n",
 							version_string(), myname);
 					exit(1);
@@ -575,10 +578,10 @@ Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 
 #ifdef ENABLE_COLOR
 	/* If colour has been turned on read in the settings. */
-	env_top = getenv("TOPCOLOURS");
+	env_top = getenv("PTOPCOLOURS");
 	if (!env_top)
 	{
-		env_top = getenv("TOPCOLORS");
+		env_top = getenv("PTOPCOLORS");
 	}
 	/* must do something about error messages */
 	color_env_parse(env_top);
@@ -846,7 +849,7 @@ Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 				active_procs = max_topn;
 			}
 
-			/* now show the top "n" processes. */
+			/* Now show the top "n" processes or other statistics. */
 			switch (mode)
 			{
 				case MODE_INDEX_STATS:
@@ -1058,7 +1061,7 @@ Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 													itoa(displays));
 										if ((i = readline(tempbuf1, 10, Yes)) > 0)
 										{
-											displays = i;
+										displays = i;
 										}
 										else if (i == 0)
 										{
@@ -1186,7 +1189,7 @@ Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 														  "Order to sort: ");
 												if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
 												{
-													if ((i = string_index(tempbuf2, index_ordernames)) == -1)
+													if ((i = string_index(tempbuf2, table_ordernames)) == -1)
 													{
 														new_message(MT_standout,
 																	" %s: unrecognized sorting order", tempbuf2);
@@ -1377,6 +1380,33 @@ Usage: %s [-ISTWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 										 * header text.
 										 */
 										reset_display();
+										break;
+								
+									case CMD_explain_analyze:
+										new_message(MT_standout,
+												 "Analyzed plan for process: ");
+										newval = readline(tempbuf1, 8, Yes);
+										reset_display();
+										display_pagerstart();
+										show_explain_analyze(conninfo, newval);
+										display_pagerend();
+										break;
+
+									case CMD_toggle:
+										if (mode_stats == STATS_DIFF)
+										{
+											mode_stats = STATS_CUMULATIVE;
+											new_message(MT_standout | MT_delayed,
+														" Displaying cumulative statistics.");
+											putchar('\r');
+										}
+										else
+										{
+											mode_stats = STATS_DIFF;
+											new_message(MT_standout | MT_delayed,
+														" Displaying differential statistics.");
+											putchar('\r');
+										}
 										break;
 
 									default:

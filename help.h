@@ -10,8 +10,9 @@ These single-character commands are available:\n\
 \n\
 ^L      - redraw screen\n\
 <sp>    - update screen\n\
+A       - EXPLAIN ANALYZE (UPDATE/DELETE SAFE)\n\
 C       - toggle the use of color\n\
-E       - show query plan of current query (SELECT only)\n\
+E       - show query plan of current query (UPDATE/DELETE SAFE)\n\
 L       - show locks held by a process\n\
 M       - sort by memory usage\n\
 N       - sort by pid\n\
@@ -34,6 +35,8 @@ o       - specify sort order (%s)\n\
 q       - quit\n\
 r       - renice a process\n\
 s       - change number of seconds to delay between updates\n\
+t       - Toggle between cumulative or differential statistics when viewing\n\
+          user table or user index statistics.\n\
 u       - display processes for only one user (+ selects all users)\n\
 \n\
 Not all commands are available on all systems.\n\

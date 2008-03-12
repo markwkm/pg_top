@@ -1,9 +1,11 @@
 /*	Copyright (c) 2007, Mark Wong */
 
 #include <stdlib.h>
+#include <strings.h>
 
 #include "display.h"
 #include "pg.h"
+#include "ptop.h"
 
 char	   *index_ordernames[] = {
 	"idx_scan", "idx_tup_fetch", "idx_tup_read", NULL
@@ -51,6 +53,11 @@ struct index_node
 	long long	old_idx_tup_read;
 	long long	old_idx_tup_fetch;
 
+	/* The value totals. */
+	long long	total_idx_scan;
+	long long	total_idx_tup_read;
+	long long	total_idx_tup_fetch;
+
 	struct index_node *next;
 };
 
@@ -79,6 +86,15 @@ struct table_node
 	long long	old_seq_scan;
 	long long	old_seq_tup_read;
 
+	/* The value totals. */
+	long long	total_idx_scan;
+	long long	total_idx_tup_fetch;
+	long long	total_n_tup_del;
+	long long	total_n_tup_ins;
+	long long	total_n_tup_upd;
+	long long	total_seq_scan;
+	long long	total_seq_tup_read;
+
 	struct table_node *next;
 };
 
@@ -106,16 +122,28 @@ compare_idx_scan(const void *vp1, const void *vp2)
 	struct index_node *p1 = *pp1;
 	struct index_node *p2 = *pp2;
 
-	if (p1->diff_idx_scan < p2->diff_idx_scan)
+	if (mode_stats == STATS_DIFF)
 	{
-		return -1;
-	}
-	else if (p1->diff_idx_scan > p2->diff_idx_scan)
-	{
-		return 1;
+		if (p1->diff_idx_scan < p2->diff_idx_scan)
+		{
+			return -1;
+		}
+		else if (p1->diff_idx_scan > p2->diff_idx_scan)
+		{
+			return 1;
+		}
+		return 0;
 	}
 	else
 	{
+		if (p1->total_idx_scan < p2->total_idx_scan)
+		{
+			return -1;
+		}
+		else if (p1->total_idx_scan > p2->total_idx_scan)
+		{
+			return 1;
+		}
 		return 0;
 	}
 }
@@ -128,16 +156,28 @@ compare_idx_scan_t(const void *vp1, const void *vp2)
 	struct table_node *p1 = *pp1;
 	struct table_node *p2 = *pp2;
 
-	if (p1->diff_idx_scan < p2->diff_idx_scan)
+	if (mode_stats == STATS_DIFF)
 	{
-		return -1;
-	}
-	else if (p1->diff_idx_scan > p2->diff_idx_scan)
-	{
-		return 1;
+		if (p1->diff_idx_scan < p2->diff_idx_scan)
+		{
+			return -1;
+		}
+		else if (p1->diff_idx_scan > p2->diff_idx_scan)
+		{
+			return 1;
+		}
+		return 0;
 	}
 	else
 	{
+		if (p1->total_idx_scan < p2->total_idx_scan)
+		{
+			return -1;
+		}
+		else if (p1->total_idx_scan > p2->total_idx_scan)
+		{
+			return 1;
+		}
 		return 0;
 	}
 }
@@ -150,16 +190,28 @@ compare_idx_tup_fetch(const void *vp1, const void *vp2)
 	struct index_node *p1 = *pp1;
 	struct index_node *p2 = *pp2;
 
-	if (p1->diff_idx_tup_fetch < p2->diff_idx_tup_fetch)
+	if (mode_stats == STATS_DIFF)
 	{
-		return -1;
-	}
-	else if (p1->diff_idx_tup_fetch > p2->diff_idx_tup_fetch)
-	{
-		return 1;
+		if (p1->diff_idx_tup_fetch < p2->diff_idx_tup_fetch)
+		{
+			return -1;
+		}
+		else if (p1->diff_idx_tup_fetch > p2->diff_idx_tup_fetch)
+		{
+			return 1;
+		}
+		return 0;
 	}
 	else
 	{
+		if (p1->total_idx_tup_fetch < p2->total_idx_tup_fetch)
+		{
+			return -1;
+		}
+		else if (p1->total_idx_tup_fetch > p2->total_idx_tup_fetch)
+		{
+			return 1;
+		}
 		return 0;
 	}
 }
@@ -172,16 +224,28 @@ compare_idx_tup_fetch_t(const void *vp1, const void *vp2)
 	struct table_node *p1 = *pp1;
 	struct table_node *p2 = *pp2;
 
-	if (p1->diff_idx_tup_fetch < p2->diff_idx_tup_fetch)
+	if (mode_stats == STATS_DIFF)
 	{
-		return -1;
-	}
-	else if (p1->diff_idx_tup_fetch > p2->diff_idx_tup_fetch)
-	{
-		return 1;
+		if (p1->diff_idx_tup_fetch < p2->diff_idx_tup_fetch)
+		{
+			return -1;
+		}
+		else if (p1->diff_idx_tup_fetch > p2->diff_idx_tup_fetch)
+		{
+			return 1;
+		}
+		return 0;
 	}
 	else
 	{
+		if (p1->total_idx_tup_fetch < p2->total_idx_tup_fetch)
+		{
+			return -1;
+		}
+		else if (p1->total_idx_tup_fetch > p2->total_idx_tup_fetch)
+		{
+			return 1;
+		}
 		return 0;
 	}
 }
@@ -194,16 +258,28 @@ compare_idx_tup_read(const void *vp1, const void *vp2)
 	struct index_node *p1 = *pp1;
 	struct index_node *p2 = *pp2;
 
-	if (p1->diff_idx_tup_read < p2->diff_idx_tup_read)
+	if (mode_stats == STATS_DIFF)
 	{
-		return -1;
-	}
-	else if (p1->diff_idx_tup_read > p2->diff_idx_tup_read)
-	{
-		return 1;
+		if (p1->diff_idx_tup_read < p2->diff_idx_tup_read)
+		{
+			return -1;
+		}
+		else if (p1->diff_idx_tup_read > p2->diff_idx_tup_read)
+		{
+			return 1;
+		}
+		return 0;
 	}
 	else
 	{
+		if (p1->total_idx_tup_read < p2->total_idx_tup_read)
+		{
+			return -1;
+		}
+		else if (p1->total_idx_tup_read > p2->total_idx_tup_read)
+		{
+			return 1;
+		}
 		return 0;
 	}
 }
@@ -216,15 +292,30 @@ compare_n_tup_del(const void *vp1, const void *vp2)
 	struct table_node *p1 = *pp1;
 	struct table_node *p2 = *pp2;
 
-	if (p1->diff_n_tup_del < p2->diff_n_tup_del)
+	if (mode_stats == STATS_DIFF)
 	{
-		return -1;
+		if (p1->diff_n_tup_del < p2->diff_n_tup_del)
+		{
+			return -1;
+		}
+		else if (p1->diff_n_tup_del > p2->diff_n_tup_del)
+		{
+			return 1;
+		}
+		return 0;
 	}
-	else if (p1->diff_n_tup_del > p2->diff_n_tup_del)
+	else
 	{
-		return 1;
+		if (p1->total_n_tup_del < p2->total_n_tup_del)
+		{
+			return -1;
+		}
+		else if (p1->total_n_tup_del > p2->total_n_tup_del)
+		{
+			return 1;
+		}
+		return 0;
 	}
-	return 0;
 }
 
 int
@@ -235,15 +326,30 @@ compare_n_tup_ins(const void *vp1, const void *vp2)
 	struct table_node *p1 = *pp1;
 	struct table_node *p2 = *pp2;
 
-	if (p1->diff_n_tup_ins < p2->diff_n_tup_ins)
+	if (mode_stats == STATS_DIFF)
 	{
-		return -1;
+		if (p1->diff_n_tup_ins < p2->diff_n_tup_ins)
+		{
+			return -1;
+		}
+		else if (p1->diff_n_tup_ins > p2->diff_n_tup_ins)
+		{
+			return 1;
+		}
+		return 0;
 	}
-	else if (p1->diff_n_tup_ins > p2->diff_n_tup_ins)
+	else
 	{
-		return 1;
+		if (p1->total_n_tup_ins < p2->total_n_tup_ins)
+		{
+			return -1;
+		}
+		else if (p1->total_n_tup_ins > p2->total_n_tup_ins)
+		{
+			return 1;
+		}
+		return 0;
 	}
-	return 0;
 }
 
 int
@@ -254,15 +360,30 @@ compare_n_tup_upd(const void *vp1, const void *vp2)
 	struct table_node *p1 = *pp1;
 	struct table_node *p2 = *pp2;
 
-	if (p1->diff_n_tup_upd < p2->diff_n_tup_upd)
+	if (mode_stats == STATS_DIFF)
 	{
-		return -1;
+		if (p1->diff_n_tup_upd < p2->diff_n_tup_upd)
+		{
+			return -1;
+		}
+		else if (p1->diff_n_tup_upd > p2->diff_n_tup_upd)
+		{
+			return 1;
+		}
+		return 0;
 	}
-	else if (p1->diff_n_tup_upd > p2->diff_n_tup_upd)
+	else
 	{
-		return 1;
+		if (p1->total_n_tup_upd < p2->total_n_tup_upd)
+		{
+			return -1;
+		}
+		else if (p1->total_n_tup_upd > p2->total_n_tup_upd)
+		{
+			return 1;
+		}
+		return 0;
 	}
-	return 0;
 }
 
 int
@@ -273,15 +394,30 @@ compare_seq_scan(const void *vp1, const void *vp2)
 	struct table_node *p1 = *pp1;
 	struct table_node *p2 = *pp2;
 
-	if (p1->diff_seq_scan < p2->diff_seq_scan)
+	if (mode_stats == STATS_DIFF)
 	{
-		return -1;
+		if (p1->diff_seq_scan < p2->diff_seq_scan)
+		{
+			return -1;
+		}
+		else if (p1->diff_seq_scan > p2->diff_seq_scan)
+		{
+			return 1;
+		}
+		return 0;
 	}
-	else if (p1->diff_seq_scan > p2->diff_seq_scan)
+	else
 	{
-		return 1;
+		if (p1->total_seq_scan < p2->total_seq_scan)
+		{
+			return -1;
+		}
+		else if (p1->total_seq_scan > p2->total_seq_scan)
+		{
+			return 1;
+		}
+		return 0;
 	}
-	return 0;
 }
 
 int
@@ -292,15 +428,30 @@ compare_seq_tup_read(const void *vp1, const void *vp2)
 	struct table_node *p1 = *pp1;
 	struct table_node *p2 = *pp2;
 
-	if (p1->diff_seq_tup_read < p2->diff_seq_tup_read)
+	if (mode_stats == STATS_DIFF)
 	{
-		return -1;
+		if (p1->diff_seq_tup_read < p2->diff_seq_tup_read)
+		{
+			return -1;
+		}
+		else if (p1->diff_seq_tup_read > p2->diff_seq_tup_read)
+		{
+			return 1;
+		}
+		return 0;
 	}
-	else if (p1->diff_seq_tup_read > p2->diff_seq_tup_read)
+	else
 	{
-		return 1;
+		if (p1->total_seq_tup_read < p2->total_seq_tup_read)
+		{
+			return -1;
+		}
+		else if (p1->total_seq_tup_read > p2->total_seq_tup_read)
+		{
+			return 1;
+		}
+		return 0;
 	}
-	return 0;
 }
 
 PGconn *
@@ -423,11 +574,20 @@ pg_display_index_stats(char *conninfo, int compare_index, int max_topn)
 	/* Display stats. */
 	for (i = rows - 1; i > rows - max_lines - 1; i--)
 	{
-		snprintf(line, sizeof(line), "%9lld %9lld %9lld %s",
-				 procs[i]->diff_idx_scan,
-				 procs[i]->diff_idx_tup_read,
-				 procs[i]->diff_idx_tup_fetch,
-				 PQgetvalue(pgresult, procs[i]->name_index, 1));
+		if (mode_stats == STATS_DIFF) {
+			snprintf(line, sizeof(line), "%9lld %9lld %9lld %s",
+				 	procs[i]->diff_idx_scan,
+				 	procs[i]->diff_idx_tup_read,
+				 	procs[i]->diff_idx_tup_fetch,
+				 	PQgetvalue(pgresult, procs[i]->name_index, 1));
+		}
+		else {
+			snprintf(line, sizeof(line), "%9lld %9lld %9lld %s",
+				 	procs[i]->total_idx_scan,
+				 	procs[i]->total_idx_tup_read,
+				 	procs[i]->total_idx_tup_fetch,
+				 	PQgetvalue(pgresult, procs[i]->name_index, 1));
+		}
 		u_process(rows - i - 1, line);
 	}
 
@@ -467,7 +627,6 @@ pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
 
 	procs = (struct table_node **) realloc(procs,
 										 rows * sizeof(struct table_node *));
-
 	/* Calculate change in values. */
 	for (i = 0; i < rows; i++)
 	{
@@ -493,16 +652,31 @@ pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
 
 	for (i = rows - 1; i > rows - max_lines - 1; i--)
 	{
-		snprintf(line, sizeof(line),
-				 "%9lld %9lld %9lld %9lld %9lld %9lld %9lld %s",
-				 procs[i]->diff_seq_scan,
-				 procs[i]->diff_seq_tup_read,
-				 procs[i]->diff_idx_scan,
-				 procs[i]->diff_idx_tup_fetch,
-				 procs[i]->diff_n_tup_ins,
-				 procs[i]->diff_n_tup_upd,
-				 procs[i]->diff_n_tup_del,
-				 PQgetvalue(pgresult, procs[i]->name_index, 1));
+		if (mode_stats == STATS_DIFF) {
+			snprintf(line, sizeof(line),
+				 	"%9lld %9lld %9lld %9lld %9lld %9lld %9lld %s",
+				 	procs[i]->diff_seq_scan,
+				 	procs[i]->diff_seq_tup_read,
+				 	procs[i]->diff_idx_scan,
+				 	procs[i]->diff_idx_tup_fetch,
+				 	procs[i]->diff_n_tup_ins,
+				 	procs[i]->diff_n_tup_upd,
+				 	procs[i]->diff_n_tup_del,
+				 	PQgetvalue(pgresult, procs[i]->name_index, 1));
+		}
+		else
+		{
+			snprintf(line, sizeof(line),
+				 	"%9lld %9lld %9lld %9lld %9lld %9lld %9lld %s",
+				 	procs[i]->total_seq_scan,
+				 	procs[i]->total_seq_tup_read,
+				 	procs[i]->total_idx_scan,
+				 	procs[i]->total_idx_tup_fetch,
+				 	procs[i]->total_n_tup_ins,
+				 	procs[i]->total_n_tup_upd,
+				 	procs[i]->total_n_tup_del,
+				 	PQgetvalue(pgresult, procs[i]->name_index, 1));
+		}
 		u_process(rows - i - 1, line);
 	}
 
@@ -599,10 +773,8 @@ new_index_node(long long indexrelid)
 	struct index_node *node;
 
 	node = (struct index_node *) malloc(sizeof(struct index_node));
+	bzero(node, sizeof(struct index_node));
 	node->indexrelid = indexrelid;
-	node->old_idx_scan = 0;
-	node->old_idx_tup_read = 0;
-	node->old_idx_tup_fetch = 0;
 	node->next = NULL;
 
 	return node;
@@ -614,14 +786,8 @@ new_table_node(long long relid)
 	struct table_node *node;
 
 	node = (struct table_node *) malloc(sizeof(struct table_node));
+	bzero(node, sizeof(struct table_node));
 	node->relid = relid;
-	node->old_idx_scan = 0;
-	node->old_idx_tup_fetch = 0;
-	node->old_n_tup_del = 0;
-	node->old_n_tup_ins = 0;
-	node->old_n_tup_upd = 0;
-	node->old_seq_scan = 0;
-	node->old_seq_tup_read = 0;
 	node->next = NULL;
 
 	return node;
@@ -631,6 +797,11 @@ void
 update_index_stats(struct index_node * node, long long idx_scan,
 				   long long idx_tup_read, long long idx_tup_fetch)
 {
+	/* Add to the index totals */
+	node->total_idx_scan += idx_scan;
+	node->total_idx_tup_read += idx_tup_read;
+	node->total_idx_tup_fetch += idx_tup_fetch;
+
 	/* Calculate difference between previous and current values. */
 	node->diff_idx_scan = idx_scan - node->old_idx_scan;
 	node->diff_idx_tup_read = idx_tup_read - node->old_idx_tup_read;
@@ -647,6 +818,15 @@ update_table_stats(struct table_node * node, long long seq_scan,
 		 long long seq_tup_read, long long idx_scan, long long idx_tup_fetch,
 			   long long n_tup_ins, long long n_tup_upd, long long n_tup_del)
 {
+	/* Add to the table totals */
+	node->total_idx_scan += idx_scan;
+	node->total_idx_tup_fetch += idx_tup_fetch;
+	node->total_n_tup_del += n_tup_del;
+	node->total_n_tup_ins += n_tup_ins;
+	node->total_n_tup_upd += n_tup_upd;
+	node->total_seq_scan += seq_scan;
+	node->total_seq_tup_read += seq_tup_read;
+
 	/* Calculate difference between previous and current values. */
 	node->diff_idx_scan = idx_scan - node->old_idx_scan;
 	node->diff_idx_tup_fetch = idx_tup_fetch - node->old_idx_tup_fetch;

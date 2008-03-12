@@ -1,12 +1,14 @@
 # configure.ac
-AC_INIT(ptop, 3.6.1-beta4)
+AC_PREREQ(2.59)
+AC_INIT(ptop, 3.6.2_beta1, ptop-hackers@pgfoundry.org)
 
 echo "Configuring $PACKAGE_STRING"
 
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
+AM_INIT_AUTOMAKE
 
 # options processing
 AC_ARG_WITH(module, AC_HELP_STRING([--with-module=NAME],
@@ -283,5 +285,6 @@ AC_SUBST(INSTALL_OPTS_PROG)
 
 # wrapup
 
-AC_CONFIG_FILES(Makefile ptop.1)
+AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([ptop.1])
 AC_OUTPUT

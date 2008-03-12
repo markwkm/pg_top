@@ -37,5 +37,6 @@ void		pg_display_index_stats(char *, int, int);
 void		pg_display_table_stats(char *, int, int);
 
 extern char *index_ordernames[];
+extern char *table_ordernames[];
 
 #endif   /* _PG_H_ */

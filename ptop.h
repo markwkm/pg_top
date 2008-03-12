@@ -78,7 +78,13 @@ struct ext_decl
 #undef RANDOM_PW
 #endif
 
+/* Display modes for table and index statistics. */
+#define STATS_DIFF 0
+#define STATS_CUMULATIVE 1
+
 void		quit(int);
 void		reset_display();
+
+extern int	mode_stats;
 
 #endif   /* _PTOP_H_ */

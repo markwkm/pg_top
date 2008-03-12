@@ -11,6 +11,7 @@ char	   *kill_procs(char *str);
 char	   *renice_procs(char *str);
 void		show_current_query(char *, int);
 void		show_explain(char *, int);
+void		show_explain_analyze(char *, int);
 void		show_locks(char *, int);
 
 #endif   /* _COMMANDS_H_ */

@@ -51,6 +51,7 @@ getopt(int argc, char **argv, char *opts)
 	register char *cp;
 
 	if (sp == 1)
+	{
 		if (optind >= argc ||
 			argv[optind][0] != '-' || argv[optind][1] == '\0')
 			return (EOF);
@@ -59,6 +60,7 @@ getopt(int argc, char **argv, char *opts)
 			optind++;
 			return (EOF);
 		}
+	}
 	optopt = c = argv[optind][sp];
 	if (c == ':' || (cp = strchr(opts, c)) == NULL)
 	{
