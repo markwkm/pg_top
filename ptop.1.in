@@ -298,6 +298,10 @@ Change the number of seconds to delay between displays
 .B T
 Order by time.
 .TP
+.B t
+Toggle between cumulative or differential statistics when viewing user table
+or user index statistics.
+.TP
 .B u
 Display only processes owned by a specific username (prompt for username).
 If the username specified is simply \*(lq+\*(rq, then processes belonging

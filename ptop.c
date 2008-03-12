@@ -15,7 +15,7 @@ char	   *copyright =
  */
 
 /*
- *	See the file "Changes" for information on version-to-version changes.
+ *	See the file "HISTORY" for information on version-to-version changes.
  */
 
 /*
@@ -102,6 +102,12 @@ void		(*d_swap) (long *) = i_swap;
 void		(*d_message) () = i_message;
 void		(*d_header) (char *) = i_header;
 void		(*d_process) (int, char *) = i_process;
+
+/*
+ * Mode for display cumulutive or differential stats when displaying table or
+ * index statistics.
+ */
+int			mode_stats = STATS_DIFF;
 
 /*
  *	reset_display() - reset all the display routine pointers so that entire
@@ -311,7 +317,7 @@ main(int argc, char *argv[])
 	char		header_table_stats[80] =
 	"SEQ_SCANS SEQ_READS   I_SCANS I_FETCHES   INSERTS   UPDATES   DELETES RELNAME";
 
-	static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLERXA";
+	static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLERXAt";
 
 /* these defines enumerate the "strchr"s of the commands in command_chars */
 #define CMD_redraw	0
@@ -343,6 +349,7 @@ main(int argc, char *argv[])
 #define CMD_tables 25
 #define CMD_indexes 26
 #define CMD_explain_analyze 27
+#define CMD_toggle 28
 
 	/* set the buffer for stdout */
 	setbuffer(stdout, stdoutbuf, Buffersize);
@@ -842,7 +849,7 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 				active_procs = max_topn;
 			}
 
-			/* now show the top "n" processes. */
+			/* Now show the top "n" processes or other statistics. */
 			switch (mode)
 			{
 				case MODE_INDEX_STATS:
@@ -1383,6 +1390,23 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 										display_pagerstart();
 										show_explain_analyze(conninfo, newval);
 										display_pagerend();
+										break;
+
+									case CMD_toggle:
+										if (mode_stats == STATS_DIFF)
+										{
+											mode_stats = STATS_CUMULATIVE;
+											new_message(MT_standout | MT_delayed,
+														" Displaying cumulative statistics.");
+											putchar('\r');
+										}
+										else
+										{
+											mode_stats = STATS_DIFF;
+											new_message(MT_standout | MT_delayed,
+														" Displaying differential statistics.");
+											putchar('\r');
+										}
 										break;
 
 									default:

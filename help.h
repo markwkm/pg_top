@@ -35,6 +35,8 @@ o       - specify sort order (%s)\n\
 q       - quit\n\
 r       - renice a process\n\
 s       - change number of seconds to delay between updates\n\
+t       - Toggle between cumulative or differential statistics when viewing\n\
+          user table or user index statistics.\n\
 u       - display processes for only one user (+ selects all users)\n\
 \n\
 Not all commands are available on all systems.\n\

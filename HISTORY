@@ -9,6 +9,8 @@ Changes
      * Fixed 'E' command (EXPLAIN) to be UPDATE and INSERT safe.
      * Updated the automake file to 'make dist' works.
      * Fixed a bug so user table statistics can be sorted.
+     * Added a 't' command so that user table and index statistics can
+       display either cumulative or differential statistics.
 
 Release 3.6.1
 
@@ -31,5 +33,3 @@ Changes
      * Configure support for PostgreSQL libpq client libraries.
      * Remove old_modules directory.
      * Update RES calculation for Linux 2.6.x.
-
-ptop Release 3.6.1
