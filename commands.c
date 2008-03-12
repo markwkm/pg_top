@@ -76,22 +76,21 @@ static char *err_listem =
 			errs[errcnt++].errnum = (e); \
 			}
 
+#define BEGIN "BEGIN;"
+#define ROLLBACK "ROLLBACK;"
+
 #define CURRENT_QUERY \
 		"SELECT current_query\n" \
 		"FROM pg_stat_activity\n" \
 		"WHERE procpid = %d;"
 
 #define EXPLAIN \
-		"BEGIN;\n" \
 		"EXPLAIN\n" \
-		"%s\n" \
-		"ROLLBACK;"
+		"%s"
 
 #define EXPLAIN_ANALYZE \
-		"BEGIN;\n"\
 		"EXPLAIN ANALYZE\n" \
-		"%s\n" \
-		"ROLLBACK;"
+		"%s"
 
 #define GET_LOCKS \
 		"SELECT datname, relname, mode, granted\n" \
@@ -597,7 +596,9 @@ show_explain(char *conninfo, int procpid)
 
 		/* Execute the EXPLAIN. */
 		sprintf(sql, EXPLAIN, PQgetvalue(pgresult_query, i, 0));
+		PQexec(pgconn, BEGIN);
 		pgresult_explain = PQexec(pgconn, sql);
+		PQexec(pgconn, ROLLBACK);
 		r = PQntuples(pgresult_explain);
 		/* This will display an error if the EXPLAIN fails. */
 		display_pager("\n\nQuery Plan:\n\n");
@@ -654,7 +655,9 @@ show_explain_analyze(char *conninfo, int procpid)
 
 		/* Execute the EXPLAIN ANALYZE. */
 		sprintf(sql, EXPLAIN_ANALYZE, PQgetvalue(pgresult_query, i, 0));
+		PQexec(pgconn, BEGIN);
 		pgresult_explain_analyze = PQexec(pgconn, sql);
+		PQexec(pgconn, ROLLBACK);
 		r = PQntuples(pgresult_explain_analyze);
 		/* This will display an error if the EXPLAIN fails. */
 		display_pager("\n\nQuery Plan:\n\n");
