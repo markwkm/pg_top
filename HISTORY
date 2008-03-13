@@ -7,7 +7,8 @@ Changes
      * Add 'A' command to show actual query plan (EXPLAIN ANALYZE) of a
        running query.
      * Fixed 'E' command (EXPLAIN) to be UPDATE and INSERT safe.
-     * Updated the automake file to 'make dist' works.
+     * Updated the automake file so other targets like 'make dist' and
+       'make distdir' work.
      * Fixed a bug so user table statistics can be sorted.
      * Added a 't' command so that user table and index statistics can
        display either cumulative or differential statistics.
