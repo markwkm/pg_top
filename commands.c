@@ -34,6 +34,7 @@
 #include "help.h"
 #include "display.h"
 #include "pg.h"
+#include "commands.h"
 
 extern int	errno;
 
@@ -83,14 +84,6 @@ static char *err_listem =
 		"SELECT current_query\n" \
 		"FROM pg_stat_activity\n" \
 		"WHERE procpid = %d;"
-
-#define EXPLAIN \
-		"EXPLAIN\n" \
-		"%s"
-
-#define EXPLAIN_ANALYZE \
-		"EXPLAIN ANALYZE\n" \
-		"%s"
 
 #define GET_LOCKS \
 		"SELECT datname, relname, mode, granted\n" \
@@ -560,7 +553,7 @@ show_current_query(char *conninfo, int procpid)
 }
 
 void
-show_explain(char *conninfo, int procpid)
+show_explain(char *conninfo, int procpid, int analyze)
 {
 	int			i,
 				j;
@@ -595,7 +588,15 @@ show_explain(char *conninfo, int procpid)
 		display_pager(PQgetvalue(pgresult_query, i, 0));
 
 		/* Execute the EXPLAIN. */
-		sprintf(sql, EXPLAIN, PQgetvalue(pgresult_query, i, 0));
+		if (analyze == EXPLAIN_ANALYZE)
+		{
+			sprintf(sql, "EXPLAIN ANALYZE\n%s",
+					PQgetvalue(pgresult_query, i, 0));
+		}
+		else
+		{
+			sprintf(sql, "EXPLAIN\n%s", PQgetvalue(pgresult_query, i, 0));
+		}
 		PQexec(pgconn, BEGIN);
 		pgresult_explain = PQexec(pgconn, sql);
 		PQexec(pgconn, ROLLBACK);
@@ -610,65 +611,6 @@ show_explain(char *conninfo, int procpid)
 		}
 		if (pgresult_explain != NULL)
 			PQclear(pgresult_explain);
-	}
-	display_pager("\n\n");
-
-	if (pgresult_query != NULL)
-		PQclear(pgresult_query);
-	PQfinish(pgconn);
-}
-
-void
-show_explain_analyze(char *conninfo, int procpid)
-{
-	int			i,
-				j;
-	int			rows,
-				r;
-	char		sql[4096];
-	char		info[1024];
-	PGconn	   *pgconn;
-	PGresult   *pgresult_query = NULL;
-	PGresult   *pgresult_explain_analyze = NULL;
-
-	sprintf(sql, CURRENT_QUERY, procpid);
-	sprintf(info,
-			"Current query plan for procpid %d:\n\n Statement:\n\n",
-			procpid);
-	display_pager(info);
-
-	/* Get the currently running query. */
-	pgconn = connect_to_db(conninfo);
-	if (pgconn != NULL)
-	{
-		pgresult_query = PQexec(pgconn, sql);
-		rows = PQntuples(pgresult_query);
-	}
-	else
-	{
-		rows = 0;
-	}
-	for (i = 0; i < rows; i++)
-	{
-		/* Display the query before the query plan. */
-		display_pager(PQgetvalue(pgresult_query, i, 0));
-
-		/* Execute the EXPLAIN ANALYZE. */
-		sprintf(sql, EXPLAIN_ANALYZE, PQgetvalue(pgresult_query, i, 0));
-		PQexec(pgconn, BEGIN);
-		pgresult_explain_analyze = PQexec(pgconn, sql);
-		PQexec(pgconn, ROLLBACK);
-		r = PQntuples(pgresult_explain_analyze);
-		/* This will display an error if the EXPLAIN fails. */
-		display_pager("\n\nQuery Plan:\n\n");
-		display_pager(PQresultErrorMessage(pgresult_explain_analyze));
-		for (j = 0; j < r; j++)
-		{
-			display_pager(PQgetvalue(pgresult_explain_analyze, j, 0));
-			display_pager("\n");
-		}
-		if (pgresult_explain_analyze != NULL)
-			PQclear(pgresult_explain_analyze);
 	}
 	display_pager("\n\n");
 

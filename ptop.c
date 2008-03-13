@@ -1345,7 +1345,7 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 										newval = readline(tempbuf1, 8, Yes);
 										reset_display();
 										display_pagerstart();
-										show_explain(conninfo, newval);
+										show_explain(conninfo, newval, EXPLAIN);
 										display_pagerend();
 										break;
 
@@ -1388,7 +1388,7 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 										newval = readline(tempbuf1, 8, Yes);
 										reset_display();
 										display_pagerstart();
-										show_explain_analyze(conninfo, newval);
+										show_explain(conninfo, newval, EXPLAIN_ANALYZE);
 										display_pagerend();
 										break;
 
