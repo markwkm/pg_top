@@ -12,6 +12,7 @@ Changes
      * Fixed a bug so user table statistics can be sorted.
      * Added a 't' command so that user table and index statistics can
        display either cumulative or differential statistics.
+     * Fixed support for OS X, tested on v10.5.
 
 Release 3.6.1
 
