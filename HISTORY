@@ -4,8 +4,8 @@ Release 3.6.2
 
 Changes
 
-     * Add 'A' command to show actual query plan (EXPLAIN ANALYZE) of a
-       running query.
+     * Add 'A' command to re-run SQL statement and show actual execution plan
+       (EXPLAIN ANALYZE) of a running query.
      * Fixed 'E' command (EXPLAIN) to be UPDATE and INSERT safe.
      * Updated the automake file so other targets like 'make dist' and
        'make distdir' work.
@@ -26,7 +26,8 @@ Changes
      * Add 'R' command to view user table statistics.
      * Add support for Solaris 10.
      * Add support for FreeBSD.
-     * Add 'E' command to show query plan of a running query.
+     * Add 'E' command to re-determine and show execution plan of a running
+       SQL statement.
      * Add parameters to specify database connection information.
      * Add 'L' command to show locks held by a process.
      * Add 'Q' command to show current query of a process.
