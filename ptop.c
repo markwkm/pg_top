@@ -1342,7 +1342,7 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 
 									case CMD_explain:
 										new_message(MT_standout,
-												 "Query plan for process: ");
+												 "Re-determine execution plan: ");
 										newval = readline(tempbuf1, 8, Yes);
 										reset_display();
 										display_pagerstart();
@@ -1385,7 +1385,7 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 								
 									case CMD_explain_analyze:
 										new_message(MT_standout,
-												 "Analyzed plan for process: ");
+												 "Re-run SQL for analysis: ");
 										newval = readline(tempbuf1, 8, Yes);
 										reset_display();
 										display_pagerstart();
