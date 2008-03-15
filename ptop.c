@@ -1,5 +1,5 @@
 char	   *copyright =
-"Copyright (c) 1984 through 2006, William LeFebvre";
+"Copyright (c) 1984 through 2007, William LeFebvre";
 
 /*
  *	Top users/processes display for Unix
@@ -12,6 +12,7 @@ char	   *copyright =
  *	Copyright (c) 1989 - 1994, William LeFebvre, Northwestern University
  *	Copyright (c) 1994, 1995, William LeFebvre, Argonne National Laboratory
  *	Copyright (c) 1996, William LeFebvre, Group sys Consulting
+ *	Copyright (c) 2007-2008, Mark Wong
  */
 
 /*
