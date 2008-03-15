@@ -67,8 +67,8 @@ struct system_info
 	int			p_total;
 	int			P_ACTIVE;		/* number of procs considered "active" */
 	int		   *procstates;
-	int		   *cpustates;
-	long	   *memory;
+	int64_t		   *cpustates;
+	int	   *memory;
 	long	   *swap;
 };
 
@@ -95,7 +95,7 @@ void		get_system_info(struct system_info *);
 caddr_t get_process_info(struct system_info *, struct process_select *, int,
 				 char *);
 char	   *format_header(char *);
-char	   *format_next_process(caddr_t, char *(*) (int));
-int			proc_owner(int);
+char	   *format_next_process(caddr_t, char *(*) (uid_t));
+uid_t			proc_owner(pid_t);
 
 #endif   /* _MACHINE_H_ */

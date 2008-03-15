@@ -23,7 +23,7 @@ char	   *strecpy(char *, char *);
 char	   *homogenize(char *);
 int			string_index(char *, char **);
 char	  **argparse(char *, int *);
-long		percentages(int, int *, long *, long *, long *);
+long		percentages(int, int64_t *, int64_t *, int64_t *, int64_t *);
 char	   *errmsg(int);
 char	   *format_percent(double);
 char	   *format_time(long);

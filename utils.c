@@ -392,7 +392,7 @@ argparse(char *line, int *cntp)
  */
 
 long
-percentages(int cnt, int *out, long *new, long *old, long *diffs)
+percentages(int cnt, int64_t *out, int64_t *new, int64_t *old, int64_t *diffs)
 
 {
 	register int i;

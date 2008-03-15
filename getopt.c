@@ -11,11 +11,9 @@
  * line of the corresponding machine module.
  */
 
-/*
- * This empty declaration exists solely to placate overexhuberant C
- * compilers that like to warn you about content-free files.
- */
-static void __empty();
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif /* HAVE_CONFIG_H */
 
 #ifndef HAVE_GETOPT
 

@@ -148,7 +148,16 @@ AC_TYPE_SIGNAL
 AC_CHECK_TYPE(time_t, long)
 
 # Checks for library functions.
-AC_CHECK_FUNCS([getopt memcpy setpriority strchr strerror snprintf sighold sigrelse sigaction sigprocmask])
+AC_CHECK_FUNCS(getopt)
+AC_CHECK_FUNCS(memcpy)
+AC_CHECK_FUNCS(setpriority)
+AC_CHECK_FUNCS(strchr)
+AC_CHECK_FUNCS(strerror)
+AC_CHECK_FUNCS(snprintf)
+AC_CHECK_FUNCS(sighold)
+AC_CHECK_FUNCS(sigrelse)
+AC_CHECK_FUNCS(sigaction)
+AC_CHECK_FUNCS(sigprocmask)
 
 # determine correct user, group, and mode
 # these can be overridden later if need be
@@ -182,7 +191,8 @@ else
 	irix5*)		MODULE=irix5;;
 	irix6*)		MODULE=irixsgi;;
 	linux*)		MODULE=linux; SET_MODE=755;;
-        netbsd*)	MODULE=netbsd; SET_MODE=755;;
+	netbsd*)	MODULE=netbsd; SET_MODE=755;;
+	openbsd*)	MODULE=openbsd;;
 	solaris2*)	MODULE=sunos5; SET_MODE=755;;
 	sunos4*)	MODULE=sunos4;;
 	sysv4*)		MODULE=svr4;;
