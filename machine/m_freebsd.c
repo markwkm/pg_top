@@ -188,9 +188,9 @@ static unsigned long bufspace_offset;
 
 /* these are for calculating cpu state percentages */
 
-static long cp_time[CPUSTATES];
-static long cp_old[CPUSTATES];
-static long cp_diff[CPUSTATES];
+static int64_t cp_time[CPUSTATES];
+static int64_t cp_old[CPUSTATES];
+static int64_t cp_diff[CPUSTATES];
 
 /* these are for detailing the process states */
 
@@ -203,7 +203,7 @@ char	   *procstatenames[] = {
 
 /* these are for detailing the cpu states */
 
-int			cpu_states[CPUSTATES];
+int64_t			cpu_states[CPUSTATES];
 char	   *cpustatenames[] = {
 	"user", "nice", "system", "interrupt", "idle", NULL
 };
@@ -529,7 +529,6 @@ get_process_info(struct system_info * si,
 	/* set up flags which define what we are going to select */
 	show_idle = sel->idle;
 	show_self = 0;
-	show_system = sel->system;
 	show_uid = sel->uid != -1;
 	show_fullcmd = sel->fullcmd;
 
@@ -603,7 +602,7 @@ char		fmt[MAX_COLS];		/* static area where result is built */
 char		cmd[MAX_COLS];
 
 char *
-format_next_process(caddr_t handle, char *(*get_userid) (int))
+format_next_process(caddr_t handle, char *(*get_userid) (uid_t))
 
 {
 	register struct kinfo_proc *pp;
@@ -1004,8 +1003,8 @@ compare_prio(struct proc ** pp1, struct proc ** pp2)
  *		and "renice" commands.
  */
 
-int
-proc_owner(int pid)
+uid_t
+proc_owner(pid_t pid)
 
 {
 	register int cnt;
