@@ -141,9 +141,9 @@ int			(*proc_compares[]) () =
 
 /* these are for calculating cpu state percentages */
 
-static long cp_time[NCPUSTATES];
-static long cp_old[NCPUSTATES];
-static long cp_diff[NCPUSTATES];
+static int64_t cp_time[NCPUSTATES];
+static int64_t cp_old[NCPUSTATES];
+static int64_t cp_diff[NCPUSTATES];
 
 /* for calculating the exponential average */
 
@@ -162,7 +162,7 @@ static time_t boottime = -1;
 
 /* these are for passing data back to the machine independant portion */
 
-static int	cpu_states[NCPUSTATES];
+static int64_t	cpu_states[NCPUSTATES];
 static int	process_states[NPROCSTATES];
 static long memory_stats[NMEMSTATS];
 static long swap_stats[NSWAPSTATS];
@@ -902,8 +902,7 @@ format_header(char *uname_field)
 
 
 char *
-format_next_process(caddr_t handle, char *(*get_userid) (int))
-
+format_next_process(caddr_t handle, char *(*get_userid) (uid_t))
 {
 	static char fmt[MAX_COLS];	/* static area where result is built */
 	struct top_proc *p = *nextactive++;
@@ -1117,8 +1116,8 @@ compare_cmd(
  *				and "renice" commands.
  */
 
-int
-proc_owner(int pid)
+uid_t
+proc_owner(pid_t pid)
 
 {
 	struct stat sb;

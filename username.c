@@ -145,7 +145,7 @@ get_user(int uid)
 }
 
 char *
-username(int uid)
+username(uid_t uid)
 
 {
 	register int hashindex;

@@ -97,7 +97,7 @@ void		(*d_minibar) (
 						  int (*) (char *, int)) = i_minibar;
 void		(*d_uptime) (time_t *, time_t *) = i_uptime;
 void		(*d_procstates) (int, int *) = i_procstates;
-void		(*d_cpustates) (int *) = i_cpustates;
+void		(*d_cpustates) (int64_t *) = i_cpustates;
 void		(*d_memory) (long *) = i_memory;
 void		(*d_swap) (long *) = i_swap;
 void		(*d_message) () = i_message;
@@ -263,7 +263,7 @@ main(int argc, char *argv[])
 	int			delay = Default_DELAY;
 	int			displays = 0;	/* indicates unspecified */
 	time_t		curr_time;
-	char	   *(*get_userid) (int) = username;
+	char	   *(*get_userid) (uid_t) = username;
 	char	   *uname_field = "USERNAME";
 	char	   *header_text;
 	char	   *env_top;

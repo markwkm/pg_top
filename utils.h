@@ -16,7 +16,7 @@
 
 int			atoiwi(char *);
 char	   *itoa(int);
-char	   *itoa7(int);
+char	   *itoa7(uid_t);
 int			digits(int);
 char	   *printable(char *);
 char	   *strecpy(char *, char *);

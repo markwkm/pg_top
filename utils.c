@@ -111,7 +111,7 @@ itoa(int val)
  */
 
 char *
-itoa7(int val)
+itoa7(uid_t val)
 
 {
 	register char *ptr;

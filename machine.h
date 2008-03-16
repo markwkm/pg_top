@@ -68,7 +68,7 @@ struct system_info
 	int			P_ACTIVE;		/* number of procs considered "active" */
 	int		   *procstates;
 	int64_t		   *cpustates;
-	int	   *memory;
+	long	   *memory;
 	long	   *swap;
 };
 

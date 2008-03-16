@@ -1021,7 +1021,7 @@ cpustates_tag()
 }
 
 void
-i_cpustates(int *states)
+i_cpustates(int64_t *states)
 
 {
 	int			value;
@@ -1073,7 +1073,7 @@ i_cpustates(int *states)
 }
 
 void
-u_cpustates(int *states)
+u_cpustates(int64_t *states)
 
 {
 	int			value;
