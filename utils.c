@@ -396,10 +396,10 @@ percentages(int cnt, int64_t *out, int64_t *new, int64_t *old, int64_t *diffs)
 
 {
 	register int i;
-	register long change;
-	register long total_change;
-	register long *dp;
-	long		half_total;
+	register int64_t change;
+	register int64_t total_change;
+	register int64_t *dp;
+	int64_t		half_total;
 
 	/* initialization */
 	total_change = 0;
@@ -411,8 +411,7 @@ percentages(int cnt, int64_t *out, int64_t *new, int64_t *old, int64_t *diffs)
 		if ((change = *new - *old) < 0)
 		{
 			/* this only happens when the counter wraps */
-			change = (int)
-				((unsigned long) *new - (unsigned long) *old);
+			change = (int64_t) ((int64_t) *new - (int64_t) *old);
 		}
 		total_change += (*dp++ = change);
 		*old++ = *new++;
@@ -428,7 +427,7 @@ percentages(int cnt, int64_t *out, int64_t *new, int64_t *old, int64_t *diffs)
 	half_total = total_change / 2l;
 	for (i = 0; i < cnt; i++)
 	{
-		*out++ = (int) ((*diffs++ * 1000 + half_total) / total_change);
+		*out++ = (int64_t) ((*diffs++ * 1000 + half_total) / total_change);
 	}
 
 	/* return the total in case the caller wants to use it */
