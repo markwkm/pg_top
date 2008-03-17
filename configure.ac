@@ -124,7 +124,7 @@ fi
 
 # checks for header files
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdarg.h termcap.h sys/resource.h sys/time.h], [], [
+AC_CHECK_HEADERS([stdarg.h sys/resource.h sys/time.h], [], [
         AC_MSG_ERROR([could not locate termcap or curses headers])
 ])
 AC_HEADER_TIME
