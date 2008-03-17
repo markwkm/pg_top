@@ -261,7 +261,7 @@ char	   *procstatenames[] =
 	NULL
 };
 
-int			cpu_states[CPUSTATES];
+int64_t			cpu_states[CPUSTATES];
 char	   *cpustatenames[] =
 {"idle", "user", "kernel", "iowait", "swap", NULL};
 
@@ -367,11 +367,15 @@ getkval(unsigned long offset,
 		int size,
 		char *refstr)
 {
+#ifdef DEBUG
 	dprintf("getkval(%08x, %08x, %d, %s)\n", offset, ptr, size, refstr);
+#endif /* DEBUG */
 
 	if (kvm_read(kd, offset, (char *) ptr, size) != size)
 	{
+#ifdef DEBUG
 		dprintf("getkval: read failed\n");
+#endif /* DEBUG */
 		if (*refstr == '!')
 		{
 			return (0);
@@ -383,7 +387,9 @@ getkval(unsigned long offset,
 		}
 	}
 
+#ifdef DEBUG
 	dprintf("getkval read %d (%08x)\n", *ptr);
+#endif /* DEBUG */
 
 	return (1);
 
@@ -417,7 +423,9 @@ machine_init(struct statics * statics)
 		/* save the error message: we may need it later */
 		p = strerror(errno);
 	}
+#ifdef DEBUG
 	dprintf("kvm_open: fd %d\n", kd);
+#endif /* DEBUG */
 
 	/*
 	 * turn off super group/user privs - but beware; we might want the privs
@@ -435,7 +443,9 @@ machine_init(struct statics * statics)
 		return (-1);
 	}
 	kcid = kc->kc_chain_id;
+#ifdef DEBUG
 	dprintf("kstat_open: chain %d\n", kcid);
+#endif /* DEBUG */
 #endif
 
 	/* fill in the statics information */
@@ -591,8 +601,10 @@ kstat_safe_retrieve(kstat_t ** ksp,
 	kid_t		new_kcid;
 	int			changed;
 
+#ifdef DEBUG
 	dprintf("kstat_safe_retrieve(%08x -> %08x, %s, %d, %s, %08x)\n",
 			ksp, *ksp, module, instance, name, buf);
+#endif /* DEBUG */
 
 	ks = *ksp;
 	do
@@ -618,8 +630,10 @@ kstat_safe_retrieve(kstat_t ** ksp,
 		/* if the chain changed, update it */
 		if (new_kcid != kcid)
 		{
+#ifdef DEBUG
 			dprintf("kstat_safe_retrieve: chain changed to %d...updating\n",
 					new_kcid);
+#endif /* DEBUG */
 			changed = 1;
 			kcid = kstat_chain_update(kc);
 		}
@@ -651,8 +665,10 @@ kstat_safe_namematch(int num, kstat_t ** ksparg, char *name, void *buf, int size
 	int			changed;
 	char	   *cbuf;
 
+#ifdef DEBUG
 	dprintf("kstat_safe_namematch(%d, %08x, %s, %08x, %d)\n",
 			num, ksp, name, buf, size);
+#endif /* DEBUG */
 
 	namelen = strlen(name);
 
@@ -678,8 +694,10 @@ kstat_safe_namematch(int num, kstat_t ** ksparg, char *name, void *buf, int size
 					/* if the chain changed, update it */
 					if (new_kcid != kcid)
 					{
+#ifdef DEBUG
 						dprintf("kstat_safe_namematch: chain changed to %d...updating\n",
 								new_kcid);
+#endif /* DEBUG */
 						changed = 1;
 						kcid = kstat_chain_update(kc);
 
@@ -696,7 +714,9 @@ kstat_safe_namematch(int num, kstat_t ** ksparg, char *name, void *buf, int size
 		}
 	} while (changed);
 
+#ifdef DEBUG
 	dprintf("kstat_safe_namematch returns %d\n", count);
+#endif /* DEBUG */
 
 	return count;
 }
@@ -713,7 +733,9 @@ get_avenrun(int avenrun[3])
 	int			status;
 	kstat_named_t *kn;
 
+#ifdef DEBUG
 	dprintf("get_avenrun(%08x)\n", avenrun);
+#endif /* DEBUG */
 
 	if ((status = kstat_safe_retrieve(&ks_system_misc,
 									  "unix", 0, "system_misc", NULL)) == 0)
@@ -731,7 +753,9 @@ get_avenrun(int avenrun[3])
 			avenrun[2] = kn->value.ui32;
 		}
 	}
+#ifdef DEBUG
 	dprintf("get_avenrun returns %d\n", status);
+#endif /* DEBUG */
 	return (status);
 #else							/* !USE_KSTAT */
 
@@ -785,9 +809,9 @@ get_nproc()
 #endif
 }
 
-unsigned int
+int64_t
 			(*
-	  get_cpustats(int *cnt, unsigned int (*cp_stats)[CPUSTATES]))[CPUSTATES]
+	  get_cpustats(int *cnt, int64_t (*cp_stats)[CPUSTATES]))[CPUSTATES]
 
 {
 #ifdef USE_KSTAT
@@ -796,11 +820,12 @@ unsigned int
 	static unsigned int nelems = 0;
 	cpu_stat_t *cpu_stat_p;
 	int			i,
-				ret,
 				cpu_num;
-	unsigned int (*cp_stats_p)[CPUSTATES];
+	int64_t (*cp_stats_p)[CPUSTATES];
 
+#ifdef DEBUG
 	dprintf("get_cpustats(%d -> %d, %08x)\n", cnt, *cnt, cp_stats);
+#endif /* DEBUG */
 
 	while (nelems > 0 ?
 		   (cpu_num = kstat_safe_namematch(nelems,
@@ -811,7 +836,9 @@ unsigned int
 		   (cpu_num = get_ncpus()) > 0)
 	{
 		/* reallocate the arrays */
+#ifdef DEBUG
 		dprintf("realloc from %d to %d\n", nelems, cpu_num);
+#endif /* DEBUG */
 		nelems = cpu_num;
 		if (cpu_ks != NULL)
 		{
@@ -829,49 +856,57 @@ unsigned int
 	if (cpu_num > *cnt)
 	{
 		/* yes, so realloc their array, too */
+#ifdef DEBUG
 		dprintf("realloc array from %d to %d\n", *cnt, cpu_num);
+#endif /* DEBUG */
 		*cnt = cpu_num;
-		cp_stats = (unsigned int (*)[CPUSTATES]) realloc(cp_stats,
-								 cpu_num * sizeof(unsigned int) * CPUSTATES);
+		cp_stats = (int64_t (*)[CPUSTATES]) realloc(cp_stats,
+								 cpu_num * sizeof(int64_t) * CPUSTATES);
 	}
 
 	cpu_stat_p = cpu_stat;
 	cp_stats_p = cp_stats;
 	for (i = 0; i < cpu_num; i++)
 	{
+#ifdef DEBUG
 		dprintf("cpu %d %08x: idle %u, user %u, syscall %u\n", i, cpu_stat_p,
 				cpu_stat_p->cpu_sysinfo.cpu[0],
 				cpu_stat_p->cpu_sysinfo.cpu[1],
 				cpu_stat_p->cpu_sysinfo.syscall);
+#endif /* DEBUG */
 
-		(*cp_stats_p)[CPU_IDLE] = cpu_stat_p->cpu_sysinfo.cpu[CPU_IDLE];
-		(*cp_stats_p)[CPU_USER] = cpu_stat_p->cpu_sysinfo.cpu[CPU_USER];
-		(*cp_stats_p)[CPU_KERNEL] = cpu_stat_p->cpu_sysinfo.cpu[CPU_KERNEL];
-		(*cp_stats_p)[CPUSTATE_IOWAIT] = cpu_stat_p->cpu_sysinfo.wait[W_IO] +
+		(*cp_stats_p)[CPU_IDLE] = (int64_t) cpu_stat_p->cpu_sysinfo.cpu[CPU_IDLE];
+		(*cp_stats_p)[CPU_USER] = (int64_t) cpu_stat_p->cpu_sysinfo.cpu[CPU_USER];
+		(*cp_stats_p)[CPU_KERNEL] = (int64_t) cpu_stat_p->cpu_sysinfo.cpu[CPU_KERNEL];
+		(*cp_stats_p)[CPUSTATE_IOWAIT] = (int64_t) cpu_stat_p->cpu_sysinfo.wait[W_IO] +
 			cpu_stat_p->cpu_sysinfo.wait[W_PIO];
-		(*cp_stats_p)[CPUSTATE_SWAP] = cpu_stat_p->cpu_sysinfo.wait[W_SWAP];
+		(*cp_stats_p)[CPUSTATE_SWAP] = (int64_t) cpu_stat_p->cpu_sysinfo.wait[W_SWAP];
 		cp_stats_p++;
 		cpu_stat_p++;
 	}
 
 	cpucount = cpu_num;
 
+#ifdef DEBUG
 	dprintf("get_cpustats sees %d cpus and returns %08x\n", cpucount, cp_stats);
+#endif /* DEBUG */
 
 	return (cp_stats);
 #else							/* !USE_KSTAT */
 	int			i;
 	struct cpu	cpu;
-	unsigned int (*cp_stats_p)[CPUSTATES];
+	int64_t (*cp_stats_p)[CPUSTATES];
 
 	/* do we have more cpus than our caller? */
 	if (cpucount > *cnt)
 	{
 		/* yes, so realloc their array, too */
+#ifdef DEBUG
 		dprintf("realloc array from %d to %d\n", *cnt, cpucount);
+#endif /* DEBUG */
 		*cnt = cpucount;
-		cp_stats = (unsigned int (*)[CPUSTATES]) realloc(cp_stats,
-								cpucount * sizeof(unsigned int) * CPUSTATES);
+		cp_stats = (int64_t (*)[CPUSTATES]) realloc(cp_stats,
+								cpucount * sizeof(int64_t) * CPUSTATES);
 	}
 
 	cp_stats_p = cp_stats;
@@ -882,12 +917,12 @@ unsigned int
 			/* get struct cpu for this processor */
 			(void) getkval(cpu_offset[i], (int *) (&cpu), sizeof(struct cpu), "cpu");
 
-			(*cp_stats_p)[CPU_IDLE] = cpu.cpu_stat.cpu_sysinfo.cpu[CPU_IDLE];
-			(*cp_stats_p)[CPU_USER] = cpu.cpu_stat.cpu_sysinfo.cpu[CPU_USER];
-			(*cp_stats_p)[CPU_KERNEL] = cpu.cpu_stat.cpu_sysinfo.cpu[CPU_KERNEL];
-			(*cp_stats_p)[CPUSTATE_IOWAIT] = cpu.cpu_stat.cpu_sysinfo.wait[W_IO] +
+			(*cp_stats_p)[CPU_IDLE] = (int64_t) cpu.cpu_stat.cpu_sysinfo.cpu[CPU_IDLE];
+			(*cp_stats_p)[CPU_USER] = (int64_t) cpu.cpu_stat.cpu_sysinfo.cpu[CPU_USER];
+			(*cp_stats_p)[CPU_KERNEL] = (int64_t) cpu.cpu_stat.cpu_sysinfo.cpu[CPU_KERNEL];
+			(*cp_stats_p)[CPUSTATE_IOWAIT] = (int64_t) cpu.cpu_stat.cpu_sysinfo.wait[W_IO] +
 				cpu.cpu_stat.cpu_sysinfo.wait[W_PIO];
-			(*cp_stats_p)[CPUSTATE_SWAP] = cpu.cpu_stat.cpu_sysinfo.wait[W_SWAP];
+			(*cp_stats_p)[CPUSTATE_SWAP] = (int64_t) cpu.cpu_stat.cpu_sysinfo.wait[W_SWAP];
 			cp_stats_p++;
 		}
 	}
@@ -1040,15 +1075,11 @@ void
 get_system_info(struct system_info * si)
 {
 	int			avenrun[3];
-	static long freemem;
-	static long maxmem;
-	static int	swap_total;
-	static int	swap_free;
 
-	static long cp_time[CPUSTATES];
-	static long cp_old[CPUSTATES];
-	static long cp_diff[CPUSTATES];
-	static unsigned int (*cp_stats)[CPUSTATES] = NULL;
+	static int64_t cp_time[CPUSTATES];
+	static int64_t cp_old[CPUSTATES];
+	static int64_t cp_diff[CPUSTATES];
+	static int64_t (*cp_stats)[CPUSTATES] = NULL;
 	static int	cpus;
 	register int j,
 				i;
@@ -1105,7 +1136,9 @@ get_system_info(struct system_info * si)
 	si->cpustates = cpu_states;
 	si->memory = memory_stats;
 
+#ifdef DEBUG
 	dprintf("get_system_info returns\n");
+#endif /* DEBUG */
 }
 
 static struct handle handle;
@@ -1158,7 +1191,6 @@ get_process_info(
 
 	/* set up flags which define what we are going to select */
 	show_idle = sel->idle;
-	show_system = sel->system;
 	show_uid = sel->uid != -1;
 	show_fullcmd = sel->fullcmd;
 
@@ -1658,8 +1690,8 @@ getptable(struct prpsinfo * baseptr, PGresult * pgresult)
  *				security problem.  It validates requests for the "kill"
  *				and "renice" commands.
  */
-int
-proc_owner(int pid)
+uid_t
+proc_owner(pid_t pid)
 {
 	register struct prpsinfo *p;
 	int			i;
@@ -1720,7 +1752,9 @@ reallocproc(int n)
 	if (n < maxprocs)
 		return;
 
+#ifdef DEBUG
 	dprintf("reallocproc(%d): reallocating from %d\n", n, maxprocs);
+#endif /* DEBUG */
 
 	maxprocs = n;
 
