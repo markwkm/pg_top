@@ -96,15 +96,15 @@ AC_SUBST(DBCFLAGS)
 AC_SUBST(DBLDFLAGS)
 
 # checks for libraries
-AC_SEARCH_LIBS(kstat, kstat_open)
-AC_SEARCH_LIBS(kvm, kvm_open)
-AC_SEARCH_LIBS(elf, elf32_getphdr)
+AC_CHECK_LIB(kstat, kstat_open)
+AC_CHECK_LIB(kvm, kvm_open)
+AC_CHECK_LIB(elf, elf32_getphdr)
 # -lmld -lmach
-AC_SEARCH_LIBS(mach, vm_statistics)
+AC_CHECK_LIB(mach, vm_statistics)
 AC_SEARCH_LIBS(tgetent, termcap curses ncurses)
-AC_SEARCH_LIBS(m, exp)
+AC_CHECK_LIB(m, exp)
 
-AC_SEARCH_LIBS(resolv, inet_aton, AC_DEFINE(HAVE_INET_ATON, 1,
+AC_CHECK_LIB(resolv, inet_aton, AC_DEFINE(HAVE_INET_ATON, 1,
         [inet_aton is already defined]))
 
 # check for libraries required by extension
