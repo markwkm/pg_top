@@ -197,12 +197,7 @@ else
 	sunos4*)	MODULE=sunos4;;
 	sysv4*)		MODULE=svr4;;
 	sysv5*)		MODULE=svr5;;
-	darwin*)
-	    echo "macosx"
-	    echo "The macosx module is untested.  Use at your own risk."
-	    echo "If you really want to use this module, please run configure as follows:"
-	    echo "    ./configure --with-module=macosx"
-	    AC_MSG_ERROR([macosx module unsupported]);;
+	darwin*)	MODULE=macosx;;
 	*)  echo "none"
 	    echo "Configure doesn't recognize this system and doesn't know"
 	    echo "what module to assign to it.  Help the cause and run the"

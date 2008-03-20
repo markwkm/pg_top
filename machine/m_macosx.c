@@ -35,7 +35,6 @@
  * MacOS kernel stuff
  */
 
-#include <kvm.h>
 #include <fcntl.h>
 #include <sys/dkstat.h>
 #include <sys/sysctl.h>
@@ -131,10 +130,10 @@ static long memory_stats[7];
 
 host_cpu_load_info_data_t cpuload;
 
-static long cp_time[CPU_STATE_MAX];
-static long cp_old[CPU_STATE_MAX];
-static long cp_diff[CPU_STATE_MAX];
-static int	cpu_states[CPU_STATE_MAX];
+static int64_t cp_time[CPU_STATE_MAX];
+static int64_t cp_old[CPU_STATE_MAX];
+static int64_t cp_diff[CPU_STATE_MAX];
+static int64_t	cpu_states[CPU_STATE_MAX];
 
 /*
  * types
@@ -667,7 +666,6 @@ get_process_info(struct system_info * si,
 
 	/* set up flags which define what we are going to select */
 	show_idle = sel->idle;
-	show_system = sel->system;
 	show_uid = sel->uid != -1;
 	show_command = sel->command != NULL;
 	show_fullcmd = sel->fullcmd;
@@ -948,11 +946,8 @@ proc_compare(const void *pp1, const void *pp2)
  *		and "renice" commands.
  */
 
-int
-proc_owner(pid)
-
-int			pid;
-
+uid_t
+proc_owner(pid_t pid)
 {
 	register int cnt;
 	register struct macos_proc **prefp;
