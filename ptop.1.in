@@ -77,6 +77,9 @@ By default, ptop displays both active and idle processes.
 List all available color tags and the current set of tests used for
 color highlighting, then exit.
 .TP
+.B \-W
+Forces psql to prompt for a password before connecting to a database.
+.TP
 .B \-b
 Use \*(lqbatch\*(rq mode.  In this mode, all input from the terminal is
 ignored.  Interrupt characters (such as ^C and ^\e) still have an effect.
