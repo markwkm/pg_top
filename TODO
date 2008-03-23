@@ -4,3 +4,51 @@
 * Use a stored procedure to get system statistics so that ptop can be run
   remotely, as opposed to running ptop locally in order to access the
   operating systems process table.
+
+* Display status in the executor using pstack/dtract/gstack.
+
+* Display elapsed time of currently running query.
+
+* Display SQL statement type currently executing, i.e. SELECT, UPDATE,
+  VACUUM, etc.
+
+* Display summary statistics for queries per second, average query cpu time,
+  average query elapsed time, etc.
+
+* Display i/o statistics per process.
+
+* Renamed number of processs to be number of connections since that is more
+  accurate:
+
+  5 processes: 1 running, 4 sleeping
+
+  to
+
+  5 connections: 1 running, 4 sleeping
+
+* Display summary statistics for connections such as total number of idles
+  connections, etc.
+
+* Display summary statistics for locks such as total number of granted locks,
+  total number of ungranted locks, etc.
+
+* Display summary statistics for listener information such as total number of
+  entries in pg_listener, distinct number of entries in pg_listener, etc.
+
+* Display screen database statistics:
+
+  SELECT datname,
+         SUM(numbackends) AS numbackends,
+         SUM(blks_read) AS reads,
+         SUM(tup_fetched) AS fetches,
+         SUM(tup_inserte + tup_update + tup_deleted) AS alterations
+  FROM pg_stat_database
+  GROUP BY datname HAVING SUM(numbackends) > 0
+  ORDER BY (SUM(blks_read) + SUM(tup_fetched) +
+            SUM(tup_inserted + tup_updated + tup_deleted)) DESC LIMIT 5;
+
+     datname   | numbackends | reads | fetches | alterations 
+  -------------+-------------+-------+---------+-------------
+   pgbenchtest |           1 |  3085 |  321558 |      485894
+
+* Display the size of each database.
