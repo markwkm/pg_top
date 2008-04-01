@@ -5,7 +5,7 @@
 .TH PTOP 1 Local
 .UC 4
 .SH NAME
-ptop \- display and update information about the ptop cpu PostgreSQL processes
+ptop \- display and update information about the top cpu PostgreSQL processes
 .SH SYNOPSIS
 .B ptop
 [
