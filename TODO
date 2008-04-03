@@ -1,8 +1,8 @@
 * Test on more platforms.  Development has primarily been on Linux and some
   attempts have been made on FreeBSD and Solaris.
 
-* Use a stored procedure to get system statistics so that ptop can be run
-  remotely, as opposed to running ptop locally in order to access the
+* Use a stored procedure to get system statistics so that pg_top can be run
+  remotely, as opposed to running pg_top locally in order to access the
   operating systems process table.
 
 * Display status in the executor using pstack/dtract/gstack.

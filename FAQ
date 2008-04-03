@@ -1,4 +1,4 @@
-								  ptop
+								  pg_top
 							 Version 3.6.1
 
 							   Mark Wong
@@ -9,10 +9,10 @@
 
      GENERAL
 
- 1.  What is ptop? 
+ 1.  What is pg_top? 
 
-	ptop is 'top' for PostgreSQL. It is derived from Unix Top. Similar to top,
-	ptop allows you to monitor PostgreSQL processes. It also allows you to:
+	pg_top is 'top' for PostgreSQL. It is derived from Unix Top. Similar to top,
+	pg_top allows you to monitor PostgreSQL processes. It also allows you to:
 
     * View currently running SQL statement of a process.
     * View query plan of a currently running SELECT statement.
@@ -20,17 +20,17 @@
     * View user table statistics.
     * View user index statistics.
 
- 2.  Where do I get the latest version of ptop? 
+ 2.  Where do I get the latest version of pg_top? 
 
 	 If you have mercurial, you can download the latest version from SourceForge:
 	 
-	 hg clone http://ptop.sourceforge.net/cgi-bin/hgwebdir.cgi/ptop
+	 hg clone http://ptop.sourceforge.net/cgi-bin/hgwebdir.cgi/pg_top
 
- 3.  Is there a web page for ptop? 
+ 3.  Is there a web page for pg_top? 
 
 	 http://ptop.projects.postgresql.org/
 
- 4.  Is there a mailing list or on-line bulletin board for ptop? 
+ 4.  Is there a mailing list or on-line bulletin board for pg_top? 
 
 	 Subscribe or browse the archives of ptop-hackers at:
 
@@ -41,7 +41,7 @@
 	 A full statement concerning top and the year 2000 can be found in the file
 	 "Y2K" included with the distribution.
 
- 6.  Will there be another major release of ptop? Will there be a ptop
+ 6.  Will there be another major release of pg_top? Will there be a pg_top
      version 4? 
 
      We hope so!  Depends on how much fun we have. :)
@@ -53,10 +53,10 @@
 
      COMPILING
 
- 8.  We just upgraded our operating system to a new version and ptop broke.
+ 8.  We just upgraded our operating system to a new version and pg_top broke.
      What should we do? 
 
-     Recompile it. ptop is very sensitive to changes in internal kernel
+     Recompile it. pg_top is very sensitive to changes in internal kernel
      data structures. It is not uncommon for a new version of the
      operating system to include changes to kernel data structures.
 

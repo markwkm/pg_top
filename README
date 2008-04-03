@@ -1,4 +1,4 @@
-								  ptop
+								  pg_top
 							 Version 3.6.1
 
 							   Mark Wong
@@ -8,11 +8,11 @@
 If you do not want to read this entire file, then at least read
 the section at the end entitled "KNOWN PROBLEMS".
 
-If you are having any problems getting ptop to work, please read the
+If you are having any problems getting pg_top to work, please read the
 file "FAQ" *before* contacting me.  Thank you.
 
-ptop is 'top' for PostgreSQL. It is derived from Unix Top. Similar to top, ptop
-allows you to monitor PostgreSQL processes. It also allows you to:
+pg_top is 'top' for PostgreSQL. It is derived from Unix Top. Similar to top,
+pg_top allows you to monitor PostgreSQL processes. It also allows you to:
 
     * View currently running SQL statement of a process.
     * View query plan of a currently running SELECT statement.
@@ -20,24 +20,24 @@ allows you to monitor PostgreSQL processes. It also allows you to:
     * View user table statistics.
     * View user index statistics.
 
-CAVEAT: version 3 of ptop has internal commands that kill and renice
-processes.  Although I have taken steps to insure that ptop makes
+CAVEAT: version 3 of pg_top has internal commands that kill and renice
+processes.  Although I have taken steps to insure that pg_top makes
 appropriate checks with these commands, I cannot guarantee that these
-internal commands are totally secure.  IF YOU INSTALL ptop SET-USER-ID
+internal commands are totally secure.  IF YOU INSTALL pg_top SET-USER-ID
 TO ROOT, YOU DO SO AT YOUR OWN RISK!  I realize that some operating
-systems will require ptop to run setuid root, and I will do everything
-I can to make sure that ptop is a secure setuid program.
+systems will require pg_top to run setuid root, and I will do everything
+I can to make sure that pg_top is a secure setuid program.
 
-To compile and install "ptop", read the file "INSTALL" and follow the
+To compile and install "pg_top", read the file "INSTALL" and follow the
 directions and advice contained therein.
 
-If you make any kind of change to "ptop" that you feel would be
+If you make any kind of change to "pg_top" that you feel would be
 beneficial to others who use this program, or if you find and fix a bug,
 please send me the change.
 
 Be sure to read the FAQ enclosed with the distrubution.  It contains
 answers to the most commonly asked questions about the configuration,
-installation, and operation of ptop.
+installation, and operation of pg_top.
 
 
 AVAILABILITY
@@ -48,7 +48,7 @@ http://ptop.projects.postgresql.org/
 
 If you have mercurial, you can download the source code from SourceForge:
 
-hg clone http://ptop.sourceforge.net/cgi-bin/hgwebdir.cgi/ptop
+hg clone http://ptop.sourceforge.net/cgi-bin/hgwebdir.cgi/pg_top
 
 
 KNOWN PROBLEMS:
@@ -64,7 +64,7 @@ When the operating system is upgraded, the include files that are part
 of the gcc package MUST also be updated.  Gcc maintains its own
 include files.  Even a minor OS upgrade can involve changes to some of
 the kernel's internal data structures, which are defined in include
-files in "sys".  ptop is very sensitive to these changes.  If you are
+files in "sys".  pg_top is very sensitive to these changes.  If you are
 compiling with gcc and experience any sort of strange problems, please
 make sure the include files you are using are up to date BEFORE
 sending me a bug report.  Look in the gcc source distribution for the
@@ -91,7 +91,7 @@ pub in Portland, OR, USA.
 
 LICENSE
 
-ptop is distributed free of charge under the same terms as the BSD
+pg_top is distributed free of charge under the same terms as the BSD
 license.  For an official statement, please refer to the file "LICENSE"
 which should be included with the source distribution.
 

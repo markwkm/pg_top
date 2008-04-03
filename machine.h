@@ -10,7 +10,7 @@
 #include <time.h>
 #include <sys/types.h>
 
-#include "ptop.h"
+#include "pg_top.h"
 #include "pg.h"
 
 /*

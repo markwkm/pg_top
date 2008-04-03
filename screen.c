@@ -19,7 +19,7 @@
  */
 
 #include "os.h"
-#include "ptop.h"
+#include "pg_top.h"
 
 #include <sys/ioctl.h>
 #ifdef CBREAK

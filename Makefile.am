@@ -6,11 +6,11 @@ AM_LDFLAGS = $(DBLDFLAGS)
 sigdesc.h: sigconv.awk $(SIGNAL_H)
 	$(AWK) -f $(srcdir)/sigconv.awk $(SIGNAL_H) > sigdesc.h 
 
-bin_PROGRAMS = ptop
+bin_PROGRAMS = pg_top
 
-ptop_SOURCES = color.c commands.c display.c getopt.c screen.c sprompt.c pg.c \
-		ptop.c username.c utils.c version.c
-EXTRA_ptop_SOURCES = \
+pg_top_SOURCES = color.c commands.c display.c getopt.c screen.c sprompt.c pg.c \
+		pg_top.c username.c utils.c version.c
+EXTRA_pg_top_SOURCES = \
 		machine/m_aix43.c \
 		machine/m_aix5.c \
 		machine/m_decosf1.c \
@@ -31,10 +31,10 @@ EXTRA_ptop_SOURCES = \
 		machine/m_sunos5.c \
 		machine/m_svr4.c \
 		machine/m_svr5.c
-ptop_LDADD = @OBJ@
-ptop_DEPENDENCIES = @OBJ@
+pg_top_LDADD = @OBJ@
+pg_top_DEPENDENCIES = @OBJ@
 
-man_MANS = ptop.1
+man_MANS = pg_top.1
 
 EXTRA_DIST = \
 		FAQ \
@@ -60,7 +60,7 @@ EXTRA_DIST = \
 		pg.h \
 		pg_trace.h \
 		port.h \
-		ptop.h \
+		pg_top.h \
 		screen.h \
 		sigconv.awk \
 		sigdesc.h \

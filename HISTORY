@@ -14,6 +14,7 @@ Changes
        display either cumulative or differential statistics.
      * Fixed support for OS X, tested on v10.4.x, v10.5.x.
      * Added support for OpenBSD, tested on v4.2.
+     * Rename 'ptop' to 'pg_top' to fit PostgreSQL naming conventions.
 
 Release 3.6.1
 

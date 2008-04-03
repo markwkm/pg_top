@@ -1,6 +1,6 @@
 # configure.ac
 AC_PREREQ(2.59)
-AC_INIT(ptop, 3.6.2-beta2, ptop-hackers@pgfoundry.org)
+AC_INIT(pg_top, 3.6.2-beta3, ptop-hackers@pgfoundry.org)
 
 echo "Configuring $PACKAGE_STRING"
 
@@ -291,5 +291,5 @@ AC_SUBST(INSTALL_OPTS_PROG)
 # wrapup
 
 AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([ptop.1])
+AC_CONFIG_FILES([pg_top.1])
 AC_OUTPUT

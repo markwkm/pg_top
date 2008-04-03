@@ -10,7 +10,7 @@
  */
 
 #include "config.h"
-#include "ptop.h"
+#include "pg_top.h"
 
 char *
 version_string()

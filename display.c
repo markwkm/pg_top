@@ -31,7 +31,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 
-#include "ptop.h"
+#include "pg_top.h"
 #include "machine.h"
 #include "screen.h"				/* interface to screen package */
 #include "layout.h"				/* defines for screen position layout */

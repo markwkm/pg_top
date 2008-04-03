@@ -1,13 +1,13 @@
-.\" NOTE:  changes to the manual page for "ptop" should be made in the
-.\"        file "ptop.1.in" and NOT in the file "ptop.1".
+.\" NOTE:  changes to the manual page for "pg_top" should be made in the
+.\"        file "pg_top.1.in" and NOT in the file "pg_top.1".
 .nr N 10
 .nr D 5
 .TH PTOP 1 Local
 .UC 4
 .SH NAME
-ptop \- display and update information about the top cpu PostgreSQL processes
+pg_top \- display and update information about the top cpu PostgreSQL processes
 .SH SYNOPSIS
-.B ptop
+.B pg_top
 [
 .B \-ITWbcinqu
 ] [
@@ -38,7 +38,7 @@ ptop \- display and update information about the top cpu PostgreSQL processes
 .\" Just in case these number registers aren't set yet...
 .if \nN==0 .nr N 10
 .if \nD==0 .nr D 5
-.I ptop
+.I pg_top
 displays the top processes on the system and periodically updates this
 information.
 .if \nN==-1 \
@@ -53,7 +53,7 @@ is given, then the top
 .I number
 processes will be displayed instead of the default.
 .PP
-.I ptop
+.I pg_top
 makes a distinction between terminals that support advanced capabilities
 and those that do not.  This
 distinction affects the choice of defaults for certain options.  In the
@@ -61,7 +61,7 @@ remainder of this document, an \*(lqintelligent\*(rq terminal is one that
 supports cursor addressing, clear screen, and clear to end of line.
 Conversely, a \*(lqdumb\*(rq terminal is one that does not support such
 features.  If the output of
-.I ptop
+.I pg_top
 is redirected to a file, it acts as if it were being run on a dumb
 terminal.
 .SH OPTIONS
@@ -71,7 +71,7 @@ Turn off the use of color in the display.
 .TP
 .B \-I
 Do not display idle processes.
-By default, ptop displays both active and idle processes.
+By default, pg_top displays both active and idle processes.
 .TP
 .B \-T
 List all available color tags and the current set of tests used for
@@ -104,14 +104,14 @@ mode.
 .TP
 .B \-q
 Renice
-.I ptop
+.I pg_top
 to -20 so that it will run faster.  This can be used when the system is
 being very sluggish to improve the possibility of discovering the problem.
 This option can only be used by root.
 .TP
 .B \-u
 Do not take the time to map uid numbers to usernames.  Normally,
-.I ptop
+.I pg_top
 will read as much of the file \*(lq/etc/passwd\*(rq as is necessary to map
 all the user id numbers it encounters into login names.  This option
 disables all that, while possibly decreasing execution time.  The uid
@@ -120,7 +120,7 @@ numbers are displayed instead of the names.
 .B \-v
 Write version number information to stderr then exit immediately.
 No other processing takes place when this option is used.  To see current
-revision information while ptop is running, use the help command \*(lq?\*(rq.
+revision information while pg_top is running, use the help command \*(lq?\*(rq.
 .TP
 .BI \-s time
 Set the delay between screen updates to
@@ -140,7 +140,7 @@ Show only
 displays, then exit.  A display is considered to be one update of the
 screen.  This option allows the user to select the number of displays he
 wants to see before
-.I ptop
+.I pg_top
 automatically exits.  For intelligent terminals, no upper limit
 is set.  The default is 1 for dumb terminals.
 .TP
@@ -183,20 +183,20 @@ will negate the first.  Thus a user who has the environment variable
 set to \*(lq\-I\*(rq may use the command \*(lqtop \-I\*(rq to see idle processes.
 .SH "INTERACTIVE MODE"
 When
-.I ptop
+.I pg_top
 is running in \*(lqinteractive mode\*(rq, it reads commands from the
 terminal and acts upon them accordingly.  In this mode, the terminal is
 put in \*(lqCBREAK\*(rq, so that a character will be
 processed as soon as it is typed.  Almost always, a key will be
 pressed when
-.I ptop
+.I pg_top
 is between displays; that is, while it is waiting for
 .I time
 seconds to elapse.  If this is the case, the command will be
 processed and the display will be updated immediately thereafter
 (reflecting any changes that the command may have specified).  This
 happens even if the command was incorrect.  If a key is pressed while 
-.I ptop
+.I pg_top
 is in the middle of updating the display, it will finish the update and
 then process the command.  Some commands require additional information,
 and the user will be prompted accordingly.  While typing this information
@@ -224,7 +224,7 @@ Change the number of displays to show (prompt for new number).
 Remember that the next display counts as one, so typing
 .B d1
 will make
-.I ptop
+.I pg_top
 show one final display and then immediately exit.
 .IP "\fBh\fP\ or\ \fB?\fP"
 Display a summary of the commands (help screen).  Version information
@@ -284,7 +284,7 @@ id.)
 .TP
 .B q
 Quit
-.IR ptop.
+.IR pg_top.
 .TP
 .B R
 Display user table statistics.
@@ -315,7 +315,7 @@ Display user index statistics.
 .SH "THE DISPLAY"
 The actual display varies depending on the specific variant of Unix
 that the machine is running.  This description may not exactly match
-what is seen by ptop running on this particular machine.  Differences
+what is seen by pg_top running on this particular machine.  Differences
 are listed at the end of this manual entry.
 .PP
 The top few lines of the display show general information
@@ -333,7 +333,7 @@ It also includes information about physical and virtual memory allocation.
 The remainder of the screen displays information about individual
 processes.  This display is similar in spirit to
 .IR ps (1)
-but it is not exactly the same.  The columns displayed by ptop will
+but it is not exactly the same.  The columns displayed by pg_top will
 differ slightly between operating systems.  Generally, the following
 fields are displayed:
 .TP
@@ -373,7 +373,7 @@ Percentage of available cpu time used by this process.
 .B COMMAND
 Name of the command that the process is currently running.
 .SH COLOR
-ptop supports the use of ANSI color in its output. By default, color is
+pg_top supports the use of ANSI color in its output. By default, color is
 available but not used.  The environment variable
 .B TOPCOLORS
 specifies colors to use and conditions for which they should be used.
@@ -418,7 +418,7 @@ be specified with no lower and upper limits, specifically
 .B header=,#
 followed by the ANSI color code.
 .PP
-You can see a list of color codes recognized by this installation of ptop
+You can see a list of color codes recognized by this installation of pg_top
 with the
 .B \-T
 option.  This will also show the current set of tests used for
@@ -434,7 +434,7 @@ PTOPCOLORS	color specification
 As with
 .IR ps (1),
 things can change while
-.I ptop
+.I pg_top
 is collecting information for an update.  The picture it gives is only a
 close approximation to reality.
 .SH "SEE ALSO"

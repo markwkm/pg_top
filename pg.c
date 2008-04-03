@@ -5,7 +5,7 @@
 
 #include "display.h"
 #include "pg.h"
-#include "ptop.h"
+#include "pg_top.h"
 
 char	   *index_ordernames[] = {
 	"idx_scan", "idx_tup_fetch", "idx_tup_read", NULL
