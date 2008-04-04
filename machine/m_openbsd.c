@@ -29,7 +29,7 @@
  *          Patch for process wait display by Jarl F. Greipsland <jarle@idt.unit.no>
  *	    Patch for -DORDER by Kenneth Stailey <kstailey@disclosure.com>
  *	    Patch for new swapctl(2) by Tobias Weingartner <weingart@openbsd.org>
- *	    Adapted for ptop by Mark Wong <markwkm@gmail.com>
+ *	    Adapted for pg_top by Mark Wong <markwkm@gmail.com>
  */
 
 #include <sys/types.h>
@@ -44,7 +44,7 @@
 #include <err.h>
 #include <errno.h>
 
-#include "ptop.h"
+#include "pg_top.h"
 #include "display.h"
 #include "machine.h"
 #include "utils.h"

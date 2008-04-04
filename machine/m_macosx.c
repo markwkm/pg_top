@@ -27,7 +27,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include "os.h"
-#include "ptop.h"
+#include "pg_top.h"
 #include "machine.h"
 #include "utils.h"
 

@@ -64,7 +64,7 @@
 typedef int pid_t;
 #endif
 
-#include "ptop.h"
+#include "pg_top.h"
 #include "machine.h"
 #include "utils.h"
 

@@ -35,7 +35,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
-#include "ptop.h"
+#include "pg_top.h"
 #include "machine.h"
 
 #ifdef IRIX64

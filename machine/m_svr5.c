@@ -55,7 +55,7 @@
 #include <sys/tspriocntl.h>
 #include <sys/var.h>
 
-#include "ptop.h"
+#include "pg_top.h"
 #include "machine.h"
 #include "utils.h"
 

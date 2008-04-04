@@ -65,7 +65,7 @@
 #define pr_onpro	pr_filler[5]
 #endif
 
-#include "ptop.h"
+#include "pg_top.h"
 #include "machine.h"
 #include <stdio.h>
 #include <fcntl.h>

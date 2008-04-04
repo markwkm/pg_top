@@ -15,7 +15,7 @@ space (as well as file table and other resources).  Thus
 multiple threads appear as separate processes in most system
 utilities (see
 .IR clone (2)).
-This version of ptop detects child thread processes and does not
+This version of pg_top detects child thread processes and does not
 display them separately.  Instead of displaying threads individually,
 an extra column "THR" shows the number of thread processes for a
 parent process.  The cpu time and percentages are added to the

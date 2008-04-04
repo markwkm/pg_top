@@ -43,7 +43,7 @@
 #include <sys/var.h>
 #include <sys/sysi86.h>
 
-#include "ptop.h"
+#include "pg_top.h"
 #include "machine.h"
 #include "utils.h"
 #include "loadavg.h"

@@ -9,7 +9,7 @@ display indicating which processor each running process is assigned
 to.  Information about physical memory is displayed on the memory
 status line, but information about virtual memory is not available.
 
-Due to incompatabilities in kernel data structures, a ptop executable
+Due to incompatabilities in kernel data structures, a pg_top executable
 compiled on a Sun 4 multiprocessor architecture machine (sun4m) will
 not run correctly on a uniprocessor architecture machine (sun4), and
 vice versa.  You will have to compile and maintain separate executables

@@ -74,7 +74,7 @@ struct mbuf;
 								 * below */
 
 
-#include "ptop.h"
+#include "pg_top.h"
 #include "machine.h"
 #include "utils.h"
 
