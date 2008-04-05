@@ -511,7 +511,7 @@ get_process_info(struct system_info * si,
 	{
 		pgresult = PQexec(pgconn, QUERY_PROCESSES);
 		nproc = PQntuples(pgresult);
-		pbase = (struct kinfo_proc *) malloc(sizeof(struct kinfo_proc *));
+		pbase = (struct kinfo_proc *) malloc(sizeof(struct kinfo_proc) * nproc);
 	}
 	PQfinish(pgconn);
 
