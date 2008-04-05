@@ -1,5 +1,5 @@
 /*
- * top - a top users display for Unix
+ * pg_top - a top PostgreSQL users display for Unix
  *
  * SYNOPSIS:  PowerPC running AIX 5.1 or higher
  *
@@ -630,7 +630,7 @@ char	   *refstr;
 
 	if (lseek(kmem, offset, SEEK_SET) != offset)
 	{
-		fprintf(stderr, "top: lseek failed\n");
+		fprintf(stderr, "pg_top: lseek failed\n");
 		quit(2);
 	}
 
@@ -640,7 +640,7 @@ char	   *refstr;
 			return 0;
 		else
 		{
-			fprintf(stderr, "top: kvm_read for %s: %s\n", refstr,
+			fprintf(stderr, "pg_top: kvm_read for %s: %s\n", refstr,
 					sys_errlist[errno]);
 			quit(2);
 		}

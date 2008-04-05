@@ -1,11 +1,11 @@
 /*
- * top - a top users display for Unix
+ * pg_top - a top PostgreSQL users display for Unix
  *
  * SYNOPSIS:  any hp9000 running hpux version 7 or earlier
  *
  * DESCRIPTION:
  * This is the machine-dependent module for Hpux 6.5 and 7.0.
- * This makes top work on the following systems:
+ * This makes pg_top work on the following systems:
  *	hp9000s300
  *	hp9000s700
  *	hp9000s800
@@ -260,7 +260,7 @@ struct statics *statics;
 	(void) nlist(VMUNIX, nlst);
 	if (nlst[0].n_type == 0)
 	{
-		fprintf(stderr, "top: nlist failed\n");
+		fprintf(stderr, "pg_top: nlist failed\n");
 		return (-1);
 	}
 
@@ -318,7 +318,7 @@ struct statics *statics;
 	/* Just in case ... */
 	if (pbase == (struct proc *) NULL || pref == (struct proc **) NULL)
 	{
-		fprintf(stderr, "top: can't allocate sufficient memory\n");
+		fprintf(stderr, "pg_top: can't allocate sufficient memory\n");
 		return (-1);
 	}
 
@@ -854,7 +854,7 @@ setpriority(a, b, c)
  * proc_owner(pid) - returns the uid that owns process "pid", or -1 if
  *		the process does not exist.
  *		It is EXTREMLY IMPORTANT that this function work correctly.
- *		If top runs setuid root (as in SVR4), then this function
+ *		If pg_top runs setuid root (as in SVR4), then this function
  *		is the only thing that stands in the way of a serious
  *		security problem.  It validates requests for the "kill"
  *		and "renice" commands.

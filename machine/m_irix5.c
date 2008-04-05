@@ -1,5 +1,5 @@
 /*
- * top - a top users display for Unix
+ * pg_top - a top PostgreSQL users display for Unix
  *
  * SYNOPSIS:  any uniprocessor, 32 bit SGI machine running IRIX 5.3
  *

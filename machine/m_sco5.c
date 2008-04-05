@@ -1,5 +1,5 @@
 /*
- * top - a top users display for Unix
+ * pg_top - a top PostgreSQL users display for Unix
  *
  * SYNOPSIS:  SCO UNIX OpenServer5
  *
@@ -220,7 +220,7 @@ machine_init(struct statics * statics)
 	/* get the list of symbols we want to access in the kernel */
 	if (nlist(VMUNIX, nlst) == -1)
 	{
-		fprintf(stderr, "top: nlist failed\n");
+		fprintf(stderr, "pg_top: nlist failed\n");
 		return -1;
 	}
 	/* make sure they were all found */
@@ -248,7 +248,7 @@ machine_init(struct statics * statics)
 	pref = (struct proc **) malloc(v.v_proc * sizeof(struct proc *));
 	if (pbase == (struct proc *) NULL || pref == (struct proc **) NULL)
 	{
-		fprintf(stderr, "top: cannot allocate sufficient memory\n");
+		fprintf(stderr, "pg_top: cannot allocate sufficient memory\n");
 		return -1;
 	}
 

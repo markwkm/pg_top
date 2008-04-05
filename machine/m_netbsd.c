@@ -1,7 +1,7 @@
 /*	$NetBSD: m_netbsd15.c,v 1.16 2002/03/23 01:28:11 thorpej Exp $	*/
 
 /*
- * top - a top users display for Unix
+ * pg_top - a top PostgreSQL users display for Unix
  *
  * SYNOPSIS:  For a NetBSD-1.5 (or later) system
  *
@@ -25,11 +25,11 @@
  *	NetBSD-1.5
  * -
  * Doesn't include separate CPU states line per cpu on multiprocessor
- * systems like the NetBSD version of top, but that requires some
+ * systems like the NetBSD version of pg_top, but that requires some
  * recent kernel support.  This module forsakes that functionality as
  * a tradeoff for working on older versions of NetBSD.
  * -
- * top does not need to be installed setuid or setgid with this module.
+ * pg_top does not need to be installed setuid or setgid with this module.
  *
  * LIBS: -lkvm
  *
@@ -232,7 +232,7 @@ struct statics *statics;
 	size = sizeof(ccpu);
 	if (sysctl(mib, 2, &ccpu, &size, NULL, 0) == -1)
 	{
-		fprintf(stderr, "top: sysctl kern.ccpu failed: %s\n",
+		fprintf(stderr, "pg_top: sysctl kern.ccpu failed: %s\n",
 				strerror(errno));
 		return (-1);
 	}
@@ -242,7 +242,7 @@ struct statics *statics;
 	size = sizeof(clockinfo);
 	if (sysctl(mib, 2, &clockinfo, &size, NULL, 0) == -1)
 	{
-		fprintf(stderr, "top: sysctl kern.clockrate failed: %s\n",
+		fprintf(stderr, "pg_top: sysctl kern.clockrate failed: %s\n",
 				strerror(errno));
 		return (-1);
 	}
@@ -315,7 +315,7 @@ struct system_info *si;
 	ssize = sizeof(cp_time);
 	if (sysctl(mib, 2, cp_time, &ssize, NULL, 0) < 0)
 	{
-		fprintf(stderr, "top: sysctl kern.cp_time failed: %s\n",
+		fprintf(stderr, "pg_top: sysctl kern.cp_time failed: %s\n",
 				strerror(errno));
 		quit(23);
 	}
@@ -337,7 +337,7 @@ struct system_info *si;
 	ssize = sizeof(uvmexp);
 	if (sysctl(mib, 2, &uvmexp, &ssize, NULL, 0) < 0)
 	{
-		fprintf(stderr, "top: sysctl vm.uvmexp2 failed: %s\n",
+		fprintf(stderr, "pg_top: sysctl vm.uvmexp2 failed: %s\n",
 				strerror(errno));
 		quit(23);
 	}
@@ -439,7 +439,7 @@ int			compare_index;
 							sizeof(struct kinfo_proc2 *) * (onproc = nproc));
 	if (pref == NULL || pbase == NULL)
 	{
-		(void) fprintf(stderr, "top: Out of memory.\n");
+		(void) fprintf(stderr, "pg_top: Out of memory.\n");
 		quit(23);
 	}
 	/* get a pointer to the states summary array */
@@ -819,7 +819,7 @@ struct proc **pp1,
  * proc_owner(pid) - returns the uid that owns process "pid", or -1 if
  *		the process does not exist.
  *		It is EXTREMLY IMPORTANT that this function work correctly.
- *		If top runs setuid root (as in SVR4), then this function
+ *		If pg_top runs setuid root (as in SVR4), then this function
  *		is the only thing that stands in the way of a serious
  *		security problem.  It validates requests for the "kill"
  *		and "renice" commands.

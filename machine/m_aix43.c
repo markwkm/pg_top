@@ -1,5 +1,5 @@
 /*
- * top - a top users display for Unix
+ * pg_top - a top PostgreSQL users display for Unix
  *
  * SYNOPSIS:  PowerPC running AIX 4.2 or higher
  *
@@ -248,7 +248,7 @@ machine_init(struct statics * statics)
 
 	if (!p_proc || !p_info || !pref)
 	{
-		fprintf(stderr, "top: not enough memory\n");
+		fprintf(stderr, "pg_top: not enough memory\n");
 		return -1;
 	}
 
@@ -317,7 +317,7 @@ get_system_info(struct system_info * si)
 		total += cp_diff[i];
 	}
 
-	total = total / 1000.0;		/* top itself will correct this */
+	total = total / 1000.0;		/* pg_top itself will correct this */
 	for (i = 0; i < CPU_NTIMES; i++)
 	{
 		cpu_states[i] = cp_diff[i] / total;
@@ -526,7 +526,7 @@ getkval(unsigned long offset, caddr_t ptr, int size, char *refstr)
 
 	if (lseek(kmem, offset, SEEK_SET) != offset)
 	{
-		fprintf(stderr, "top: lseek failed\n");
+		fprintf(stderr, "pg_top: lseek failed\n");
 		quit(2);
 	}
 
@@ -536,7 +536,7 @@ getkval(unsigned long offset, caddr_t ptr, int size, char *refstr)
 			return 0;
 		else
 		{
-			fprintf(stderr, "top: kvm_read for %s: %s\n", refstr,
+			fprintf(stderr, "pg_top: kvm_read for %s: %s\n", refstr,
 					sys_errlist[errno]);
 			quit(2);
 		}

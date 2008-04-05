@@ -1,5 +1,5 @@
 /*
- * top - a top users display for Unix
+ * pg_top - a top PostgreSQL users display for Unix
  *
  * SYNOPSIS:  Any SGI machine running IRIX 6.2 and up
  *
@@ -190,7 +190,7 @@ extern char *ordernames[];
  * 6.5 seems to have changed the semantics of prpsinfo.pr_state
  * so we rely, (like ps does) on the char value pr_sname.
  * The order we use here is what may be most interesting
- * to top users:  Most interesting state on top, least on bottom.
+ * to pg_top users:  Most interesting state on pg_top, least on bottom.
  * 'S' (sleeping) is the most common case so I put it _after_
  * zombie, even though it is more "active" than zombie.
  *
@@ -541,7 +541,7 @@ format_state(struct prpsinfo * pp)
 		/*
 		 * Alert: 6.2 (MP only?) binary incompatibility pp->pr_sonproc
 		 * apparently (?) has a different offset on 6.2 machines... I've seen
-		 * cases where a 6.4 compiled top running on 6.2 printed a garbage
+		 * cases where a 6.4 compiled pg_top running on 6.2 printed a garbage
 		 * CPU-id. To be safe, I print the CPU-id only if it falls within
 		 * range [0..numcpus-1]
 		 */

@@ -1,11 +1,11 @@
 /*
- * top - a top users display for Unix
+ * pg_top - a top PostgreSQL users display for Unix
  *
  * SYNOPSIS:  any Sun running SunOS version 4.x
  *
  * DESCRIPTION:
  * This is the machine-dependent module for SunOS 4.x.
- * This makes top work on the following systems:
+ * This makes pg_top work on the following systems:
  *	SunOS 4.0
  *	SunOS 4.0.1
  *	SunOS 4.0.2 (including 386i architecture)
@@ -269,7 +269,7 @@ struct statics *statics;
 	register int pagesize;
 
 	/* initialize the kernel interface */
-	if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "top")) == NULL)
+	if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "pg_top")) == NULL)
 	{
 		perror("kvm_open");
 		return (-1);
@@ -278,7 +278,7 @@ struct statics *statics;
 	/* get the list of symbols we want to access in the kernel */
 	if ((i = kvm_nlist(kd, nlst)) < 0)
 	{
-		fprintf(stderr, "top: nlist failed\n");
+		fprintf(stderr, "pg_top: nlist failed\n");
 		return (-1);
 	}
 
@@ -349,7 +349,7 @@ struct statics *statics;
 	/* Just in case ... */
 	if (pbase == (struct proc *) NULL || pref == (struct proc **) NULL)
 	{
-		fprintf(stderr, "top: can't allocate sufficient memory\n");
+		fprintf(stderr, "pg_top: can't allocate sufficient memory\n");
 		return (-1);
 	}
 
@@ -359,7 +359,7 @@ struct statics *statics;
 	physpage = (struct page *) malloc(epages - pages);
 	if (physpage == NULL)
 	{
-		fprintf(stderr, "top: can't allocate sufficient memory\n");
+		fprintf(stderr, "pg_top: can't allocate sufficient memory\n");
 		return (-1);
 	}
 
@@ -792,7 +792,7 @@ char	   *refstr;
 		}
 		else
 		{
-			fprintf(stderr, "top: kvm_read for %s: %s\n",
+			fprintf(stderr, "pg_top: kvm_read for %s: %s\n",
 					refstr, sys_errlist[errno]);
 			quit(23);
 			/* NOTREACHED */
@@ -930,7 +930,7 @@ struct proc **pp2;
  * proc_owner(pid) - returns the uid that owns process "pid", or -1 if
  *		the process does not exist.
  *		It is EXTREMLY IMPORTANT that this function work correctly.
- *		If top runs setuid root (as in SVR4), then this function
+ *		If pg_top runs setuid root (as in SVR4), then this function
  *		is the only thing that stands in the way of a serious
  *		security problem.  It validates requests for the "kill"
  *		and "renice" commands.

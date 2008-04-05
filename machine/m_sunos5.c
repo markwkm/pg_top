@@ -1,12 +1,12 @@
 /*
- * top - a top users display for Unix
+ * pg_top - a top PostgreSQL users display for Unix
  *
  * SYNOPSIS:  Any Sun running SunOS 5.x (Solaris 2.x)
  *
  * DESCRIPTION:
  * This is the machine-dependent module for SunOS 5.x (Solaris 2).
  * There is some support for MP architectures.
- * This makes top work on all revisions of SunOS 5 from 5.0
+ * This makes pg_top work on all revisions of SunOS 5 from 5.0
  * through 5.9 (otherwise known as Solaris 9).	It has not been
  * tested on SunOS 5.10.
  *
@@ -382,7 +382,7 @@ getkval(unsigned long offset,
 		}
 		else
 		{
-			fprintf(stderr, "top: kvm_read for %s: %s\n", refstr, strerror(errno));
+			fprintf(stderr, "pg_top: kvm_read for %s: %s\n", refstr, strerror(errno));
 			quit(23);
 		}
 	}
@@ -1685,7 +1685,7 @@ getptable(struct prpsinfo * baseptr, PGresult * pgresult)
  * proc_owner(pid) - returns the uid that owns process "pid", or -1 if
  *				the process does not exist.
  *				It is EXTREMLY IMPORTANT that this function work correctly.
- *				If top runs setuid root (as in SVR4), then this function
+ *				If pg_top runs setuid root (as in SVR4), then this function
  *				is the only thing that stands in the way of a serious
  *				security problem.  It validates requests for the "kill"
  *				and "renice" commands.

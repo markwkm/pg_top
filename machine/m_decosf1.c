@@ -1,5 +1,5 @@
 /*
- * top - a top users display for Unix
+ * pg_top - a top PostgreSQL users display for Unix
  *
  * SYNOPSIS:  OSF/1, Digital Unix 4.0, Compaq Tru64 5.0
  *
@@ -301,7 +301,7 @@ struct statics *statics;
 	if (pbase == (struct osf1_top_proc *) NULL ||
 		pref == (struct osf1_top_proc **) NULL)
 	{
-		fprintf(stderr, "top: cannot allocate sufficient memory\n");
+		fprintf(stderr, "pg_top: cannot allocate sufficient memory\n");
 		return (-1);
 	}
 
@@ -848,7 +848,7 @@ struct osf1_top_proc **pp2;
  * proc_owner(pid) - returns the uid that owns process "pid", or -1 if
  *		the process does not exist.
  *		It is EXTREMLY IMPORTANT that this function work correctly.
- *		If top runs setuid root (as in SVR4), then this function
+ *		If pg_top runs setuid root (as in SVR4), then this function
  *		is the only thing that stands in the way of a serious
  *		security problem.  It validates requests for the "kill"
  *		and "renice" commands.
@@ -986,7 +986,7 @@ struct osf1_top_proc *thisproc;
 }
 
 /* The reason for this function is that the system call will let
- * someone lower their own processes priority (because top is setuid :-(
+ * someone lower their own processes priority (because pg_top is setuid :-(
  * Yes, using syscall() is a hack, if you can come up with something
  * better, then I'd be thrilled to hear it. I'm not holding my breath,
  * though.

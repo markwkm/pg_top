@@ -1,5 +1,5 @@
 /*
- * top - a top users display for Unix
+ * pg_top - a top PostgreSQL users display for Unix
  *
  * SYNOPSIS:  For FreeBSD-2.x, 3.x, 4.x, and 5.x
  *
@@ -295,7 +295,7 @@ machine_init(struct statics * statics)
 	(void) kvm_nlist(kd, nlst);
 	if (nlst[0].n_type == 0)
 	{
-		fprintf(stderr, "top: nlist failed\n");
+		fprintf(stderr, "pg_top: nlist failed\n");
 		return (-1);
 	}
 
@@ -520,7 +520,7 @@ get_process_info(struct system_info * si,
 											  * (onproc = nproc));
 	if (pref == NULL)
 	{
-		(void) fprintf(stderr, "top: Out of memory.\n");
+		(void) fprintf(stderr, "pg_top: Out of memory.\n");
 		quit(23);
 	}
 	/* get a pointer to the states summary array */
@@ -804,7 +804,7 @@ getkval(unsigned long offset, int *ptr, int size, char *refstr)
 		}
 		else
 		{
-			fprintf(stderr, "top: kvm_read for %s: %s\n",
+			fprintf(stderr, "pg_top: kvm_read for %s: %s\n",
 					refstr, strerror(errno));
 			quit(23);
 		}
@@ -997,7 +997,7 @@ compare_prio(struct proc ** pp1, struct proc ** pp2)
  * proc_owner(pid) - returns the uid that owns process "pid", or -1 if
  *		the process does not exist.
  *		It is EXTREMLY IMPORTANT that this function work correctly.
- *		If top runs setuid root (as in SVR4), then this function
+ *		If pg_top runs setuid root (as in SVR4), then this function
  *		is the only thing that stands in the way of a serious
  *		security problem.  It validates requests for the "kill"
  *		and "renice" commands.

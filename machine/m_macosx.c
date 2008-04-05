@@ -294,7 +294,7 @@ load_thread_info(struct macos_proc * mp)
 
 
 /*
- * prototypes for functions which top needs
+ * prototypes for functions which pg_top needs
  */
 
 char	   *printable();
@@ -940,7 +940,7 @@ proc_compare(const void *pp1, const void *pp2)
  * proc_owner(pid) - returns the uid that owns process "pid", or -1 if
  *		the process does not exist.
  *		It is EXTREMLY IMPORTANT that this function work correctly.
- *		If top runs setuid root (as in SVR4), then this function
+ *		If pg_top runs setuid root (as in SVR4), then this function
  *		is the only thing that stands in the way of a serious
  *		security problem.  It validates requests for the "kill"
  *		and "renice" commands.
