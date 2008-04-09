@@ -511,7 +511,9 @@ get_process_info(struct system_info * si,
 	{
 		pgresult = PQexec(pgconn, QUERY_PROCESSES);
 		nproc = PQntuples(pgresult);
-		pbase = (struct kinfo_proc *) malloc(sizeof(struct kinfo_proc) * nproc);
+		if (nproc > onproc)
+			pbase = (struct kinfo_proc *)
+					realloc(pbase, sizeof(struct kinfo_proc) * nproc);
 	}
 	PQfinish(pgconn);
 
@@ -581,7 +583,6 @@ get_process_info(struct system_info * si,
 			}
 		}
 	}
-	free(pbase);
 	PQclear(pgresult);
 
 	/* if requested, sort the "interesting" processes */
