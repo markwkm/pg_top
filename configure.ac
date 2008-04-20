@@ -1,6 +1,6 @@
 # configure.ac
 AC_PREREQ(2.59)
-AC_INIT(pg_top, 3.6.2-beta3, ptop-hackers@pgfoundry.org)
+AC_INIT(pg_top, 3.6.2-beta4, ptop-hackers@pgfoundry.org)
 
 echo "Configuring $PACKAGE_STRING"
 
@@ -103,6 +103,8 @@ AC_SEARCH_LIBS(elf32_getphdr, elf)
 AC_SEARCH_LIBS(vm_statistics, mach)
 AC_SEARCH_LIBS(tgetent, termcap curses ncurses)
 AC_SEARCH_LIBS(exp, m)
+
+AC_SEARCH_LIBS(dlerror, dl)
 
 AC_SEARCH_LIBS(inet_aton, resolv, AC_DEFINE(HAVE_INET_ATON, 1,
         [inet_aton is already defined]))
