@@ -375,7 +375,7 @@ main(int argc, char *argv[])
 	ps.command = NULL;
 
 	/* get preset options from the environment */
-	if ((env_top = getenv("PTOP")) != NULL)
+	if ((env_top = getenv("PG_TOP")) != NULL)
 	{
 		av = preset_argv = argparse(env_top, &preset_argc);
 		ac = preset_argc;
@@ -579,10 +579,10 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 
 #ifdef ENABLE_COLOR
 	/* If colour has been turned on read in the settings. */
-	env_top = getenv("PTOPCOLOURS");
+	env_top = getenv("PG_TOPCOLOURS");
 	if (!env_top)
 	{
-		env_top = getenv("PTOPCOLORS");
+		env_top = getenv("PG_TOPCOLORS");
 	}
 	/* must do something about error messages */
 	color_env_parse(env_top);

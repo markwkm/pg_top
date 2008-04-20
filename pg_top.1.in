@@ -2,7 +2,7 @@
 .\"        file "pg_top.1.in" and NOT in the file "pg_top.1".
 .nr N 10
 .nr D 5
-.TH PTOP 1 Local
+.TH PG_TOP 1 Local
 .UC 4
 .SH NAME
 pg_top \- display and update information about the top cpu PostgreSQL processes
@@ -78,7 +78,7 @@ List all available color tags and the current set of tests used for
 color highlighting, then exit.
 .TP
 .B \-W
-Forces psql to prompt for a password before connecting to a database.
+Forces pg_top to prompt for a password before connecting to a database.
 .TP
 .B \-b
 Use \*(lqbatch\*(rq mode.  In this mode, all input from the terminal is
@@ -167,11 +167,11 @@ on an intelligent terminal is, in fact,
 .BI infinity .
 .PP
 The environment variable
-.B PTOP
+.B PG_TOP
 is examined for options before the command line is scanned.  This enables
 a user to set his or her own defaults.  The number of processes to display
 can also be specified in the environment variable
-.BR PTOP .
+.BR PG_TOP .
 The options
 .BR \-C ,
 .BR \-I ,
@@ -179,7 +179,7 @@ and
 .B \-u
 are actually toggles.  A second specification of any of these options
 will negate the first.  Thus a user who has the environment variable
-.B PTOP
+.B PG_TOP
 set to \*(lq\-I\*(rq may use the command \*(lqtop \-I\*(rq to see idle processes.
 .SH "INTERACTIVE MODE"
 When
@@ -428,8 +428,8 @@ William LeFebvre
 Mark Wong
 .SH ENVIRONMENT
 .DT
-PTOP		user-configurable defaults for options.
-PTOPCOLORS	color specification
+PG_TOP		user-configurable defaults for options.
+PG_TOPCOLORS	color specification
 .SH BUGS
 As with
 .IR ps (1),

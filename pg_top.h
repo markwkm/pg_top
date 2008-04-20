@@ -4,8 +4,8 @@
  *	General (global) definitions
  */
 
-#ifndef _PTOP_H_
-#define _PTOP_H_
+#ifndef _PG_TOPP_H_
+#define _PG_TOPP_H_
 
 /* Maximum number of columns allowed for display */
 #define MAX_COLS	255
@@ -87,4 +87,4 @@ void		reset_display();
 
 extern int	mode_stats;
 
-#endif   /* _PTOP_H_ */
+#endif   /* _PG_TOPP_H_ */

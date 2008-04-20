@@ -81,7 +81,7 @@
      This default has only changed about a dozen times, and I finally got
      tired of people whining about it. Go read the manual page for the
      current version and pay special attention to the description of the
-     "PTOP" environment variable.
+     "PG_TOP" environment variable.
 
 12.  We have so much memory in our machine that the memory status display
      (the fourth line) ends up being longer than 80 characters. This
