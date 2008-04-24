@@ -16,6 +16,7 @@ Changes
      * Added support for OpenBSD, tested on v4.2.
      * Rename 'ptop' to 'pg_top' to fit PostgreSQL naming conventions and
        avoid naming conflict with free pascal's source formatter 'ptop'.
+     * Recognize PGDATABASE, PGHOST, PGUSER, and PGPORT environment variables.
 
 Release 3.6.1
 
