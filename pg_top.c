@@ -355,6 +355,23 @@ main(int argc, char *argv[])
 	/* set the buffer for stdout */
 	setbuffer(stdout, stdoutbuf, Buffersize);
 
+	/* Get default values from the environment. */
+	env_top = getenv("PGDATABASE");
+	if (env_top != NULL)
+		sprintf(dbname, "dbname=%s", getenv("PGDATABASE"));
+
+	env_top = getenv("PGHOST");
+	if (env_top != NULL)
+		sprintf(socket, "host=%s", getenv("PGHOST"));
+
+	env_top = getenv("PGPORT");
+	if (env_top != NULL)
+		dbport = atoi(getenv("PGPORT"));
+
+	env_top = getenv("PGUSER");
+	if (env_top != NULL)
+		sprintf(dbusername, "user=%s", getenv("PGUSER"));
+
 	/* get our name */
 	if (argc > 0)
 	{
@@ -519,7 +536,7 @@ main(int argc, char *argv[])
 					break;
 
 				case 'd':		/* database name */
-					sprintf(dbname, "%s", optarg);
+					sprintf(dbname, "dbname=%s", optarg);
 					break;
 
 				case 'h':		/* socket location */
@@ -537,8 +554,8 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 		}
 
 		/* connect to the database */
-		sprintf(conninfo, "port=%d dbname=%s %s %s %s", dbport,
-				dbname, socket, dbusername, password);
+		sprintf(conninfo, "port=%d %s %s %s %s",
+				dbport, dbname, socket, dbusername, password);
 
 		/* get count of top processes to display (if any) */
 		if (optind < ac && *av[optind])
