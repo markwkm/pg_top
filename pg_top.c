@@ -545,7 +545,7 @@ main(int argc, char *argv[])
 
 				default:
 					fprintf(stderr, "\
-Top version %s\n\
+pg_top version %s\n\
 Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
           [-p PORT] [-U USER] [-d DBNAME] [-h HOSTNAME] [number]\n",
 							version_string(), myname);

@@ -76,7 +76,7 @@
      However, you have to *install* it first. Do this with the command
      "make install".
 
-11.  Top is (not) displaying idle processes and I don't (do) want it to. 
+11.  pg_top is (not) displaying idle processes and I don't (do) want it to. 
 
      This default has only changed about a dozen times, and I finally got
      tired of people whining about it. Go read the manual page for the
@@ -197,7 +197,7 @@
      (such as zero memory). 
 
      If you are running a 64-bit system, then you will want to make a
-     64-bit top binary. Top's configure script attempts to detect 64-bit
+     64-bit top binary. pg_top's configure script attempts to detect 64-bit
      systems, and will adjust the compilation options accordingly. If you
      configure and make a binary on a 32-bit system it will still run on a
      64-bit system, but may not produce the correct results. The same will
@@ -246,7 +246,7 @@
      wrong? 
 
      Your system probably uses the pseudo file system "/proc", which is by
-     default only accessible by root. Top needs to be installed setuid
+     default only accessible by root. pg_top needs to be installed setuid
      root on such systems if it is going to function correctly for normal
      users.
 
@@ -276,7 +276,7 @@
 
      If after reading all of this file and checking everything you can you
      are still stuck, then please use SourceForge to submit a support
-     request or a bug. Top is supported by the SourceForge project  named
+     request or a bug. pg_top is supported by the SourceForge project  named
      "unixtop". On SourceForge you will find defect tracking, a mailing
      list, and on-line forums. You can also contact the author through
      SourceForge.
