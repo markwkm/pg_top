@@ -3,7 +3,6 @@ char	   *copyright =
 
 /*
  *	Top users/processes display for Unix
- *	Version 3
  *
  *	This program may be freely redistributed,
  *	but this entire comment MUST remain intact.
@@ -49,6 +48,7 @@ char	   *copyright =
 
 #include "pg_top.h"
 #include "machine.h"
+#include "remote.h"
 #include "commands.h"
 #include "display.h"			/* interface to display package */
 #include "screen.h"				/* interface to screen package */
@@ -109,6 +109,11 @@ void		(*d_process) (int, char *) = i_process;
  * index statistics.
  */
 int			mode_stats = STATS_DIFF;
+
+/*
+ * Mode for monitoring a remote database system.
+ */
+int mode_remote = 0;
 
 /*
  *	reset_display() - reset all the display routine pointers so that entire
@@ -417,7 +422,7 @@ main(int argc, char *argv[])
 			optind = 1;
 		}
 
-		while ((i = getopt(ac, av, "CDITbcinquvh:s:d:U:o:Wp:x:z:")) != EOF)
+		while ((i = getopt(ac, av, "CDITbcinqruvh:s:d:U:o:Wp:x:z:")) != EOF)
 		{
 			switch (i)
 			{
@@ -483,7 +488,8 @@ main(int argc, char *argv[])
 					break;
 
 				case 's':
-					if ((delay = atoi(optarg)) < 0 || (delay == 0 && getuid() != 0))
+					if ((delay = atoi(optarg)) < 0 ||
+							(delay == 0 && getuid() != 0))
 					{
 						new_message(MT_standout | MT_delayed,
 									" Bad seconds delay (ignored)");
@@ -543,10 +549,14 @@ main(int argc, char *argv[])
 					sprintf(socket, "host=%s", optarg);
 					break;
 
+				case 'r':		/* remote mode */
+					mode_remote = 1;
+					break;
+
 				default:
 					fprintf(stderr, "\
 pg_top version %s\n\
-Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
+Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
           [-p PORT] [-U USER] [-d DBNAME] [-h HOSTNAME] [number]\n",
 							version_string(), myname);
 					exit(1);
@@ -606,10 +616,13 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 #endif
 
 	/* call the platform-specific init */
-	if (machine_init(&statics) == -1)
-	{
+	if (mode_remote == 0)
+		i = machine_init(&statics);
+	else
+		i = machine_init_r(&statics);
+
+	if (i == -1)
 		exit(1);
-	}
 
 	/* determine sorting order index, if necessary */
 	if (order_name != NULL)
@@ -619,7 +632,8 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 			new_message(MT_standout | MT_delayed,
 						" This platform does not support arbitrary ordering");
 		}
-		else if ((order_index = string_index(order_name, statics.order_names)) == -1)
+		else if ((order_index = string_index(order_name,
+				statics.order_names)) == -1)
 		{
 			char	  **pp;
 
@@ -645,7 +659,10 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 	init_termcap(interactive);
 
 	/* get the string to use for the process area header */
-	header_text = header_processes = format_header(uname_field);
+	if (mode_remote == 0)
+		header_text = header_processes = format_header(uname_field);
+	else
+		header_text = header_processes = format_header_r(uname_field);
 
 #ifdef ENABLE_COLOR
 	/* Disable colours on non-smart terminals */
@@ -728,7 +745,8 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 	old_sigmask = sigblock(sigmask(SIGINT) | sigmask(SIGQUIT) |
 						   sigmask(SIGTSTP) | sigmask(SIGWINCH));
 #else
-	old_sigmask = sigblock(sigmask(SIGINT) | sigmask(SIGQUIT) | sigmask(SIGTSTP));
+	old_sigmask = sigblock(sigmask(SIGINT) | sigmask(SIGQUIT) |
+						   sigmask(SIGTSTP));
 #endif
 #endif
 
@@ -771,8 +789,16 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 	/* some systems require a warmup */
 	if (statics.flags.warmup)
 	{
-		get_system_info(&system_info);
-		(void) get_process_info(&system_info, &ps, 0, conninfo);
+		if (mode_remote == 0)
+		{
+			get_system_info(&system_info);
+			(void) get_process_info(&system_info, &ps, 0, conninfo);
+		}
+		else
+		{
+			get_system_info_r(&system_info, conninfo);
+			(void) get_process_info_r(&system_info, &ps, 0, conninfo);
+		}
 		timeout.tv_sec = 1;
 		timeout.tv_usec = 0;
 		select(0, NULL, NULL, NULL, &timeout);
@@ -788,15 +814,19 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 
 	while ((displays == -1) || (displays-- > 0))
 	{
-		/* get the current stats */
-		get_system_info(&system_info);
-
-		/* get the current set of processes */
-		processes =
-			get_process_info(&system_info,
-							 &ps,
-							 order_index,
-							 conninfo);
+		/* get the current stats and processes */
+		if (mode_remote == 0)
+		{
+			get_system_info(&system_info);
+			processes = get_process_info(&system_info, &ps, order_index,
+					conninfo);
+		}
+		else
+		{
+			get_system_info_r(&system_info, conninfo);
+			processes = get_process_info_r(&system_info, &ps, order_index,
+					conninfo);
+		}
 
 		/* display the load averages */
 		(*d_loadave) (system_info.last_pid,
@@ -871,16 +901,23 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 			switch (mode)
 			{
 				case MODE_INDEX_STATS:
-					pg_display_index_stats(conninfo, index_order_index, max_topn);
+					pg_display_index_stats(conninfo, index_order_index,
+							max_topn);
 					break;
 				case MODE_TABLE_STATS:
-					pg_display_table_stats(conninfo, table_order_index, max_topn);
+					pg_display_table_stats(conninfo, table_order_index,
+							max_topn);
 					break;
 				case MODE_PROCESSES:
 				default:
 					for (i = 0; i < active_procs; i++)
 					{
-						(*d_process) (i, format_next_process(processes, get_userid));
+						if (mode_remote == 0)
+							(*d_process) (i, format_next_process(processes,
+									get_userid));
+						else
+							(*d_process) (i, format_next_process_r(processes,
+									get_userid));
 					}
 			}
 		}
@@ -949,7 +986,8 @@ Usage: %s [-ITWbcinqu] [-x x] [-s x] [-o field] [-z username]\n\
 					timeout.tv_usec = 0;
 
 					/* wait for either input or the end of the delay period */
-					if (select(32, &readfds, (fd_set *) NULL, (fd_set *) NULL, &timeout) > 0)
+					if (select(32, &readfds, (fd_set *) NULL, (fd_set *) NULL,
+							&timeout) > 0)
 					{
 						int			newval;
 						char	   *errmsg;

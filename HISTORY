@@ -1,5 +1,9 @@
 Release Notes
 
+Release 3.7.0
+
+     * Added support for monitoring databases on remote systems.
+
 Release 3.6.2
 
 Changes
