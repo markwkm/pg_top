@@ -23,12 +23,12 @@
 		"FROM pg_memusage()"
 
 #define QUERY_PROCTAB \
-		"SELECT pid, comm, state, utime, stime, priority, nice, starttime,\n" \
-		"	 vsize, rss\n" \
+		"SELECT pid, comm, fullcomm, state, utime, stime, priority, \n" \
+		"       nice, starttime, vsize, rss\n" \
 		"FROM pg_proctab()"
 
-enum column { c_pid, c_comm, c_state, c_utime, c_stime, c_priority, c_nice,
-		c_starttime, c_vsize, c_rss };
+enum column { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
+		c_priority, c_nice, c_starttime, c_vsize, c_rss };
 
 #include "remote.h"
 #include "utils.h"
@@ -530,7 +530,11 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 
 		otime = proc->time;
 
-		proc->name = strdup(PQgetvalue(pgresult, i, c_comm));
+		if (sel->fullcmd && PQgetvalue(pgresult, i, c_fullcomm))
+			proc->name = strdup(PQgetvalue(pgresult, i, c_fullcomm));
+		else
+			proc->name = strdup(PQgetvalue(pgresult, i, c_comm));
+
 		switch (PQgetvalue(pgresult, i, c_state)[0])
 		{
 		case 'R':
