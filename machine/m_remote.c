@@ -11,23 +11,29 @@
 #include "pg.h"
 
 #define QUERY_CPUTIME \
-		"SELECT *\n" \
+		"SELECT user, nice, system, idle, iowait\n" \
 		"FROM pg_cputime()"
 
 #define QUERY_LOADAVG \
-		"SELECT *\n" \
+		"SELECT load1, load5, load15, last_pid\n" \
 		"FROM pg_loadavg()"
 
 #define QUERY_MEMUSAGE \
-		"SELECT *\n" \
+		"SELECT memused, memfree, memshared, membuffers, memcached,\n" \
+		"       swapused, swapfree, swapcached\n" \
 		"FROM pg_memusage()"
 
 #define QUERY_PROCTAB \
-		"SELECT pid, comm, fullcomm, state, utime, stime, priority, \n" \
-		"       nice, starttime, vsize, rss\n" \
+		"SELECT pid, comm, fullcomm, state, utime, stime, priority, nice,\n" \
+		"       starttime, vsize, rss\n" \
 		"FROM pg_proctab()"
 
-enum column { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
+enum column_cputime { c_cpu_user, c_cpu_nice, c_cpu_system, c_cpu_idle,
+		c_cpu_iowait };
+enum column_loadavg { c_load1, c_load5, c_load15, c_last_pid };
+enum column_memusage { c_memused, c_memfree, c_memshared, c_membuffers,
+		c_memcached, c_swapused, c_swapfree, c_swapcached};
+enum column_proctab { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
 		c_priority, c_nice, c_starttime, c_vsize, c_rss };
 
 #include "remote.h"
@@ -351,10 +357,10 @@ get_system_info_r(struct system_info *info, char *conninfo)
 	/* Get load averages. */
 	if (rows > 0)
 	{
-		info->load_avg[0] = atof(PQgetvalue(pgresult, 0, 0));
-		info->load_avg[1] = atof(PQgetvalue(pgresult, 0, 1));
-		info->load_avg[2] = atof(PQgetvalue(pgresult, 0, 2));
-		info->last_pid = atoi(PQgetvalue(pgresult, 0, 3));
+		info->load_avg[0] = atof(PQgetvalue(pgresult, 0, c_load1));
+		info->load_avg[1] = atof(PQgetvalue(pgresult, 0, c_load5));
+		info->load_avg[2] = atof(PQgetvalue(pgresult, 0, c_load15));
+		info->last_pid = atoi(PQgetvalue(pgresult, 0, c_last_pid));
 	}
 	else
 	{
@@ -372,11 +378,11 @@ get_system_info_r(struct system_info *info, char *conninfo)
 	}
 	if (rows > 0)
 	{
-		cp_time[0] = atol(PQgetvalue(pgresult, 0, 0));
-		cp_time[1] = atol(PQgetvalue(pgresult, 0, 1));
-		cp_time[2] = atol(PQgetvalue(pgresult, 0, 2));
-		cp_time[3] = atol(PQgetvalue(pgresult, 0, 3));
-		cp_time[4] = atol(PQgetvalue(pgresult, 0, 4));
+		cp_time[0] = atol(PQgetvalue(pgresult, 0, c_cpu_user));
+		cp_time[1] = atol(PQgetvalue(pgresult, 0, c_cpu_nice));
+		cp_time[2] = atol(PQgetvalue(pgresult, 0, c_cpu_system));
+		cp_time[3] = atol(PQgetvalue(pgresult, 0, c_cpu_idle));
+		cp_time[4] = atol(PQgetvalue(pgresult, 0, c_cpu_iowait));
 
 		/* convert cp_time counts to percentages */
 		percentages(NCPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
@@ -398,14 +404,14 @@ get_system_info_r(struct system_info *info, char *conninfo)
 	}
 	if (rows > 0)
 	{
-		memory_stats[MEMUSED] = atol(PQgetvalue(pgresult, 0, 0));
-		memory_stats[MEMFREE] = atol(PQgetvalue(pgresult, 0, 1));
-		memory_stats[MEMSHARED] = atol(PQgetvalue(pgresult, 0, 2));
-		memory_stats[MEMBUFFERS] = atol(PQgetvalue(pgresult, 0, 3));
-		memory_stats[MEMCACHED] = atol(PQgetvalue(pgresult, 0, 4));
-		swap_stats[SWAPUSED] = atol(PQgetvalue(pgresult, 0, 5));
-		swap_stats[SWAPFREE] = atol(PQgetvalue(pgresult, 0, 6));
-		swap_stats[SWAPCACHED] = atol(PQgetvalue(pgresult, 0, 7));
+		memory_stats[MEMUSED] = atol(PQgetvalue(pgresult, 0, c_memused));
+		memory_stats[MEMFREE] = atol(PQgetvalue(pgresult, 0, c_memfree));
+		memory_stats[MEMSHARED] = atol(PQgetvalue(pgresult, 0, c_memshared));
+		memory_stats[MEMBUFFERS] = atol(PQgetvalue(pgresult, 0, c_membuffers));
+		memory_stats[MEMCACHED] = atol(PQgetvalue(pgresult, 0, c_memcached));
+		swap_stats[SWAPUSED] = atol(PQgetvalue(pgresult, 0, c_swapused));
+		swap_stats[SWAPFREE] = atol(PQgetvalue(pgresult, 0, c_swapfree));
+		swap_stats[SWAPCACHED] = atol(PQgetvalue(pgresult, 0, c_swapcached));
 	}
 	else
 	{
