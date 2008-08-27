@@ -326,7 +326,7 @@ format_next_process_r(caddr_t handler)
 			format_k(p->size),
 			format_k(p->rss),
 			state_abbrev[p->state],
-			"",
+			format_time(p->time),
 			p->wcpu * 100.0,
 			p->pcpu * 100.0,
 			p->name);
