@@ -25,7 +25,7 @@
 
 #define QUERY_PROCTAB \
 		"SELECT pid, comm, fullcomm, state, utime, stime, priority, nice,\n" \
-		"       starttime, vsize, rss\n" \
+		"       starttime, vsize, rss, uid, username\n" \
 		"FROM pg_proctab()"
 
 enum column_cputime { c_cpu_user, c_cpu_nice, c_cpu_system, c_cpu_idle,
@@ -34,7 +34,7 @@ enum column_loadavg { c_load1, c_load5, c_load15, c_last_pid };
 enum column_memusage { c_memused, c_memfree, c_memshared, c_membuffers,
 		c_memcached, c_swapused, c_swapfree, c_swapcached};
 enum column_proctab { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
-		c_priority, c_nice, c_starttime, c_vsize, c_rss };
+		c_priority, c_nice, c_starttime, c_vsize, c_rss, c_uid, c_username };
 
 #include "remote.h"
 #include "utils.h"
@@ -109,6 +109,7 @@ struct top_proc
 	pid_t pid;
 	uid_t uid;
 	char *name;
+	char *username;
 	int pri;
 	int nice;
 	unsigned long size;
@@ -311,7 +312,7 @@ format_header_r(char *uname_field)
 }
 
 char *
-format_next_process_r(caddr_t handle, char *(*get_userid) (uid_t))
+format_next_process_r(caddr_t handler)
 {
 	static char fmt[MAX_COLS];/* static area where result is built */
 	struct top_proc *p = *nextactive++;
@@ -319,7 +320,7 @@ format_next_process_r(caddr_t handle, char *(*get_userid) (uid_t))
 	snprintf(fmt, sizeof(fmt),
 			"%5d %-8.8s %3d %4d %5s %5s %-5s %6s %5.2f%% %5.2f%% %s",
 			p->pid,
-			(*get_userid) (p->uid),
+			p->username,
 			p->pri < -99 ? -99 : p->pri,
 			p->nice,
 			format_k(p->size),
@@ -575,6 +576,9 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 				atol(PQgetvalue(pgresult, i, c_vsize)));
 		proc->rss = bytetok((unsigned long)
 				atol(PQgetvalue(pgresult, i, c_rss)));
+
+		proc->uid = atol(PQgetvalue(pgresult, i, c_uid));
+		proc->username = strdup(PQgetvalue(pgresult, i, c_username));
 
 		++total_procs;
 		++process_states[proc->state];

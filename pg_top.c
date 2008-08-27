@@ -916,8 +916,7 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 							(*d_process) (i, format_next_process(processes,
 									get_userid));
 						else
-							(*d_process) (i, format_next_process_r(processes,
-									get_userid));
+							(*d_process) (i, format_next_process_r(processes));
 					}
 			}
 		}
