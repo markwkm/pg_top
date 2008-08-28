@@ -28,6 +28,11 @@
 		"       starttime, vsize, rss, uid, username\n" \
 		"FROM pg_proctab()"
 
+#define QUERY_PG_PROC \
+		"SELECT COUNT(*)\n" \
+		"FROM pg_catalog.pg_proc\n" \
+		"WHERE proname = '%s'"
+
 enum column_cputime { c_cpu_user, c_cpu_nice, c_cpu_system, c_cpu_idle,
 		c_cpu_iowait };
 enum column_loadavg { c_load1, c_load5, c_load15, c_last_pid };
@@ -156,6 +161,7 @@ static int64_t cp_diff[NCPUSTATES];
 #define ORDERKEY_MEM	 if ((result = p2->size - p1->size) == 0)
 #define ORDERKEY_NAME	if ((result = strcmp(p1->name, p2->name)) == 0)
 
+int check_for_function(PGconn *, char *);
 int compare_cpu_r(struct top_proc **, struct top_proc **);
 int compare_size_r(struct top_proc **, struct top_proc **);
 int compare_res_r(struct top_proc **, struct top_proc **);
@@ -164,7 +170,35 @@ int compare_cmd_r(struct top_proc **, struct top_proc **);
 static void free_proc(struct top_proc *);
 static struct top_proc *new_proc();
 
-int (*proc_compares_r[])() =
+int
+check_for_function(PGconn *pgconn, char *procname)
+{
+	PGresult *pgresult = NULL;
+	int rows = 0;
+	int count;
+	char sql[128];
+
+	sprintf(sql, QUERY_PG_PROC, procname);
+	pgresult = PQexec(pgconn, sql);
+	rows = PQntuples(pgresult);
+	/* Don't need to clean up on error, the program will exit shortly after. */
+	if (rows == 0)
+	{
+		fprintf(stderr, "Error executing '%s'.\n", sql);
+		return -1;
+	}
+	count = atoi(PQgetvalue(pgresult, 0, 0));
+	if (count == 0) {
+		fprintf(stderr, "Stored function '%s' is missing.\n", procname);
+		return -1;
+	}
+	if (pgresult != NULL)
+		PQclear(pgresult);
+	return 0;
+}
+
+int
+(*proc_compares_r[])() =
 {
 	compare_cpu_r,
 	compare_size_r,
@@ -660,9 +694,27 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 }
 
 int
-machine_init_r(struct statics *statics)
+machine_init_r(struct statics *statics, char *conninfo)
 {
+	PGconn   *pgconn;
+
 	/* Make sure the remote system has the stored function installed. */
+	pgconn = connect_to_db(conninfo);
+	if (pgconn == NULL)
+	{
+		fprintf(stderr, "Cannot connect to database.\n");
+		return -1;
+	}
+
+	if (check_for_function(pgconn, "pg_cputime") != 0)
+		return -1;
+	if (check_for_function(pgconn, "pg_loadavg") != 0)
+		return -1;
+	if (check_for_function(pgconn, "pg_memusage") != 0)
+		return -1;
+	if (check_for_function(pgconn, "pg_proctab") != 0)
+		return -1;
+	PQfinish(pgconn);
 
 	/* fill in the statics information */
 	statics->procstate_names = procstatenames;

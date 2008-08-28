@@ -3,7 +3,7 @@
 
 #include "machine.h"
 
-int machine_init_r(struct statics *);
+int machine_init_r(struct statics *, char *);
 void get_system_info_r(struct system_info *, char *);
 caddr_t get_process_info_r(struct system_info *, struct process_select *, int,
 		char *);

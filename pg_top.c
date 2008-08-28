@@ -619,7 +619,7 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 	if (mode_remote == 0)
 		i = machine_init(&statics);
 	else
-		i = machine_init_r(&statics);
+		i = machine_init_r(&statics, conninfo);
 
 	if (i == -1)
 		exit(1);
