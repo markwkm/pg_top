@@ -5,6 +5,8 @@
   remotely, as opposed to running pg_top locally in order to access the
   operating systems process table.
 
+  Linux is done, more operating systems to go...
+
 * Display status in the executor using pstack/dtract/gstack.
 
 * Display elapsed time of currently running query.

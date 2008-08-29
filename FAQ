@@ -1,5 +1,5 @@
 								  pg_top
-							 Version 3.6.1
+							 Version 3.7.0
 
 							   Mark Wong
 
@@ -22,7 +22,8 @@
 
  2.  Where do I get the latest version of pg_top? 
 
-	 If you have mercurial, you can download the latest version from SourceForge:
+	 If you have mercurial, you can download the latest version from
+     SourceForge:
 	 
 	 hg clone http://ptop.sourceforge.net/cgi-bin/hgwebdir.cgi/pg_top
 
@@ -116,24 +117,9 @@
      files. See the previous question.
 
 
-     MACOSX PROBLEMS
-
-15.  I tried to configure top on my Mac OSX system and I got an error
-     claiming "macosx not supported". What up? 
-
-     Since I don't have full time root access to a Mac OSX system I cannot
-     provide effective support for the platform. MacOSX uses Mach, and it
-     is very difficult to extract accurate system and process information
-     from the system. It takes a lot of trial and error, along with root
-     access. I have included the most up-to-date version of the macosx
-     module in the distribution, but I do not claim that it works. If you
-     want to try to use it, you can configure with "./configure
-     --with-module=macosx".
-
-
      SUNOS PROBLEMS
 
-16.  I tried compiling top under SunOS version 4.1.x and it got compile
+15.  I tried compiling top under SunOS version 4.1.x and it got compile
      time errors or run time errors. Is there a patch? 
 
      If you try compiling top in a "System V environment" under SunOS
@@ -152,12 +138,12 @@
      /usr/ucb is not on your path before attempting to compile top under
      Solaris.
 
-17.  Is there somewhere I can get a pre-compiled package? 
+16.  Is there somewhere I can get a pre-compiled package?
 
      Yes. Although I don't provide pre-compiled binaries, you can get a
      Sun-style package from www.sunfreeware.com.
 
-18.  Under Solaris 2, when I type "make", the system says "language
+17.  Under Solaris 2, when I type "make", the system says "language
      optional software package not installed." What's going on? 
 
      You tried to compile with /usr/ucb/cc. Make sure /usr/ucb is not on
@@ -165,7 +151,7 @@
      your system. You need a compiler to make top. Either Sun's C compiler
      or the Gnu C compiler will work fine.
 
-19.  Under Solaris 2, when I run top as root it only shows root processes,
+18.  Under Solaris 2, when I run top as root it only shows root processes,
      or it only shows processes with a PID less than 1000. It refuses to
      show anything else. What do I do? 
 
@@ -174,7 +160,7 @@
      source-level compatability mode. You do not want that. Make sure that
      /usr/ucb is not on your path and try compiling top again.
 
-20.  Under Solaris 2, I compiled top using what I am sure is the correct
+19.  Under Solaris 2, I compiled top using what I am sure is the correct
      compiler but when I try to run it it complains about missing dynamic
      libraries. What is wrong? 
 
@@ -182,7 +168,7 @@
      you do, make sure that /usr/ucblib is not on the path anywhere. Then
      try compiling top again.
 
-21.  Under Solaris 2, when I try to run top it complains that it can't
+20.  Under Solaris 2, when I try to run top it complains that it can't
      open the library "libucb.so.1". So I changed the LIBS line in
      m_sunos5.c to include -R/usr/ucblib to make sure that the dynamic
      linker will look there when top runs. I figured this was just an
@@ -193,7 +179,7 @@
      Solaris 2. You probably compiled top with /usr/ucb/cc instead of the
      real C compiler. See FAQ 22 for more details.
 
-22.  On my 64-bit system some processes show up with incorrect information
+21.  On my 64-bit system some processes show up with incorrect information
      (such as zero memory). 
 
      If you are running a 64-bit system, then you will want to make a
@@ -205,7 +191,7 @@
      compile with that configuration on a 64-bit system. You must
      configure and compile on the same system.
 
-23.  Can I install both 32-bit and 64-bit binaries on a central file
+22.  Can I install both 32-bit and 64-bit binaries on a central file
      server and have machines which mount it automatically use the correct
      one? 
 
@@ -221,7 +207,7 @@
      determine the kernel type and run the top "binary" out of the correct
      subdirectory.
 
-24.  This version of top show less available swap space than previous
+23.  This version of top show less available swap space than previous
      versions. Why does it no longer match the output of the swap summary
      produced with "swap -s"? 
 
@@ -239,7 +225,7 @@
 
      SVR4-DERIVED PROBLEMS
 
-25.  When I run top on my SVR4-derived operating system, it displays all
+24.  When I run top on my SVR4-derived operating system, it displays all
      the system information at the top but does not display any process
      information (or only displays process information for my own
      processes). Yet when I run it as root, everything works fine. What's
@@ -253,7 +239,7 @@
 
      SVR42 PROBLEMS
 
-26.  The memory display doesn't work right. Why? 
+25.  The memory display doesn't work right. Why?
 
      This is a known bug with the svr42 module. The problem has been
      traced down to a potential bug in the "mem" driver. The author of the
@@ -262,7 +248,7 @@
 
      STILL STUCK
 
-27.  I'm still stuck. To whom do I report problems with top? 
+26.  I'm still stuck. To whom do I report problems with top?
 
      The most common problems are caused by top's sensitivity to internal
      kernel data structures. So make sure that you are using the right

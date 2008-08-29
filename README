@@ -1,12 +1,9 @@
 								  pg_top
-							 Version 3.6.1
+							 Version 3.7.0
 
 							   Mark Wong
 						and a cast of ... a few
 
-
-If you do not want to read this entire file, then at least read
-the section at the end entitled "KNOWN PROBLEMS".
 
 If you are having any problems getting pg_top to work, please read the
 file "FAQ" *before* contacting me.  Thank you.
@@ -49,38 +46,6 @@ http://ptop.projects.postgresql.org/
 If you have mercurial, you can download the source code from SourceForge:
 
 hg clone http://ptop.sourceforge.net/cgi-bin/hgwebdir.cgi/pg_top
-
-
-KNOWN PROBLEMS:
-
-Gnu CC
-
-(This section left in because it's probably still valid.)
-
-Compiling via Gnu CC continued to be the source of most of the
-questions I receive.  By far the most common mistake made by those
-attempting to compile top with Gnu CC is out of date include files.
-When the operating system is upgraded, the include files that are part
-of the gcc package MUST also be updated.  Gcc maintains its own
-include files.  Even a minor OS upgrade can involve changes to some of
-the kernel's internal data structures, which are defined in include
-files in "sys".  pg_top is very sensitive to these changes.  If you are
-compiling with gcc and experience any sort of strange problems, please
-make sure the include files you are using are up to date BEFORE
-sending me a bug report.  Look in the gcc source distribution for the
-shell script "fixincludes".
-
-MacOS X
-
-(Selena is working on this.)
-
-Since I don't have full time root access to a MacOS X system I cannot
-provide effective support for the platform.  MacOS X uses Mach, and it
-is very difficult to extract accurate system and process information
-from the system.  It takes a lot of trial and error, along with root
-access.  I have included the most up-to-date version of the macosx module
-in the distribution, but I do not claim that it works.  If you want to
-try to use it, you can configure with "./configure --with-module=macosx".
 
 
 GRATITUDE
