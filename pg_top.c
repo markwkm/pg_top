@@ -1127,6 +1127,13 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 
 #ifdef ENABLE_KILL
 									case CMD_kill:		/* kill program */
+										if (mode_remote == 1)
+										{
+											new_message(MT_standout, "Cannot kill when accessing a remote database.");
+											putchar('\r');
+											no_command = Yes;
+											break;
+										}
 										new_message(0, "kill ");
 										if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
 										{
@@ -1144,6 +1151,13 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 										break;
 
 									case CMD_renice:	/* renice program */
+										if (mode_remote == 1)
+										{
+											new_message(MT_standout, "Cannot renice when accessing a remote database.");
+											putchar('\r');
+											no_command = Yes;
+											break;
+										}
 										new_message(0, "renice ");
 										if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
 										{
