@@ -353,7 +353,7 @@ format_next_process_r(caddr_t handler)
 
 	snprintf(fmt, sizeof(fmt),
 			"%5d %-8.8s %3d %4d %5s %5s %-5s %6s %5.2f%% %5.2f%% %s",
-			p->pid,
+			(int) p->pid, /* Some OS's need to cast pid_t to int. */
 			p->username,
 			p->pri < -99 ? -99 : p->pri,
 			p->nice,

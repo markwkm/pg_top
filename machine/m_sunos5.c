@@ -19,10 +19,10 @@
  *				 Robert Boucher		<boucher@sofkin.ca>
  * CONTRIBUTORS: Marc Cohen			<marc@aai.com>
  *				 Charles Hedrick	<hedrick@geneva.rutgers.edu>
- *			 William L. Jones	<jones@chpc>
- *				 Petri Kutvonen			<kutvonen@cs.helsinki.fi>
- *			 Casper Dik				<casper.dik@sun.com>
- *				 Tim Pugh				<tpugh@oce.orst.edu>
+ *				 William L. Jones	<jones@chpc>
+ *				 Petri Kutvonen		<kutvonen@cs.helsinki.fi>
+ *				 Casper Dik			<casper.dik@sun.com>
+ *				 Tim Pugh			<tpugh@oce.orst.edu>
  */
 
 #define _KMEMUSER
@@ -1213,7 +1213,7 @@ get_process_info(
 			(show_system || ((pp->pr_flag & SSYS) == 0)))
 		{
 			total_procs++;
-			process_states[pp->pr_state]++;
+			process_states[(int) pp->pr_state]++;
 			if ((!ZOMBIE(pp)) &&
 				(show_idle || percent_cpu(pp) || (pp->pr_state == SRUN) || (pp->pr_state == SONPROC)) &&
 				(!show_uid || pp->pr_uid == (uid_t) sel->uid))
@@ -1273,14 +1273,14 @@ format_next_process(
 	sprintf(fmt,
 #endif
 			Proc_format,
-			pp->pr_pid,
+			(int) pp->pr_pid,
 			(*get_userid) (pp->pr_uid),
 			(u_short) pp->pr_fill < 999 ? (u_short) pp->pr_fill : 999,
 			pp->pr_pri,
 			pp->pr_nice - NZERO,
 			format_k(SIZE_K(pp)),
 			format_k(RSS_K(pp)),
-			*sb ? sb : state_abbrev[pp->pr_state],
+			*sb ? sb : state_abbrev[(int) pp->pr_state],
 			format_time(cputime),
 			format_percent(pctcpu),
 			printable(show_fullcmd ? pp->pr_psargs : pp->pr_fname));
@@ -1340,8 +1340,9 @@ check_nlist(register struct nlist * nlst)
 #define ORDERKEY_PCTCPU  if (dresult = percent_cpu (p2) - percent_cpu (p1),\
 				 (result = dresult > 0.0 ? 1 : dresult < 0.0 ? -1 : 0) == 0)
 #define ORDERKEY_CPTICKS if ((result = p2->pr_time.tv_sec - p1->pr_time.tv_sec) == 0)
-#define ORDERKEY_STATE	 if ((result = (long) (sorted_state[p2->pr_state] - \
-				   sorted_state[p1->pr_state])) == 0)
+#define ORDERKEY_STATE	 if ((result = \
+			(long) (sorted_state[(int) p2->pr_state] - \
+			sorted_state[(int) p1->pr_state])) == 0)
 #define ORDERKEY_PRIO	 if ((result = p2->pr_oldpri - p1->pr_oldpri) == 0)
 #define ORDERKEY_RSSIZE  if ((result = p2->pr_rssize - p1->pr_rssize) == 0)
 #define ORDERKEY_MEM	 if ((result = (p2->pr_size - p1->pr_size)) == 0)
