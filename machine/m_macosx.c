@@ -420,6 +420,7 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
 	register long cputime;
 	register double pct;
 	struct handle *hp;
+    char *command; /* text outputted to describe the command */
 
 	/*
 	 * we need to keep track of the next proc structure.
@@ -447,6 +448,7 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
 		comm[COMSIZ - 2] = '\0';
 		strncat(comm, ">", COMSIZ - 1);
 		comm[COMSIZ - 1] = '\0';
+        command = comm;
 	}
 
 	/*
@@ -545,7 +547,7 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
 			100.0 * TP(pp, resident_size) / maxmem,
 /*		100.0 * weighted_cpu(pct, (RP(pp, user_time).seconds + RP(pp, system_time).seconds)), */
 			100.0 * pct,
-			stringPtr);
+			command);
 
 	return (fmt);
 }
