@@ -3,6 +3,9 @@ AUTOMAKE_OPTIONS = foreign
 AM_CPPFLAGS = $(DBCFLAGS)
 AM_LDFLAGS = $(DBLDFLAGS)
 
+BUILT_SOURCES = sigdesc.h
+CLEANFILES = sigdesc.h
+
 sigdesc.h: sigconv.awk $(SIGNAL_H)
 	$(AWK) -f $(srcdir)/sigconv.awk $(SIGNAL_H) > sigdesc.h 
 
