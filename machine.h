@@ -95,6 +95,7 @@ void		get_system_info(struct system_info *);
 caddr_t get_process_info(struct system_info *, struct process_select *, int,
 				 char *);
 char	   *format_header(char *);
+char	   *format_next_io(caddr_t, char *(*) (uid_t));
 char	   *format_next_process(caddr_t, char *(*) (uid_t));
 uid_t			proc_owner(pid_t);
 

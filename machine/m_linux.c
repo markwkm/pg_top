@@ -42,6 +42,22 @@
 #define PROC_SUPER_MAGIC 0x9fa0
 #endif
 
+#define BUFFERLEN 255
+#define GET_VALUE(v) \
+		p = strchr(p, ':'); \
+		++p; \
+		++p; \
+		q = strchr(p, '\n'); \
+		len = q - p; \
+		if (len >= BUFFERLEN) \
+		{ \
+			printf("ERROR - value is larger than the buffer: %d\n", __LINE__); \
+			exit(1); \
+		} \
+		strncpy(value, p, len); \
+		value[len] = '\0'; \
+		v = atoll(value);
+
 #include "machine.h"
 #include "utils.h"
 
@@ -53,6 +69,8 @@ extern char *myname;
 struct top_proc
 {
 	pid_t		pid;
+
+	/* Data from /proc/<pid>/stat. */
 	uid_t		uid;
 	char	   *name;
 	int			pri,
@@ -64,9 +82,43 @@ struct top_proc
 	unsigned long start_time;
 	double		pcpu,
 				wcpu;
+
+	/* Data from /proc/<pid>/io. */
+	long long rchar;
+	long long wchar;
+	long long syscr;
+	long long syscw;
+	long long read_bytes;
+	long long write_bytes;
+	long long cancelled_write_bytes;
+
 	struct top_proc *next;
 };
 
+struct io_node
+{
+	pid_t pid;
+
+	/* The change in the previous values and current values. */
+	long long diff_rchar;
+	long long diff_wchar;
+	long long diff_syscr;
+	long long diff_syscw;
+	long long diff_read_bytes;
+	long long diff_write_bytes;
+	long long diff_cancelled_write_bytes;
+
+	/* The previous values. */
+	long long old_rchar;
+	long long old_wchar;
+	long long old_syscr;
+	long long old_syscw;
+	long long old_read_bytes;
+	long long old_write_bytes;
+	long long old_cancelled_write_bytes;
+
+	struct io_node *next;
+};
 
 /*=STATE IDENT STRINGS==================================================*/
 
@@ -173,6 +225,17 @@ static long swap_stats[NSWAPSTATS];
 #define HASH(x)		(((x) * 1686629713U) % HASH_SIZE)
 
 /*======================================================================*/
+
+struct io_node *
+new_io_node(pid_t);
+
+void
+update_io_stats(struct io_node *, pid_t, long long, long long, long long,
+	long long, long long, long long, long long);
+
+struct io_node *
+upsert_io_stats(struct io_node *, pid_t, long long, long long, long long,
+	long long, long long, long long, long long);
 
 static inline char *
 skip_ws(const char *p)
@@ -462,7 +525,8 @@ get_system_info(struct system_info * info)
 					memory_stats[MEMUSED] = bytetok(memory_stats[MEMUSED]);
 					memory_stats[MEMFREE] = bytetok(memory_stats[MEMFREE]);
 					memory_stats[MEMSHARED] = bytetok(memory_stats[MEMSHARED]);
-					memory_stats[MEMBUFFERS] = bytetok(memory_stats[MEMBUFFERS]);
+					memory_stats[MEMBUFFERS] =
+							bytetok(memory_stats[MEMBUFFERS]);
 					memory_stats[MEMCACHED] = bytetok(memory_stats[MEMCACHED]);
 					mem = 1;
 				}
@@ -544,6 +608,7 @@ read_one_proc_stat(pid_t pid, struct top_proc * proc, struct process_select * se
 	int			fd,
 				len;
 	int			fullcmd;
+	char		value[BUFFERLEN + 1];
 
 	/* if anything goes wrong, we return with proc->state == 0 */
 	proc->state = 0;
@@ -679,6 +744,37 @@ read_one_proc_stat(pid_t pid, struct top_proc * proc, struct process_select * se
 	p = skip_token(p);			/* delayacct_blkio_ticks */
 #endif
 
+	/* Get the io stats. */
+	sprintf(buffer, "%d/io", pid);
+	fd = open(buffer, O_RDONLY);
+	if (fd == -1)
+	{
+		/*
+		 * CONFIG_TASK_IO_ACCOUNTING is not enabled in the Linux kernel or
+		 * this version of Linux may not support collecting i/o statistics
+		 * per pid.  Report 0's.
+		 */
+		proc->rchar = 0;
+		proc->wchar = 0;
+		proc->syscr = 0;
+		proc->syscw = 0;
+		proc->read_bytes = 0;
+		proc->write_bytes = 0;
+		proc->cancelled_write_bytes = 0;
+		return;
+	}
+	len = read(fd, buffer, sizeof(buffer) - 1);
+	close(fd);
+
+	buffer[len] = '\0';
+	p = buffer;
+	GET_VALUE(proc->rchar);
+	GET_VALUE(proc->wchar);
+	GET_VALUE(proc->syscr);
+	GET_VALUE(proc->syscw);
+	GET_VALUE(proc->read_bytes);
+	GET_VALUE(proc->write_bytes);
+	GET_VALUE(proc->cancelled_write_bytes);
 }
 
 
@@ -900,6 +996,48 @@ format_header(char *uname_field)
 	return fmt_header;
 }
 
+
+char *
+format_next_io(caddr_t handle, char *(*get_userid) (uid_t))
+{
+	static char fmt[MAX_COLS];	/* static area where result is built */
+	static struct io_node *head = NULL;
+	struct top_proc *p = *nextactive++;
+
+	head = upsert_io_stats(head, p->pid, p->rchar, p->wchar, p->syscr,
+			p->syscw, p->read_bytes, p->write_bytes, p->cancelled_write_bytes);
+
+	if (mode_stats == STATS_DIFF)
+	{
+		snprintf(fmt, sizeof(fmt),
+				"%5d %5s %5s %7lld %7lld %5s %6s %7s %s\n",
+				p->pid,
+				format_b(head->diff_rchar),
+				format_b(head->diff_wchar),
+				head->diff_syscr,
+				head->diff_syscw,
+				format_b(head->diff_read_bytes),
+				format_b(head->diff_write_bytes),
+				format_b(head->diff_cancelled_write_bytes),
+				p->name);
+	}
+	else
+	{
+		snprintf(fmt, sizeof(fmt),
+				"%5d %5s %5s %7lld %7lld %5s %6s %7s %s\n",
+				p->pid,
+				format_b(p->rchar),
+				format_b(p->wchar),
+				p->syscr,
+				p->syscw,
+				format_b(p->read_bytes),
+				format_b(p->write_bytes),
+				format_b(p->cancelled_write_bytes),
+				p->name);
+	}
+
+	return (fmt);
+}
 
 char *
 format_next_process(caddr_t handle, char *(*get_userid) (uid_t))
@@ -1129,4 +1267,78 @@ proc_owner(pid_t pid)
 		return -1;
 	else
 		return (int) sb.st_uid;
+}
+
+struct io_node *
+new_io_node(pid_t pid)
+{
+	struct io_node *node;
+
+	node = (struct io_node *) malloc(sizeof(struct io_node));
+	bzero(node, sizeof(struct io_node));
+	node->pid = pid;
+	node->next = NULL;
+
+	return node;
+}
+
+void
+update_io_stats(struct io_node *node, pid_t pid, long long rchar,
+	long long wchar, long long syscr, long long syscw, long long read_bytes,
+	long long write_bytes, long long cancelled_write_bytes)
+{
+	/* Calculate difference between previous and current values. */
+	node->diff_rchar = rchar - node->old_rchar;
+	node->diff_wchar = wchar - node->old_rchar;
+	node->diff_syscr = syscr - node->old_syscr;
+	node->diff_syscw = syscw - node->old_syscw;
+	node->diff_read_bytes = read_bytes - node->old_read_bytes;
+	node->diff_write_bytes = write_bytes - node->old_write_bytes;
+	node->diff_cancelled_write_bytes =
+			cancelled_write_bytes - node->old_cancelled_write_bytes;
+
+	/* Save the current values as previous values. */
+	node->old_rchar = rchar;
+	node->old_wchar = wchar;
+	node->old_syscr = syscr;
+	node->old_syscw = syscw;
+	node->old_read_bytes = read_bytes;
+	node->old_write_bytes = write_bytes;
+	node->old_cancelled_write_bytes = cancelled_write_bytes;
+}
+
+struct io_node *
+upsert_io_stats(struct io_node *head, pid_t pid, long long rchar,
+	long long wchar, long long syscr, long long syscw, long long read_bytes,
+	long long write_bytes, long long cancelled_write_bytes)
+{
+	struct io_node *c = head;
+
+	/* List is empty, create a new node. */
+	if (head == NULL)
+	{
+		head = new_io_node(pid);
+		update_io_stats(head, pid, rchar, wchar, syscr, syscw, read_bytes,
+				write_bytes, cancelled_write_bytes);
+		return head;
+	}
+
+	/* Check if this pid exists already. */
+	while (c != NULL)
+	{
+		if (c->pid == pid)
+		{
+			/* Found an existing node with same pid, update it. */
+			update_io_stats(c, pid, rchar, wchar, syscr, syscw, read_bytes,
+					write_bytes, cancelled_write_bytes);
+			return head;
+		}
+		c = c->next;
+	}
+
+	 /* Didn't find pig.  Create a new node, save the data and insert it. */
+	c = new_io_node(pid);
+	update_io_stats(c, pid, rchar, wchar, syscr, syscw, read_bytes,
+			write_bytes, cancelled_write_bytes);
+	return head;
 }

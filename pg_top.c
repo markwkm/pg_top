@@ -68,6 +68,7 @@ char	   *copyright =
 #define MODE_PROCESSES 0
 #define MODE_TABLE_STATS 1
 #define MODE_INDEX_STATS 2
+#define MODE_IO_STATS 3
 
 /* The buffer that stdio will use */
 char		stdoutbuf[Buffersize];
@@ -322,6 +323,7 @@ main(int argc, char *argv[])
 	"  I_SCANS   I_READS I_FETCHES INDEXRELNAME";
 	char		header_table_stats[80] =
 	"SEQ_SCANS SEQ_READS   I_SCANS I_FETCHES   INSERTS   UPDATES   DELETES RELNAME";
+	char		header_io_stats[80] = "  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
 
 	static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLERXAt";
 
@@ -340,7 +342,7 @@ main(int argc, char *argv[])
 #define CMD_kill	10
 #define CMD_renice	11
 #define CMD_idletog		12
-#define CMD_idletog2	13
+#define CMD_io	13
 #define CMD_user	14
 #define CMD_cmdline		15
 #define CMD_order		16
@@ -908,6 +910,13 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 					pg_display_table_stats(conninfo, table_order_index,
 							max_topn);
 					break;
+				case MODE_IO_STATS:
+					for (i = 0; i < active_procs; i++)
+					{
+						(*d_process) (i, format_next_io(processes,
+								get_userid));
+					}
+					break;
 				case MODE_PROCESSES:
 				default:
 					for (i = 0; i < active_procs; i++)
@@ -1176,7 +1185,6 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 #endif
 
 									case CMD_idletog:
-									case CMD_idletog2:
 										ps.idle = !ps.idle;
 										new_message(MT_standout | MT_delayed,
 											  " %sisplaying idle processes.",
@@ -1476,6 +1484,20 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 														" Displaying differential statistics.");
 											putchar('\r');
 										}
+										break;
+
+									case CMD_io:
+										if (mode == MODE_IO_STATS)
+										{
+											mode = MODE_PROCESSES;
+											header_text = header_processes;
+										}
+										else
+										{
+											mode = MODE_IO_STATS;
+											header_text = header_io_stats;
+										}
+										reset_display();
 										break;
 
 									default:

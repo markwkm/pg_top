@@ -3,6 +3,7 @@ Release Notes
 Release 3.7.0
 
      * Added support for monitoring databases on remote systems.
+     * Added support for monitoring i/o statistics on Linux.
 
 Release 3.6.2
 
