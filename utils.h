@@ -27,6 +27,7 @@ long		percentages(int, int64_t *, int64_t *, int64_t *, int64_t *);
 char	   *errmsg(int);
 char	   *format_percent(double);
 char	   *format_time(long);
+char	   *format_b(long long);
 char	   *format_k(long);
 char	   *string_list(char **);
 void		debug_set(int);

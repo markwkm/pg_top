@@ -554,6 +554,50 @@ format_time(long seconds)
 	return (result);
 }
 
+#define NUM_STRINGS 8
+
+/*
+ * format_b(amt) - format a byte memory value, returning a string
+ *		suitable for display.  Returns a pointer to a static
+ *		area that changes each call.  "amt" is converted to a
+ *		string with a trailing "B".  If "amt" is 10000 or greater,
+ *		then it is formatted as megabytes (rounded) with a
+ *		trailing "K".  And so on...
+ */
+
+char *
+format_b(long long amt)
+
+{
+	static char retarray[NUM_STRINGS][16];
+	static int	index = 0;
+	register char *ret;
+	register char tag = 'B';
+
+	ret = retarray[index];
+	index = (index + 1) % NUM_STRINGS;
+
+	if (amt >= 10000)
+	{
+		amt = (amt + 512) / 1024;
+		tag = 'K';
+		if (amt >= 10000)
+		{
+			amt = (amt + 512) / 1024;
+			tag = 'B';
+			if (amt >= 10000)
+			{
+				amt = (amt + 512) / 1024;
+				tag = 'G';
+			}
+		}
+	}
+
+	snprintf(ret, sizeof(retarray[index]) - 1, "%lld%c", amt, tag);
+
+	return (ret);
+}
+
 /*
  * format_k(amt) - format a kilobyte memory value, returning a string
  *		suitable for display.  Returns a pointer to a static
@@ -576,8 +620,6 @@ format_time(long seconds)
  * Keeping NUM_STRINGS a power of two will allow an intelligent optimizer
  * to convert the modulo operation into something quicker.	What a hack!
  */
-
-#define NUM_STRINGS 8
 
 char *
 format_k(long amt)
