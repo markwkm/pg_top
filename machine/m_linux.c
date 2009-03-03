@@ -1357,7 +1357,7 @@ update_io_stats(struct io_node *node, pid_t pid, long long rchar,
 {
 	/* Calculate difference between previous and current values. */
 	node->diff_rchar = rchar - node->old_rchar;
-	node->diff_wchar = wchar - node->old_rchar;
+	node->diff_wchar = wchar - node->old_wchar;
 	node->diff_syscr = syscr - node->old_syscr;
 	node->diff_syscw = syscw - node->old_syscw;
 	node->diff_read_bytes = read_bytes - node->old_read_bytes;
