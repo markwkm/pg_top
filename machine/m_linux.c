@@ -229,6 +229,12 @@ static long swap_stats[NSWAPSTATS];
 struct io_node *
 new_io_node(pid_t);
 
+struct io_node *
+get_io_stats(struct io_node *, pid_t);
+
+struct io_node *
+insert_io_stats(struct io_node *, struct io_node *);
+
 void
 update_io_stats(struct io_node *, pid_t, long long, long long, long long,
 	long long, long long, long long, long long);
@@ -1003,28 +1009,38 @@ format_next_io(caddr_t handle, char *(*get_userid) (uid_t))
 	static char fmt[MAX_COLS];	/* static area where result is built */
 	static struct io_node *head = NULL;
 	struct top_proc *p = *nextactive++;
+	struct io_node *node = NULL;
 
 	head = upsert_io_stats(head, p->pid, p->rchar, p->wchar, p->syscr,
 			p->syscw, p->read_bytes, p->write_bytes, p->cancelled_write_bytes);
 
 	if (mode_stats == STATS_DIFF)
 	{
-		snprintf(fmt, sizeof(fmt),
-				"%5d %5s %5s %7lld %7lld %5s %6s %7s %s\n",
-				p->pid,
-				format_b(head->diff_rchar),
-				format_b(head->diff_wchar),
-				head->diff_syscr,
-				head->diff_syscw,
-				format_b(head->diff_read_bytes),
-				format_b(head->diff_write_bytes),
-				format_b(head->diff_cancelled_write_bytes),
-				p->name);
+		node = get_io_stats(head, p->pid);
+		if (node == NULL)
+		{
+			snprintf(fmt, sizeof(fmt), "%5d %5d %5d %7d %7d %5d %6d %7d %s",
+					p->pid, 0, 0, 0, 0, 0, 0, 0, p->name);
+		}
+		else
+		{
+			snprintf(fmt, sizeof(fmt),
+					"%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
+					p->pid,
+					format_b(node->diff_rchar),
+					format_b(node->diff_wchar),
+					node->diff_syscr,
+					node->diff_syscw,
+					format_b(node->diff_read_bytes),
+					format_b(node->diff_write_bytes),
+					format_b(node->diff_cancelled_write_bytes),
+					p->name);
+		}
 	}
 	else
 	{
 		snprintf(fmt, sizeof(fmt),
-				"%5d %5s %5s %7lld %7lld %5s %6s %7s %s\n",
+				"%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
 				p->pid,
 				format_b(p->rchar),
 				format_b(p->wchar),
@@ -1282,6 +1298,58 @@ new_io_node(pid_t pid)
 	return node;
 }
 
+struct io_node *
+get_io_stats(struct io_node *head, pid_t pid)
+{
+	struct io_node *node = head;
+
+	while (node != NULL)
+	{
+		if (node->pid == pid)
+		{
+			return node;
+		}
+		node = node->next;
+	}
+
+	return node;
+}
+
+struct io_node *
+insert_io_stats(struct io_node *head, struct io_node *node)
+{
+	struct io_node *c = head;
+	struct io_node *p = NULL;
+
+	if (node->pid < head->pid)
+	{
+		node->next = head;
+		head = node;
+		return head;
+	}
+
+	c = head->next;
+	p = head;
+	while (c != NULL)
+	{
+		if (node->pid < c->pid)
+		{
+			node->next = c;
+			p->next = node;
+			return head;
+		}
+		p = c;
+		c = c->next;
+	}
+
+	if (c == NULL)
+	{
+		p->next = node;
+	}
+
+	return head;
+}
+
 void
 update_io_stats(struct io_node *node, pid_t pid, long long rchar,
 	long long wchar, long long syscr, long long syscw, long long read_bytes,
@@ -1340,5 +1408,6 @@ upsert_io_stats(struct io_node *head, pid_t pid, long long rchar,
 	c = new_io_node(pid);
 	update_io_stats(c, pid, rchar, wchar, syscr, syscw, read_bytes,
 			write_bytes, cancelled_write_bytes);
+	head = insert_io_stats(head, c);
 	return head;
 }
