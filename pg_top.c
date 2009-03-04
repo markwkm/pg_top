@@ -64,12 +64,6 @@ char	   *copyright =
 /* Size of the stdio buffer given to stdout */
 #define Buffersize	2048
 
-/* Display modes. */
-#define MODE_PROCESSES 0
-#define MODE_TABLE_STATS 1
-#define MODE_INDEX_STATS 2
-#define MODE_IO_STATS 3
-
 /* The buffer that stdio will use */
 char		stdoutbuf[Buffersize];
 
@@ -290,6 +284,7 @@ main(int argc, char *argv[])
 	char	   *order_name = NULL;
 	int			order_index = 0;
 	int			index_order_index = 0;
+	int			io_order_index = 0;
 	int			table_order_index = 0;
 
 #ifndef FD_SET
@@ -794,7 +789,7 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 		if (mode_remote == 0)
 		{
 			get_system_info(&system_info);
-			(void) get_process_info(&system_info, &ps, 0, conninfo);
+			(void) get_process_info(&system_info, &ps, 0, conninfo, mode);
 		}
 		else
 		{
@@ -816,12 +811,20 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 
 	while ((displays == -1) || (displays-- > 0))
 	{
+		int tmp_index = 0;
+		switch (mode) {
+		case MODE_IO_STATS:
+			tmp_index = io_order_index;
+			break;
+		default:
+			tmp_index = 0;
+		}
 		/* get the current stats and processes */
 		if (mode_remote == 0)
 		{
 			get_system_info(&system_info);
-			processes = get_process_info(&system_info, &ps, order_index,
-					conninfo);
+			processes = get_process_info(&system_info, &ps, tmp_index,
+					conninfo, mode);
 		}
 		else
 		{
@@ -1277,6 +1280,27 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 														table_order_index = i;
 													}
 													putchar('\r');
+												}
+												else
+												{
+													clear_message();
+												}
+												break;
+											case MODE_IO_STATS:
+												new_message(MT_standout,
+														  "Order to sort: ");
+												if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
+												{
+													if ((i = string_index(tempbuf2, statics.order_names_io)) == -1)
+													{
+														new_message(MT_standout,
+																	" %s: unrecognized sorting order", tempbuf2);
+														no_command = Yes;
+													}
+													else
+													{
+														io_order_index = i;
+													}
 												}
 												else
 												{

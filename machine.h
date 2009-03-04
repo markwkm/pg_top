@@ -25,6 +25,12 @@
 #define HZ sysconf(_SC_CLK_TCK)
 #endif
 
+/* Display modes. */
+#define MODE_PROCESSES 0
+#define MODE_TABLE_STATS 1
+#define MODE_INDEX_STATS 2
+#define MODE_IO_STATS 3
+
 #define QUERY_PROCESSES \
 		"SELECT procpid\n" \
 		"FROM pg_stat_activity;"
@@ -40,6 +46,7 @@ struct statics
 	char	  **memory_names;
 	char	  **swap_names;		/* optional */
 	char	  **order_names;	/* optional */
+	char	  **order_names_io;	/* optional */
 	char	  **color_names;	/* optional */
 	time_t		boottime;		/* optional */
 	struct
@@ -93,7 +100,7 @@ struct process_select
 int			machine_init(struct statics *);
 void		get_system_info(struct system_info *);
 caddr_t get_process_info(struct system_info *, struct process_select *, int,
-				 char *);
+				 char *, int);
 char	   *format_header(char *);
 char	   *format_next_io(caddr_t, char *(*) (uid_t));
 char	   *format_next_process(caddr_t, char *(*) (uid_t));

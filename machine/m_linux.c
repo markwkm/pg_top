@@ -172,12 +172,25 @@ static char fmt_header[] =
 /* these are names given to allowed sorting orders -- first is default */
 static char *ordernames[] = {"cpu", "size", "res", "time", "command", NULL};
 
+static char *ordernames_io[] = {
+		"pid", "rchar", "wchar", "syscr", "syscw", "reads", "writes",
+		"cwrites", "command", NULL
+};
+
 /* forward definitions for comparison functions */
 int			compare_cpu();
 int			compare_size();
 int			compare_res();
 int			compare_time();
 int			compare_cmd();
+int			compare_pid();
+int			compare_rchar();
+int			compare_wchar();
+int			compare_syscr();
+int			compare_syscw();
+int			compare_reads();
+int			compare_writes();
+int			compare_cwrites();
 
 int			(*proc_compares[]) () =
 {
@@ -185,6 +198,20 @@ int			(*proc_compares[]) () =
 	compare_size,
 	compare_res,
 	compare_time,
+	compare_cmd,
+	NULL
+};
+
+int			(*io_compares[]) () =
+{
+	compare_pid,
+	compare_rchar,
+	compare_wchar,
+	compare_syscr,
+	compare_syscw,
+	compare_reads,
+	compare_writes,
+	compare_cwrites,
 	compare_cmd,
 	NULL
 };
@@ -425,6 +452,7 @@ machine_init(struct statics * statics)
 	statics->memory_names = memorynames;
 	statics->swap_names = swapnames;
 	statics->order_names = ordernames;
+	statics->order_names_io = ordernames_io;
 	statics->boottime = boottime;
 	statics->flags.fullcmds = 1;
 	statics->flags.warmup = 1;
@@ -787,7 +815,7 @@ read_one_proc_stat(pid_t pid, struct top_proc * proc, struct process_select * se
 caddr_t
 get_process_info(struct system_info * si,
 				 struct process_select * sel,
-				 int compare_index, char *conninfo)
+				 int compare_index, char *conninfo, int mode)
 {
 	struct timeval thistime;
 	double		timediff,
@@ -978,9 +1006,17 @@ get_process_info(struct system_info * si,
 	}
 
 	/* if requested, sort the "active" procs */
-	if (si->p_active)
-		qsort(pactive, si->p_active, sizeof(struct top_proc *),
-			  proc_compares[compare_index]);
+	if (si->p_active) {
+		if (mode == MODE_IO_STATS) {
+			qsort(pactive, si->p_active, sizeof(struct top_proc *),
+			  		io_compares[compare_index]);
+		}
+		else
+		{
+			qsort(pactive, si->p_active, sizeof(struct top_proc *),
+			  		proc_compares[compare_index]);
+		}
+	}
 
 	/* don't even pretend that the return value thing here isn't bogus */
 	nextactive = pactive;
@@ -1107,6 +1143,14 @@ format_next_process(caddr_t handle, char *(*get_userid) (uid_t))
 #define ORDERKEY_RSSIZE  if ((result = p2->rss - p1->rss) == 0)
 #define ORDERKEY_MEM	 if ((result = p2->size - p1->size) == 0)
 #define ORDERKEY_NAME	 if ((result = strcmp(p1->name, p2->name)) == 0)
+#define ORDERKEY_PID	 if ((result = p1->pid - p2->pid) == 0)
+#define ORDERKEY_RCHAR	 if ((result = p1->rchar - p2->rchar) == 0)
+#define ORDERKEY_WCHAR	 if ((result = p1->wchar - p2->wchar) == 0)
+#define ORDERKEY_SYSCR	 if ((result = p1->syscr - p2->syscr) == 0)
+#define ORDERKEY_SYSCW	 if ((result = p1->syscw - p2->syscw) == 0)
+#define ORDERKEY_READS	 if ((result = p1->read_bytes - p2->read_bytes) == 0)
+#define ORDERKEY_WRITES	 if ((result = p1->write_bytes - p2->write_bytes) == 0)
+#define ORDERKEY_CWRITES if ((result = p1->cancelled_write_bytes - p2->cancelled_write_bytes) == 0)
 
 /* Now the array that maps process state to a weight */
 
@@ -1259,6 +1303,205 @@ compare_cmd(
 	return result == 0 ? 0 : result < 0 ? -1 : 1;
 }
 
+int	
+compare_pid(struct top_proc ** pp1, struct top_proc ** pp2)
+{
+	register struct top_proc *p1;
+	register struct top_proc *p2;
+	register long result;
+
+	/* remove one level of indirection */
+	p1 = *pp1;
+	p2 = *pp2;
+
+	ORDERKEY_PID
+		ORDERKEY_RCHAR
+		ORDERKEY_WCHAR
+		ORDERKEY_SYSCR
+		ORDERKEY_SYSCW
+		ORDERKEY_READS
+		ORDERKEY_WRITES
+		ORDERKEY_CWRITES
+		ORDERKEY_NAME
+		;
+
+	return result == 0 ? 0 : result < 0 ? -1 : 1;
+}
+
+int
+compare_rchar(struct top_proc ** pp1, struct top_proc ** pp2)
+{
+	register struct top_proc *p1;
+	register struct top_proc *p2;
+	register long result;
+
+	/* remove one level of indirection */
+	p1 = *pp1;
+	p2 = *pp2;
+
+	ORDERKEY_RCHAR
+		ORDERKEY_PID
+		ORDERKEY_WCHAR
+		ORDERKEY_SYSCR
+		ORDERKEY_SYSCW
+		ORDERKEY_READS
+		ORDERKEY_WRITES
+		ORDERKEY_CWRITES
+		ORDERKEY_NAME
+		;
+
+	return result == 0 ? 0 : result < 0 ? -1 : 1;
+}
+
+int
+compare_wchar(struct top_proc ** pp1, struct top_proc ** pp2)
+{
+	register struct top_proc *p1;
+	register struct top_proc *p2;
+	register long result;
+
+	/* remove one level of indirection */
+	p1 = *pp1;
+	p2 = *pp2;
+
+	ORDERKEY_WCHAR
+		ORDERKEY_PID
+		ORDERKEY_RCHAR
+		ORDERKEY_SYSCR
+		ORDERKEY_SYSCW
+		ORDERKEY_READS
+		ORDERKEY_WRITES
+		ORDERKEY_CWRITES
+		ORDERKEY_NAME
+		;
+
+	return result == 0 ? 0 : result < 0 ? -1 : 1;
+}
+
+int
+compare_syscr(struct top_proc ** pp1, struct top_proc ** pp2)
+{
+	register struct top_proc *p1;
+	register struct top_proc *p2;
+	register long result;
+
+	/* remove one level of indirection */
+	p1 = *pp1;
+	p2 = *pp2;
+
+	ORDERKEY_SYSCR
+		ORDERKEY_PID
+		ORDERKEY_RCHAR
+		ORDERKEY_WCHAR
+		ORDERKEY_SYSCW
+		ORDERKEY_READS
+		ORDERKEY_WRITES
+		ORDERKEY_CWRITES
+		ORDERKEY_NAME
+		;
+
+	return result == 0 ? 0 : result < 0 ? -1 : 1;
+}
+
+int
+compare_syscw(struct top_proc ** pp1, struct top_proc ** pp2)
+{
+	register struct top_proc *p1;
+	register struct top_proc *p2;
+	register long result;
+
+	/* remove one level of indirection */
+	p1 = *pp1;
+	p2 = *pp2;
+
+	ORDERKEY_SYSCW
+		ORDERKEY_PID
+		ORDERKEY_RCHAR
+		ORDERKEY_WCHAR
+		ORDERKEY_SYSCR
+		ORDERKEY_READS
+		ORDERKEY_WRITES
+		ORDERKEY_CWRITES
+		ORDERKEY_NAME
+		;
+
+	return result == 0 ? 0 : result < 0 ? -1 : 1;
+}
+
+int
+compare_reads(struct top_proc ** pp1, struct top_proc ** pp2)
+{
+	register struct top_proc *p1;
+	register struct top_proc *p2;
+	register long result;
+
+	/* remove one level of indirection */
+	p1 = *pp1;
+	p2 = *pp2;
+
+	ORDERKEY_READS
+		ORDERKEY_PID
+		ORDERKEY_RCHAR
+		ORDERKEY_WCHAR
+		ORDERKEY_SYSCR
+		ORDERKEY_SYSCW
+		ORDERKEY_WRITES
+		ORDERKEY_CWRITES
+		ORDERKEY_NAME
+		;
+
+	return result == 0 ? 0 : result < 0 ? -1 : 1;
+}
+
+int
+compare_writes(struct top_proc ** pp1, struct top_proc ** pp2)
+{
+	register struct top_proc *p1;
+	register struct top_proc *p2;
+	register long result;
+
+	/* remove one level of indirection */
+	p1 = *pp1;
+	p2 = *pp2;
+
+	ORDERKEY_WRITES
+		ORDERKEY_PID
+		ORDERKEY_RCHAR
+		ORDERKEY_WCHAR
+		ORDERKEY_SYSCR
+		ORDERKEY_SYSCW
+		ORDERKEY_READS
+		ORDERKEY_CWRITES
+		ORDERKEY_NAME
+		;
+
+	return result == 0 ? 0 : result < 0 ? -1 : 1;
+}
+
+int
+compare_cwrites(struct top_proc ** pp1, struct top_proc ** pp2)
+{
+	register struct top_proc *p1;
+	register struct top_proc *p2;
+	register long result;
+
+	/* remove one level of indirection */
+	p1 = *pp1;
+	p2 = *pp2;
+
+	ORDERKEY_CWRITES
+		ORDERKEY_PID
+		ORDERKEY_RCHAR
+		ORDERKEY_WCHAR
+		ORDERKEY_SYSCR
+		ORDERKEY_SYSCW
+		ORDERKEY_READS
+		ORDERKEY_WRITES
+		ORDERKEY_NAME
+		;
+
+	return result == 0 ? 0 : result < 0 ? -1 : 1;
+}
 
 /*
  * proc_owner(pid) - returns the uid that owns process "pid", or -1 if
