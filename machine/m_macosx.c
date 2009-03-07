@@ -371,6 +371,12 @@ format_header(register char *uname_field)
 	return (header);
 }
 
+char *
+format_next_io(caddr_t handle, char *(*getuserid) ())
+{
+	return (fmt);
+}
+
 /*
  * format_next_process()
  *
@@ -524,9 +530,8 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
  */
 
 caddr_t
-get_process_info(struct system_info * si,
-				 struct process_select * sel, int x, char *conninfo)
-
+get_process_info(struct system_info * si, struct process_select * sel, int x,
+		char *conninfo, int mode)
 {
 	register int i;
 	register int total_procs;
@@ -573,8 +578,8 @@ get_process_info(struct system_info * si,
 		size_t size = sizeof(struct kinfo_proc);	
 		mib[3] = atoi(PQgetvalue(pgresult, i, 0));
 		
-			if (sysctl(mib, sizeof(mib)/sizeof(int), &buffer[i], &size, NULL,
-					0) == -1) {
+		if (sysctl(mib, sizeof(mib)/sizeof(int), &buffer[i], &size, NULL,
+				0) == -1) {
 			perror("sysctl atoi loop");
 			return "1";
 		}
