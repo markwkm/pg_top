@@ -146,6 +146,8 @@ typedef long pctcpu;
  * of the stuff we care about for each process.
  */
 
+#define FULLCMDLEN 1024
+
 struct macos_proc
 {
 	struct kinfo_proc *kproc;
@@ -153,6 +155,7 @@ struct macos_proc
 	struct task_basic_info task_info;
 	unsigned int thread_count;
 	struct thread_basic_info thread_summary;
+	char fullcmd[FULLCMDLEN + 1];
 };
 
 static int	show_fullcmd;
@@ -174,7 +177,7 @@ static char header[] =
 
 
 int			proc_compare(const void *, const void *);
-
+int 		get_fullcmd(int, char *);
 
 /*
  * puke()
@@ -193,26 +196,6 @@ puke(const char *fmt,...)
 
 	fputc('\n', stderr);
 	fflush(stderr);
-}
-
-
-/*
- * xfrm_cmdline - fix \0 at string ends
- *
- *
- */
-
-static void
-xfrm_cmdline(char *p, int len)
-{
-	while (--len > 0)
-	{
-		if (*p == '\0')
-		{
-			*p = ' ';
-		}
-		p++;
-	}
 }
 
 /*
@@ -394,6 +377,7 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
 	register double pct;
 	struct handle *hp;
 	char *command; /* text outputted to describe the command */
+	int show_cmd_local = show_fullcmd;
 
 	/*
 	 * we need to keep track of the next proc structure.
@@ -445,53 +429,10 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
 
 	pct = (double) (RP(pp, cpu_usage)) / TH_USAGE_SCALE;
 
-	char *args = NULL, *namePtr = NULL, *stringPtr = '\0';
-
 	/* get the process's command name in to "cmd" */
 	if (show_fullcmd)
-	{
-		size_t size = 0;
-		int mib[4], maxarg, numArgs;
-
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_ARGMAX;
-
-		size = sizeof(maxarg);
-		if ( sysctl(mib, 2, &maxarg, &size, NULL, 0) == -1 ) {
-			perror("maxarg");
-			return "1";
-		}
-		/* fix for kernel bug? */
-		maxarg = 8192;
-		args = (char *) malloc( maxarg );
-		if ( args == NULL ) {
-			perror("args");
-			return "1";
-		}
-
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_PROCARGS;
-		mib[2] = MPP(pp, p_pid);
-
-		if (mib[2] > 0) {
-			size = (size_t) maxarg;
-			if ( sysctl(mib, 3, args, &size, NULL, 0) == -1 ) {
-				/* don't freak out because might just be a process that ended */
-				perror("sysctl args");
-			}
-
-			xfrm_cmdline(args, maxarg);
-			memcpy ( &numArgs, args, sizeof(numArgs));
-
-			stringPtr = args + sizeof(numArgs);
-
-			if ( (namePtr = strchr(stringPtr, '/')) != NULL ) {
-				*namePtr++;
-			}
-
-			stringPtr = namePtr;
-		}
-	}
+ 		if (get_fullcmd(MPP(pp, p_pid), pp->fullcmd) < 0)
+			show_cmd_local = 0; /* Don't show if full command not found. */
 
 	/*
 	 * format the entry
@@ -517,9 +458,91 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
 			format_time(cputime),
 			100.0 * TP(pp, resident_size) / maxmem,
 			100.0 * pct,
-			command);
+			(show_cmd_local == 0 ? command : pp->fullcmd));
 
 	return (fmt);
+}
+
+int
+get_fullcmd(int pid, char *fullcmd)
+{
+	char *args, *namePtr, *stringPtr, *cp;
+
+	size_t size = 0;
+	int mib[4], maxarg, numArgs, c = 0;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_ARGMAX;
+
+	size = sizeof(maxarg);
+	if ( sysctl(mib, 2, &maxarg, &size, NULL, 0) == -1 )
+		return -1;
+
+	args = (char *) malloc( maxarg );
+	if ( args == NULL )
+		return -2;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_PROCARGS2;
+	mib[2] = pid;
+
+	if (mib[1] < 1)
+		return -3;
+
+	size = (size_t) maxarg;
+	if ( sysctl(mib, 3, args, &size, NULL, 0) == -1 )
+		return -4;
+
+	memcpy(&numArgs, args, sizeof(numArgs));
+
+	/* Skip exec_patch. */
+	for (cp = args + sizeof(numArgs); cp < &args[size]; cp++)
+		if (*cp == '\0')
+			break;
+	if (cp == &args[size])
+		return -5;
+
+	/* Skip trailing '\0' characters. */
+	for (; cp < &args[size]; cp++)
+		if (*cp == '\0')
+			break;
+	if (cp == &args[size])
+		return -6;
+
+	stringPtr = cp;
+
+	/* Convert all '\0' to ' ' in the process arguments portion. */
+	for (namePtr = NULL; c < numArgs && cp < &args[size]; cp++) {
+		if (*cp == '\0') {
+			c++;
+			if (namePtr != NULL)
+			    *namePtr = ' ';
+			namePtr = cp;
+		}
+	}
+
+	/* Convert all '\0' to ' ' in the process environment settings portion. */
+	for (; cp < &args[size]; cp++) {
+		if (*cp == '\0') {
+			if (namePtr != NULL) {
+				if (&namePtr[1] == cp)
+					break;
+				*namePtr = ' ';
+			}
+			namePtr = cp;
+		}
+	}
+
+	if (namePtr == NULL || namePtr == stringPtr)
+		return -7;
+
+	/* Get rid of leading whitespace. */
+	while (stringPtr[0] == ' ' && stringPtr[0] != '\0')
+		++stringPtr;
+
+	strncpy(fullcmd, stringPtr, (size_t) FULLCMDLEN);
+
+	return 1;
 }
 
 /*
