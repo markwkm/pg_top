@@ -916,8 +916,11 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 				case MODE_IO_STATS:
 					for (i = 0; i < active_procs; i++)
 					{
-						(*d_process) (i, format_next_io(processes,
-								get_userid));
+						if (mode_remote == 0)
+							(*d_process) (i, format_next_io(processes,
+									get_userid));
+						else
+							(*d_process) (i, format_next_io_r(processes));
 					}
 					break;
 				case MODE_PROCESSES:
