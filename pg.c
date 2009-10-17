@@ -798,9 +798,9 @@ update_index_stats(struct index_node * node, long long idx_scan,
 				   long long idx_tup_read, long long idx_tup_fetch)
 {
 	/* Add to the index totals */
-	node->total_idx_scan += idx_scan;
-	node->total_idx_tup_read += idx_tup_read;
-	node->total_idx_tup_fetch += idx_tup_fetch;
+	node->total_idx_scan = idx_scan;
+	node->total_idx_tup_read = idx_tup_read;
+	node->total_idx_tup_fetch = idx_tup_fetch;
 
 	/* Calculate difference between previous and current values. */
 	node->diff_idx_scan = idx_scan - node->old_idx_scan;
@@ -819,13 +819,13 @@ update_table_stats(struct table_node * node, long long seq_scan,
 			   long long n_tup_ins, long long n_tup_upd, long long n_tup_del)
 {
 	/* Add to the table totals */
-	node->total_idx_scan += idx_scan;
-	node->total_idx_tup_fetch += idx_tup_fetch;
-	node->total_n_tup_del += n_tup_del;
-	node->total_n_tup_ins += n_tup_ins;
-	node->total_n_tup_upd += n_tup_upd;
-	node->total_seq_scan += seq_scan;
-	node->total_seq_tup_read += seq_tup_read;
+	node->total_idx_scan = idx_scan;
+	node->total_idx_tup_fetch = idx_tup_fetch;
+	node->total_n_tup_del = n_tup_del;
+	node->total_n_tup_ins = n_tup_ins;
+	node->total_n_tup_upd = n_tup_upd;
+	node->total_seq_scan = seq_scan;
+	node->total_seq_tup_read = seq_tup_read;
 
 	/* Calculate difference between previous and current values. */
 	node->diff_idx_scan = idx_scan - node->old_idx_scan;
