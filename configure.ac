@@ -90,7 +90,7 @@ INCLUDEDIR=`$PG_CONFIG --includedir`
 
 DBCFLAGS="-I$INCLUDEDIR"
 LIBDIR=`$PG_CONFIG --libdir`
-DBLDFLAGS="-L$LIBDIR -lpq"
+DBLDFLAGS="-L$LIBDIR"
 
 AC_SUBST(DBCFLAGS)
 AC_SUBST(DBLDFLAGS)
@@ -108,6 +108,8 @@ AC_SEARCH_LIBS(dlerror, dl)
 
 AC_SEARCH_LIBS(inet_aton, resolv, AC_DEFINE(HAVE_INET_ATON, 1,
         [inet_aton is already defined]))
+
+AC_SEARCH_LIBS(PQexec, pq)
 
 # check for libraries required by extension
 extlibs=""

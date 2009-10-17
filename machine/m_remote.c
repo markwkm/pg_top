@@ -1,5 +1,5 @@
 /*
- *Copyright (c) 2008, Mark Wong
+ * Copyright (c) 2008-2009, Mark Wong
  */
 
 #include <stdlib.h>
@@ -9,6 +9,9 @@
 #include <libpq-fe.h>
 
 #include "pg.h"
+
+#include "remote.h"
+#include "utils.h"
 
 #define QUERY_CPUTIME \
 		"SELECT user, nice, system, idle, iowait\n" \
@@ -25,7 +28,8 @@
 
 #define QUERY_PROCTAB \
 		"SELECT pid, comm, fullcomm, state, utime, stime, priority, nice,\n" \
-		"       starttime, vsize, rss, uid, username\n" \
+		"       starttime, vsize, rss, uid, username, rchar, wchar,\n" \
+		"       syscr, syscw, reads, writes, cwrites\n" \
 		"FROM pg_proctab()"
 
 #define QUERY_PG_PROC \
@@ -39,10 +43,8 @@ enum column_loadavg { c_load1, c_load5, c_load15, c_last_pid };
 enum column_memusage { c_memused, c_memfree, c_memshared, c_membuffers,
 		c_memcached, c_swapused, c_swapfree, c_swapcached};
 enum column_proctab { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
-		c_priority, c_nice, c_starttime, c_vsize, c_rss, c_uid, c_username };
-
-#include "remote.h"
-#include "utils.h"
+		c_priority, c_nice, c_starttime, c_vsize, c_rss, c_uid, c_username,
+		c_rchar, c_wchar, c_syscr, c_syscw, c_reads, c_writes, c_cwrites };
 
 #define HASH_SIZE (1003)
 #define HASH(x) (((x) * 1686629713U) % HASH_SIZE)
@@ -67,6 +69,43 @@ enum column_proctab { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
 #define SWAPUSED 0
 #define SWAPFREE 1
 #define SWAPCACHED 2
+
+struct top_proc
+{
+	pid_t pid;
+	uid_t uid;
+	char *name;
+	char *username;
+	int pri;
+	int nice;
+	unsigned long size;
+	unsigned long rss; /* in k */
+	int state;
+	unsigned long time;
+	unsigned long start_time;
+	double pcpu;
+	double wcpu;
+
+	/* The change in the previous values and current values. */
+	long long rchar_diff;
+	long long wchar_diff;
+	long long syscr_diff;
+	long long syscw_diff;
+	long long read_bytes_diff;
+	long long write_bytes_diff;
+	long long cancelled_write_bytes_diff;
+
+	/* The absolute values. */
+	long long rchar;
+	long long wchar;
+	long long syscr;
+	long long syscw;
+	long long read_bytes;
+	long long write_bytes;
+	long long cancelled_write_bytes;
+
+	struct top_proc *next;
+};
 
 static unsigned int activesize = 0;
 static time_t boottime = -1;
@@ -109,24 +148,6 @@ static char *swapnames[NSWAPSTATS + 1] =
 static char fmt_header[] =
 		"  PID X        PRI NICE  SIZE   RES STATE   TIME   WCPU    CPU COMMAND";
 
-struct top_proc
-{
-	pid_t pid;
-	uid_t uid;
-	char *name;
-	char *username;
-	int pri;
-	int nice;
-	unsigned long size;
-	unsigned long rss; /* in k */
-	int state;
-	unsigned long time;
-	unsigned long start_time;
-	double pcpu;
-	double wcpu;
-	struct top_proc *next;
-};
-
 /* Now the array that maps process state to a weight. */
 
 unsigned char sort_state_r[] =
@@ -137,7 +158,7 @@ unsigned char sort_state_r[] =
 	5,						  /* disk wait */
 	1,						  /* zombie */
 	2,						  /* stop */
-	4						   /* swap */
+	4						  /* swap */
 };
 
 static int64_t cpu_states[NCPUSTATES];
@@ -346,9 +367,43 @@ format_header_r(char *uname_field)
 }
 
 char *
+format_next_io_r(caddr_t handler)
+{
+	static char fmt[MAX_COLS]; /* static area where result is built */
+	struct top_proc *p = *nextactive++;
+
+	if (mode_stats == STATS_DIFF)
+		snprintf(fmt, sizeof(fmt),
+				"%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
+				p->pid,
+				format_b(p->rchar_diff),
+				format_b(p->wchar_diff),
+				p->syscr_diff,
+				p->syscw_diff,
+				format_b(p->read_bytes_diff),
+				format_b(p->write_bytes_diff),
+				format_b(p->cancelled_write_bytes_diff),
+				p->name);
+	else
+		snprintf(fmt, sizeof(fmt),
+				"%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
+				p->pid,
+				format_b(p->rchar),
+				format_b(p->wchar),
+				p->syscr,
+				p->syscw,
+				format_b(p->read_bytes),
+				format_b(p->write_bytes),
+				format_b(p->cancelled_write_bytes),
+				p->name);
+
+	return (fmt);
+}
+
+char *
 format_next_process_r(caddr_t handler)
 {
-	static char fmt[MAX_COLS];/* static area where result is built */
+	static char fmt[MAX_COLS]; /* static area where result is built */
 	struct top_proc *p = *nextactive++;
 
 	snprintf(fmt, sizeof(fmt),
@@ -546,6 +601,7 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 	for (i = 0; i < rows; i++)
 	{
 		unsigned long otime;
+		long long value;
 
 		pid = atoi(PQgetvalue(pgresult, i, c_pid));
 
@@ -613,6 +669,34 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 
 		proc->uid = atol(PQgetvalue(pgresult, i, c_uid));
 		proc->username = strdup(PQgetvalue(pgresult, i, c_username));
+
+		value = atoll(PQgetvalue(pgresult, i, c_rchar));
+		proc->rchar_diff = value - proc->rchar;
+		proc->rchar = value;
+
+		value = atoll(PQgetvalue(pgresult, i, c_wchar));
+		proc->wchar_diff = value - proc->wchar;
+		proc->wchar = value;
+
+		value = atoll(PQgetvalue(pgresult, i, c_syscr));
+		proc->syscr_diff = value - proc->syscr;
+		proc->syscr = value;
+
+		value = atoll(PQgetvalue(pgresult, i, c_syscw));
+		proc->syscw_diff = value - proc->syscw;
+		proc->syscw = value;
+
+		value = atoll(PQgetvalue(pgresult, i, c_reads));
+		proc->read_bytes_diff = value - proc->read_bytes;
+		proc->read_bytes = value;
+
+		value = atoll(PQgetvalue(pgresult, i, c_writes));
+		proc->write_bytes_diff = value - proc->write_bytes;
+		proc->write_bytes = value;
+
+		value = atoll(PQgetvalue(pgresult, i, c_cwrites));
+		proc->cancelled_write_bytes_diff = value - proc->cancelled_write_bytes;
+		proc->cancelled_write_bytes = value;
 
 		++total_procs;
 		++process_states[proc->state];

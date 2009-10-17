@@ -241,6 +241,7 @@ show_help(struct statics * stp)
 {
 	static char *fullhelp;
 	char	   *p = NULL;
+	char	   *q = NULL;
 
 	if (fullhelp == NULL)
 	{
@@ -253,8 +254,17 @@ show_help(struct statics * stp)
 		{
 			p = "not supported";
 		}
-		fullhelp = (char *) malloc(strlen(help_text) + strlen(p) + 2);
-		sprintf(fullhelp, help_text, p);
+		if (stp->order_names != NULL)
+		{
+			q = string_list(stp->order_names_io);
+		}
+		if (q == NULL)
+		{
+			q = "not supported";
+		}
+		fullhelp = (char *) malloc(strlen(help_text) + strlen(p) + strlen(q) +
+				2);
+		sprintf(fullhelp, help_text, p, q);
 	}
 
 	display_pager("Top version ");
