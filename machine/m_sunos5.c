@@ -23,6 +23,7 @@
  *				 Petri Kutvonen		<kutvonen@cs.helsinki.fi>
  *				 Casper Dik			<casper.dik@sun.com>
  *				 Tim Pugh			<tpugh@oce.orst.edu>
+ *				 Mark Wong			<markwkm@gmail.com>
  */
 
 #define _KMEMUSER
@@ -281,6 +282,7 @@ char	   *memorynames[] =
 
 /* these are names given to allowed sorting orders -- first is default */
 char	   *ordernames[] = {"cpu", "size", "res", "time", NULL};
+char	   *ordernames_io[] = {NULL};
 
 /* forward definitions for comparison functions */
 int			compare_cpu();
@@ -453,6 +455,7 @@ machine_init(struct statics * statics)
 	statics->cpustate_names = cpustatenames;
 	statics->memory_names = memorynames;
 	statics->order_names = ordernames;
+	statics->order_names_io = ordernames_io;
 	statics->flags.fullcmds = 1;
 	statics->flags.warmup = 1;
 
@@ -1149,7 +1152,8 @@ get_process_info(
 				 struct system_info * si,
 				 struct process_select * sel,
 				 int compare_index,
-				 char *conninfo)
+				 char *conninfo,
+				 int mode)
 {
 	register int i;
 	register int total_procs;
@@ -1239,6 +1243,13 @@ get_process_info(
 }
 
 char		fmt[MAX_COLS];		/* static area where result is built */
+
+char *
+format_next_io(caddr_t handle, char *(*get_userid) ())
+{
+	fmt[0] = '\0';
+	return (fmt);
+}
 
 char *
 format_next_process(
