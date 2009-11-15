@@ -375,7 +375,7 @@ format_next_io_r(caddr_t handler)
 	if (mode_stats == STATS_DIFF)
 		snprintf(fmt, sizeof(fmt),
 				"%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
-				p->pid,
+				(int) p->pid,
 				format_b(p->rchar_diff),
 				format_b(p->wchar_diff),
 				p->syscr_diff,
@@ -387,7 +387,7 @@ format_next_io_r(caddr_t handler)
 	else
 		snprintf(fmt, sizeof(fmt),
 				"%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
-				p->pid,
+				(int) p->pid,
 				format_b(p->rchar),
 				format_b(p->wchar),
 				p->syscr,
