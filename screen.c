@@ -141,7 +141,19 @@ get_screensize()
 #endif   /* TIOCGSIZE */
 #endif   /* TIOCGWINSZ */
 
-	(void) strcpy(lower_left, tgoto(cursor_motion, 0, screen_length - 1));
+	char *lower_left_motion = "";
+	// get_screensize() can be called from main() without cursor_motion
+	// having been set, so we protect against that possibility.
+	if (smart_terminal == Yes)
+	{
+		// We need to account for the fact that tgoto() might return NULL.
+		lower_left_motion = tgoto(cursor_motion, 0, screen_length - 1);
+		if (lower_left_motion == NULL)
+		{
+			lower_left_motion = "";
+		}
+	}
+	(void) strcpy(lower_left, lower_left_motion);
 }
 
 void
@@ -252,7 +264,13 @@ init_termcap(int interactive)
 	PC = (PCptr = tgetstr("pc", &bufptr)) ? *PCptr : 0;
 
 	/* set convenience strings */
-	(void) strcpy(home, tgoto(cursor_motion, 0, 0));
+	// We need to account for the fact that tgoto() might return NULL.
+	char *home_motion = tgoto(cursor_motion, 0, 0);
+	if (home_motion == NULL)
+	{
+		home_motion = "";
+	}
+	(void) strcpy(home, home_motion);
 	/* (lower_left is set in get_screensize) */
 
 	/* get the actual screen size with an ioctl, if needed */

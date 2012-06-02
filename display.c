@@ -313,8 +313,11 @@ display_write(int x, int y, int newcolor, int eol, char *new)
 		}
 
 		/* write */
-		fputs(new, stdout);
-		curr_x += strlen(new);
+		if (new != NULL)
+		{
+			fputs(new, stdout);
+			curr_x += strlen(new);
+		}
 
 		return;
 	}
