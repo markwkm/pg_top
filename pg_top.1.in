@@ -105,7 +105,7 @@ mode.
 .B \-q
 Renice
 .I pg_top
-to -20 so that it will run faster.  This can be used when the system is
+to \-20 so that it will run faster.  This can be used when the system is
 being very sluggish to improve the possibility of discovering the problem.
 This option can only be used by root.
 .TP
