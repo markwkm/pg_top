@@ -1,11 +1,29 @@
 /*	Copyright (c) 2007, Mark Wong */
 
 #include <stdlib.h>
+#include <string.h>
 #include <strings.h>
 
 #include "display.h"
 #include "pg.h"
 #include "pg_top.h"
+
+#define QUERY_PROCESSES \
+		"SELECT procpid\n" \
+		"FROM pg_stat_activity;"
+
+#define CURRENT_QUERY \
+		"SELECT current_query\n" \
+		"FROM pg_stat_activity\n" \
+		"WHERE procpid = %d;"
+
+#define GET_LOCKS \
+		"SELECT datname, relname, mode, granted\n" \
+		"FROM pg_stat_activity, pg_locks\n" \
+		"LEFT OUTER JOIN pg_class\n" \
+		"ON relation = pg_class.oid\n"\
+		"WHERE procpid = %d\n" \
+		"  AND procpid = pid;" \
 
 char	   *index_ordernames[] = {
 	"idx_scan", "idx_tup_fetch", "idx_tup_read", NULL
@@ -682,6 +700,39 @@ pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
 
 	if (pgresult != NULL)
 		PQclear(pgresult);
+}
+
+PGresult *
+pg_locks(PGconn *pgconn, int procpid)
+{
+	char *sql;
+
+	sql = (char *) malloc(strlen(GET_LOCKS) + 7);
+	sprintf(sql, GET_LOCKS, procpid);
+	PGresult *pgresult = PQexec(pgconn, sql);
+	free(sql);
+	return pgresult;
+}
+
+PGresult *
+pg_processes(PGconn *pgconn)
+{
+	PGresult *pgresult = PQexec(pgconn, QUERY_PROCESSES);
+	return pgresult;
+}
+
+PGresult *
+pg_query(PGconn *pgconn, int procpid)
+{
+	char *sql;
+	PGresult *pgresult;
+
+	sql = (char *) malloc(strlen(CURRENT_QUERY) + 7);
+	sprintf(sql, CURRENT_QUERY, procpid);
+	pgresult = PQexec(pgconn, sql);
+	free(sql);
+
+	return pgresult;
 }
 
 struct index_node *

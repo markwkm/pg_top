@@ -36,6 +36,10 @@ PGconn	   *connect_to_db(char *);
 void		pg_display_index_stats(char *, int, int);
 void		pg_display_table_stats(char *, int, int);
 
+PGresult   *pg_locks(PGconn *, int);
+PGresult   *pg_processes(PGconn *);
+PGresult   *pg_query(PGconn *, int);
+
 extern char *index_ordernames[];
 extern char *table_ordernames[];
 

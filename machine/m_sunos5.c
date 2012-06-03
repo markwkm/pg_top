@@ -1174,7 +1174,7 @@ get_process_info(
 	pgconn = connect_to_db(conninfo);
 	if (pgconn != NULL)
 	{
-		pgresult = PQexec(pgconn, QUERY_PROCESSES);
+		pgresult = pg_processes(pgconn);
 		nproc = PQntuples(pgresult);
 		if (nproc > maxprocs)
 		{

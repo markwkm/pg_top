@@ -509,7 +509,7 @@ get_process_info(struct system_info * si,
 	pgconn = connect_to_db(conninfo);
 	if (pgconn != NULL)
 	{
-		pgresult = PQexec(pgconn, QUERY_PROCESSES);
+		pgresult = pg_processes(pgconn);
 		nproc = PQntuples(pgresult);
 		if (nproc > onproc)
 			pbase = (struct kinfo_proc *)

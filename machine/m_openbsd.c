@@ -331,7 +331,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	pgconn = connect_to_db(conninfo);
 	if (pgconn != NULL)
 	{
-		pgresult = PQexec(pgconn, QUERY_PROCESSES);
+		pgresult = pg_processes(pgconn);
 		nproc = PQntuples(pgresult);
 		pbase = (struct kinfo_proc2 *) realloc(pbase,
 				sizeof(struct kinfo_proc2 *) * nproc);

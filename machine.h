@@ -31,10 +31,6 @@
 #define MODE_INDEX_STATS 2
 #define MODE_IO_STATS 3
 
-#define QUERY_PROCESSES \
-		"SELECT procpid\n" \
-		"FROM pg_stat_activity;"
-
 /*
  * The statics struct is filled in by machine_init.  Fields marked as
  * "optional" are not filled in by every module.
