@@ -9,21 +9,38 @@
 #include "pg_top.h"
 
 #define QUERY_PROCESSES \
+		"SELECT pid\n" \
+		"FROM pg_stat_activity;"
+
+#define QUERY_PROCESSES_9_1 \
 		"SELECT procpid\n" \
 		"FROM pg_stat_activity;"
 
 #define CURRENT_QUERY \
-		"SELECT current_query\n" \
+		"SELECT query\n" \
 		"FROM pg_stat_activity\n" \
 		"WHERE procpid = %d;"
+
+#define CURRENT_QUERY_9_1 \
+		"SELECT query\n" \
+		"FROM pg_stat_activity\n" \
+		"WHERE pid = %d;"
 
 #define GET_LOCKS \
 		"SELECT datname, relname, mode, granted\n" \
 		"FROM pg_stat_activity, pg_locks\n" \
 		"LEFT OUTER JOIN pg_class\n" \
 		"ON relation = pg_class.oid\n"\
+		"WHERE pg_stat_activity.pid = %d\n" \
+		"  AND pg_stat_activity.pid = pg_locks.pid;"
+
+#define GET_LOCKS_9_1 \
+		"SELECT datname, relname, mode, granted\n" \
+		"FROM pg_stat_activity, pg_locks\n" \
+		"LEFT OUTER JOIN pg_class\n" \
+		"ON relation = pg_class.oid\n"\
 		"WHERE procpid = %d\n" \
-		"  AND procpid = pid;" \
+		"  AND procpid = pid;"
 
 char	   *index_ordernames[] = {
 	"idx_scan", "idx_tup_fetch", "idx_tup_read", NULL
@@ -131,6 +148,7 @@ void update_table_stats(struct table_node *, long long, long long, long long,
 struct table_node *upsert_table_stats(struct table_node *, long long,
 			long long, long long, long long, long long, long long, long long,
 				   long long);
+float pg_version(PGconn *);
 
 int
 compare_idx_scan(const void *vp1, const void *vp2)
@@ -706,10 +724,19 @@ PGresult *
 pg_locks(PGconn *pgconn, int procpid)
 {
 	char *sql;
+	PGresult *pgresult;
 
-	sql = (char *) malloc(strlen(GET_LOCKS) + 7);
-	sprintf(sql, GET_LOCKS, procpid);
-	PGresult *pgresult = PQexec(pgconn, sql);
+	if (pg_version(pgconn) >= 9.2)
+	{
+		sql = (char *) malloc(strlen(GET_LOCKS) + 7);
+		sprintf(sql, GET_LOCKS, procpid);
+	}
+	else
+	{
+		sql = (char *) malloc(strlen(GET_LOCKS) + 7);
+		sprintf(sql, GET_LOCKS_9_1, procpid);
+	}
+	pgresult = PQexec(pgconn, sql);
 	free(sql);
 	return pgresult;
 }
@@ -717,7 +744,15 @@ pg_locks(PGconn *pgconn, int procpid)
 PGresult *
 pg_processes(PGconn *pgconn)
 {
-	PGresult *pgresult = PQexec(pgconn, QUERY_PROCESSES);
+	PGresult *pgresult;
+	if (pg_version(pgconn) >= 9.2)
+	{
+		pgresult = PQexec(pgconn, QUERY_PROCESSES);
+	}
+	else
+	{
+		pgresult = PQexec(pgconn, QUERY_PROCESSES_9_1);
+	}
 	return pgresult;
 }
 
@@ -727,12 +762,39 @@ pg_query(PGconn *pgconn, int procpid)
 	char *sql;
 	PGresult *pgresult;
 
-	sql = (char *) malloc(strlen(CURRENT_QUERY) + 7);
-	sprintf(sql, CURRENT_QUERY, procpid);
+	if (pg_version(pgconn) >= 9.2)
+	{
+		sql = (char *) malloc(strlen(CURRENT_QUERY) + 7);
+		sprintf(sql, CURRENT_QUERY, procpid);
+	}
+	else
+	{
+		sql = (char *) malloc(strlen(CURRENT_QUERY_9_1) + 7);
+		sprintf(sql, CURRENT_QUERY_9_1, procpid);
+	}
 	pgresult = PQexec(pgconn, sql);
 	free(sql);
 
 	return pgresult;
+}
+
+/* Query the version string and just return the major.minor as a float. */
+float
+pg_version(PGconn *pgconn)
+{
+	PGresult *pgresult = NULL;
+
+	char *version_string;
+	float version;
+
+	pgresult = PQexec(pgconn, "SHOW server_version;");
+	version_string = PQgetvalue(pgresult, 0, 0);
+	sscanf(version_string, "%f%*s", &version);
+	/* Deal with rounding problems by adding 0.01. */
+	version += 0.01;
+	PQclear(pgresult);
+
+	return version;
 }
 
 struct index_node *
