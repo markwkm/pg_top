@@ -80,19 +80,6 @@ static char *err_listem =
 #define BEGIN "BEGIN;"
 #define ROLLBACK "ROLLBACK;"
 
-#define CURRENT_QUERY \
-		"SELECT current_query\n" \
-		"FROM pg_stat_activity\n" \
-		"WHERE procpid = %d;"
-
-#define GET_LOCKS \
-		"SELECT datname, relname, mode, granted\n" \
-		"FROM pg_stat_activity, pg_locks\n" \
-		"LEFT OUTER JOIN pg_class\n" \
-		"ON relation = pg_class.oid\n"\
-		"WHERE procpid = %d\n" \
-		"  AND procpid = pid;" \
-
 /*
  *	err_compar(p1, p2) - comparison routine used by "qsort"
  *	for sorting errors.
@@ -529,13 +516,10 @@ show_current_query(char *conninfo, int procpid)
 {
 	int			i;
 	int			rows;
-	char	   *sql;
 	char		info[64];
 	PGconn	   *pgconn;
 	PGresult   *pgresult = NULL;
 
-	sql = (char *) malloc(strlen(CURRENT_QUERY) + 7);
-	sprintf(sql, CURRENT_QUERY, procpid);
 	sprintf(info, "Current query for procpid %d:\n\n", procpid);
 	display_pager(info);
 
@@ -543,7 +527,7 @@ show_current_query(char *conninfo, int procpid)
 	pgconn = connect_to_db(conninfo);
 	if (pgconn != NULL)
 	{
-		pgresult = PQexec(pgconn, sql);
+		pgresult = pg_query(pgconn, procpid);
 		rows = PQntuples(pgresult);
 	}
 	else
@@ -556,7 +540,6 @@ show_current_query(char *conninfo, int procpid)
 	}
 	display_pager("\n\n");
 
-	free(sql);
 	if (pgresult != NULL)
 		PQclear(pgresult);
 	PQfinish(pgconn);
@@ -575,7 +558,6 @@ show_explain(char *conninfo, int procpid, int analyze)
 	PGresult   *pgresult_query = NULL;
 	PGresult   *pgresult_explain = NULL;
 
-	sprintf(sql, CURRENT_QUERY, procpid);
 	sprintf(info,
 			"Current query plan for procpid %d:\n\n Statement:\n\n",
 			procpid);
@@ -585,7 +567,7 @@ show_explain(char *conninfo, int procpid, int analyze)
 	pgconn = connect_to_db(conninfo);
 	if (pgconn != NULL)
 	{
-		pgresult_query = PQexec(pgconn, sql);
+		pgresult_query = pg_query(pgconn, procpid);
 		rows = PQntuples(pgresult_query);
 	}
 	else
@@ -636,7 +618,6 @@ show_locks(char *conninfo, int procpid)
 				j,
 				k;
 	int			rows;
-	char	   *sql;
 	char		info[64];
 	int			width[5] = {1, 8, 5, 4, 7};
 	PGconn	   *pgconn;
@@ -646,8 +627,6 @@ show_locks(char *conninfo, int procpid)
 	char		prefix[21];		/* Should hold any 64 bit integer. */
 	char		line[1024];
 
-	sql = (char *) malloc(strlen(GET_LOCKS) + 7);
-	sprintf(sql, GET_LOCKS, procpid);
 	sprintf(info, "Locks held by procpid %d:\n\n", procpid);
 	display_pager(info);
 
@@ -659,8 +638,7 @@ show_locks(char *conninfo, int procpid)
 		return;
 	}
 
-	pgresult = PQexec(pgconn, sql);
-	free(sql);
+	pgresult = pg_locks(pgconn, procpid);
 	rows = PQntuples(pgresult);
 
 	/* Determine column sizes. */
