@@ -477,7 +477,7 @@ format_next_process(caddr_t handle, char *(*get_userid)(uid_t))
 			p_wait = pp->p_wmesg;
 		else {
 			snprintf(waddr, sizeof(waddr), "%llx",
-			    (unsigned long long)(pp->p_wchan & ~KERNBASE));
+			    (unsigned long long)pp->p_wchan);
 			p_wait = waddr;
 		}
 	} else
