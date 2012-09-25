@@ -153,7 +153,8 @@ get_screensize()
 			lower_left_motion = "";
 		}
 	}
-	(void) strcpy(lower_left, lower_left_motion);
+	(void) strncpy(lower_left, lower_left_motion, 15);
+	lower_left[14] = '\0';
 }
 
 void
@@ -270,7 +271,8 @@ init_termcap(int interactive)
 	{
 		home_motion = "";
 	}
-	(void) strcpy(home, home_motion);
+	(void) strncpy(home, home_motion, 15);
+	home[15] = '\0';
 	/* (lower_left is set in get_screensize) */
 
 	/* get the actual screen size with an ioctl, if needed */
