@@ -1,6 +1,6 @@
 # configure.ac
 AC_PREREQ(2.59)
-AC_INIT(pg_top, 3.7.0-beta1, ptop-hackers@pgfoundry.org)
+AC_INIT(pg_top, 3.7.0-alpha1, ptop-hackers@pgfoundry.org)
 
 echo "Configuring $PACKAGE_STRING"
 
