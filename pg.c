@@ -19,12 +19,12 @@
 #define CURRENT_QUERY \
 		"SELECT query\n" \
 		"FROM pg_stat_activity\n" \
-		"WHERE procpid = %d;"
+		"WHERE pid = %d;"
 
 #define CURRENT_QUERY_9_1 \
 		"SELECT query\n" \
 		"FROM pg_stat_activity\n" \
-		"WHERE pid = %d;"
+		"WHERE procpid = %d;"
 
 #define GET_LOCKS \
 		"SELECT datname, relname, mode, granted\n" \
