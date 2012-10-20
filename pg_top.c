@@ -1201,10 +1201,21 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 									case CMD_cmdline:
 										if (statics.flags.fullcmds)
 										{
-											ps.fullcmd = !ps.fullcmd;
-											new_message(MT_standout | MT_delayed,
-														" %sisplaying full command lines.",
-												 ps.fullcmd ? "D" : "Not d");
+											ps.fullcmd = (ps.fullcmd + 1) % 3;
+											switch (ps.fullcmd) {
+											case 2:
+												new_message(MT_standout | MT_delayed,
+														" Displaying current query.");
+												break;
+											case 1:
+												new_message(MT_standout | MT_delayed,
+														" Displaying full command lines.");
+												break;
+											case 0:
+											default:
+												new_message(MT_standout | MT_delayed,
+												" Not displaying full command lines.");
+											}
 										}
 										else
 										{

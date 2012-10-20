@@ -649,7 +649,7 @@ read_one_proc_stat(pid_t pid, struct top_proc * proc, struct process_select * se
 
 	/* full cmd handling */
 	fullcmd = sel->fullcmd;
-	if (fullcmd)
+	if (fullcmd == 1)
 	{
 		sprintf(buffer, "%d/cmdline", pid);
 		if ((fd = open(buffer, O_RDONLY)) != -1)
@@ -922,6 +922,8 @@ get_process_info(struct system_info * si,
 			otime = proc->time;
 
 			read_one_proc_stat(pid, proc, sel);
+			if (sel->fullcmd == 2)
+				update_procname(proc, PQgetvalue(pgresult, i, 1));
 
 			if (proc->state == 0)
 				continue;

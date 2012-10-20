@@ -9,11 +9,11 @@
 #include "pg_top.h"
 
 #define QUERY_PROCESSES \
-		"SELECT pid\n" \
+		"SELECT pid, query\n" \
 		"FROM pg_stat_activity;"
 
 #define QUERY_PROCESSES_9_1 \
-		"SELECT procpid\n" \
+		"SELECT procpid, current_query\n" \
 		"FROM pg_stat_activity;"
 
 #define CURRENT_QUERY \
