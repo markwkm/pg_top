@@ -13,7 +13,7 @@ These single-character commands are available:\n\
 A       - EXPLAIN ANALYZE (UPDATE/DELETE safe)\n\
 C       - toggle the use of color\n\
 E       - show execution plan (UPDATE/DELETE safe)\n\
-I       - show I/O statistics per process\n\
+I       - show I/O statistics per process (Linux only)\n\
 L       - show locks held by a process\n\
 M       - sort by memory usage\n\
 N       - sort by pid\n\

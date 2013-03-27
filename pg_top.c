@@ -913,6 +913,7 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 					pg_display_table_stats(conninfo, table_order_index,
 							max_topn);
 					break;
+#ifdef __linux__
 				case MODE_IO_STATS:
 					for (i = 0; i < active_procs; i++)
 					{
@@ -923,6 +924,7 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 							(*d_process) (i, format_next_io_r(processes));
 					}
 					break;
+#endif /* __linux__ */
 				case MODE_PROCESSES:
 				default:
 					for (i = 0; i < active_procs; i++)
