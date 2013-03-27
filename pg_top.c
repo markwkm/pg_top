@@ -789,7 +789,11 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 		if (mode_remote == 0)
 		{
 			get_system_info(&system_info);
+#ifdef __linux__
 			(void) get_process_info(&system_info, &ps, 0, conninfo, mode);
+#else
+			(void) get_process_info(&system_info, &ps, 0, conninfo);
+#endif /* __linux__ */
 		}
 		else
 		{
@@ -823,8 +827,13 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 		if (mode_remote == 0)
 		{
 			get_system_info(&system_info);
+#ifdef __linux__
 			processes = get_process_info(&system_info, &ps, tmp_index,
 					conninfo, mode);
+#else
+			processes = get_process_info(&system_info, &ps, tmp_index,
+					conninfo);
+#endif /* __linux__ */
 		}
 		else
 		{
