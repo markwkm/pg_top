@@ -246,30 +246,44 @@ get_system_info(struct system_info *si)
 	int i;
 	int64_t *tmpstate;
 
-	if (ncpu > 1) {
-		size = CPUSTATES * sizeof(int64_t);
-		for (i = 0; i < ncpu; i++) {
-			int cp_time_mib[] = {CTL_KERN, KERN_CPTIME2, i};
-			tmpstate = cpu_states + (CPUSTATES * i);
-			if (sysctl(cp_time_mib, 3, cp_time[i], &size, NULL, 0) < 0)
-				warn("sysctl kern.cp_time2 failed");
-			/* convert cp_time2 counts to percentages */
-			(void) percentages(CPUSTATES, tmpstate, cp_time[i],
-			    cp_old[i], cp_diff[i]);
-		}
-	} else {
-		int cp_time_mib[] = {CTL_KERN, KERN_CPTIME};
-		long cp_time_tmp[CPUSTATES];
+	/*
+	 * Can't track down the exact issue, but I think it has something to do
+	 * with pg_top being the only process connected to the database, that its
+	 * pid is gone before data is extracted from the process table.  So assume
+	 * that there's nothing worth getting from the process table unless there
+	 * is more than 1 process.
+	 */
+	if (nproc > 1)
+		if (ncpu > 1) {
+			int cp_time_mib[] = {CTL_KERN, KERN_CPTIME2, 0};
 
-		size = sizeof(cp_time_tmp);
-		if (sysctl(cp_time_mib, 2, cp_time_tmp, &size, NULL, 0) < 0)
-			warn("sysctl kern.cp_time failed");
-		for (i = 0; i < CPUSTATES; i++)
-			cp_time[0][i] = cp_time_tmp[i];
-		/* convert cp_time counts to percentages */
-		(void) percentages(CPUSTATES, cpu_states, cp_time[0],
-		    cp_old[0], cp_diff[0]);
-	}
+			size = CPUSTATES * sizeof(int64_t);
+			for (i = 0; i < ncpu; i++) {
+				cp_time_mib[2] = i;
+				tmpstate = cpu_states + (CPUSTATES * i);
+				if (sysctl(cp_time_mib, 3, cp_time[i], &size, NULL, 0) < 0)
+					warn("sysctl kern.cp_time2 failed");
+				/* convert cp_time2 counts to percentages */
+				else
+					(void) percentages(CPUSTATES, tmpstate, cp_time[i],
+							cp_old[i], cp_diff[i]);
+			}
+		} else {
+			int cp_time_mib[] = {CTL_KERN, KERN_CPTIME};
+			long cp_time_tmp[CPUSTATES];
+
+			size = sizeof(cp_time_tmp);
+			if (sysctl(cp_time_mib, 2, cp_time_tmp, &size, NULL, 0) < 0)
+				warn("sysctl kern.cp_time failed");
+			else
+			{
+				for (i = 0; i < CPUSTATES; i++)
+					cp_time[0][i] = cp_time_tmp[i];
+				/* convert cp_time counts to percentages */
+				(void) percentages(CPUSTATES, cpu_states, cp_time[0],
+						cp_old[0], cp_diff[0]);
+			}
+		}
 
 	size = sizeof(sysload);
 	if (sysctl(sysload_mib, 2, &sysload, &size, NULL, 0) < 0)
@@ -363,9 +377,16 @@ get_process_info(struct system_info *si, struct process_select *sel,
 		mib[3] = atoi(PQgetvalue(pgresult, i, 0));
 		if (sysctl(mib, 6, &pbase[i++], &size, NULL, 0) != 0)
 		{
-			printf("\n\ndoh %d\n", errno);
-			perror("\n\ndoh");
-			exit(1);
+			/*
+			 * It appears that when pg_top is the only process accessing the
+			 * database, the pg_top connection might be gone from the process
+			 * table before we get it from the operating system.  If sysctl
+			 * throws any error, assume that is the case and adjust pbase
+			 * accordingly.
+			 */
+			--i;
+			--nproc;
+			continue;
 		}
 
 		/*
