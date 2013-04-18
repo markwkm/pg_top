@@ -64,6 +64,7 @@ EXTRA_DIST = \
 		pg_trace.h \
 		port.h \
 		pg_top.h \
+		remote.h \
 		screen.h \
 		sigconv.awk \
 		sigdesc.h \
