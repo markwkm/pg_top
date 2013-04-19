@@ -32,6 +32,13 @@
 		"       syscr, syscw, reads, writes, cwrites\n" \
 		"FROM pg_proctab()"
 
+#define QUERY_PROCTAB_QUERY \
+		"SELECT a.pid, comm, query, a.state, utime, stime, priority, nice,\n" \
+		"       starttime, vsize, rss, uid, username, rchar, wchar,\n" \
+		"       syscr, syscw, reads, writes, cwrites\n" \
+		"FROM pg_proctab() a LEFT OUTER JOIN pg_stat_activity b\n" \
+		"                    ON a.pid = b.pid"
+
 #define QUERY_PG_PROC \
 		"SELECT COUNT(*)\n" \
 		"FROM pg_catalog.pg_proc\n" \
@@ -590,7 +597,14 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 	pgconn = connect_to_db(conninfo);
 	if (pgconn != NULL)
 	{
-		pgresult = PQexec(pgconn, QUERY_PROCTAB);
+		if (sel->fullcmd == 2)
+		{
+			pgresult = PQexec(pgconn, QUERY_PROCTAB_QUERY);
+		}
+		else
+		{
+			pgresult = PQexec(pgconn, QUERY_PROCTAB);
+		}
 		rows = PQntuples(pgresult);
 	}
 	else
