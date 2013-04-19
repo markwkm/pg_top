@@ -554,7 +554,7 @@ get_fullcmd(int pid, char *fullcmd)
 
 caddr_t
 get_process_info(struct system_info * si, struct process_select * sel, int x,
-		char *conninfo, int mode)
+		char *conninfo)
 {
 	register int i;
 	register int total_procs;
@@ -721,6 +721,7 @@ get_system_info(struct system_info * si)
 	register long total;
 	register int i;
 	unsigned int count = HOST_CPU_LOAD_INFO_COUNT;
+	double avg[3];
 
 	if (host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO,
 			(host_info_t) & cpuload, &count) == KERN_SUCCESS)
@@ -745,6 +746,10 @@ get_system_info(struct system_info * si)
 	/*
 	 * get the load averages
 	 */
+	getloadavg(avg, sizeof(avg));
+	si->load_avg[0] = avg[0];
+	si->load_avg[1] = avg[1];
+	si->load_avg[2] = avg[2];
 
 #ifdef MAX_VERBOSE
 	printf("%-30s%03.2f, %03.2f, %03.2f\n",
