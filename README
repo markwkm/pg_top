@@ -5,9 +5,6 @@
 						and a cast of ... a few
 
 
-If you are having any problems getting pg_top to work, please read the
-file "FAQ" *before* contacting me.  Thank you.
-
 pg_top is 'top' for PostgreSQL. It is derived from Unix Top. Similar to top,
 pg_top allows you to monitor PostgreSQL processes. It also allows you to:
 
@@ -30,7 +27,14 @@ directions and advice contained therein.
 
 If you make any kind of change to "pg_top" that you feel would be
 beneficial to others who use this program, or if you find and fix a bug,
-please send me the change.
+please send the change to the pg_top mailing list.
+
+In order to monitor a remote database, the pg_proctab extension needs to be
+created on the database to be monitored.  Any operating system that pg_proctab
+supports can be monitored remotely on any operating system.  See details for
+pg_protab here:
+
+http://pgxn.org/dist/pg_proctab/
 
 Be sure to read the FAQ enclosed with the distrubution.  It contains
 answers to the most commonly asked questions about the configuration,
@@ -43,9 +47,9 @@ Project home page:
 
 http://ptop.projects.postgresql.org/
 
-If you have mercurial, you can download the source code from SourceForge:
+If you have git, you can download the source code:
 
-hg clone http://ptop.sourceforge.net/cgi-bin/hgwebdir.cgi/pg_top
+git clone git://git.postgresql.org/git/pg_top.git
 
 
 GRATITUDE

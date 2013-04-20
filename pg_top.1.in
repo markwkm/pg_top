@@ -19,6 +19,8 @@ pg_top \- display and update information about the top cpu PostgreSQL processes
 ] [
 .BI \-p PORT
 ] [
+.BI \-r
+] [
 .BI \-s time
 ] [
 .BI \-U USER
@@ -108,6 +110,12 @@ Renice
 to \-20 so that it will run faster.  This can be used when the system is
 being very sluggish to improve the possibility of discovering the problem.
 This option can only be used by root.
+.TP
+.B \-r
+Monitor a remote database where the database is on a system other than where
+pg_top is running from.
+.I pg_top
+will monitor a remote database if it has the pg_proctab extension installed.
 .TP
 .B \-u
 Do not take the time to map uid numbers to usernames.  Normally,

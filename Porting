@@ -225,5 +225,3 @@ If there is no support for multiple keys:
 
 Leave statics->order_names alone and call the comparison function of
 your choice in get_process_info, ignoring the third argument.
-
-

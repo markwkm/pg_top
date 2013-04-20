@@ -1,11 +1,5 @@
 * Test on more platforms.  Development has primarily been on Linux and some
-  attempts have been made on FreeBSD and Solaris.
-
-* Use a stored procedure to get system statistics so that pg_top can be run
-  remotely, as opposed to running pg_top locally in order to access the
-  operating systems process table.
-
-  Linux is done, more operating systems to go...
+  attempts have been made on FreeBSD, OpenBSD, and OS X.
 
 * Display status in the executor using pstack/dtract/gstack.
 
@@ -16,8 +10,6 @@
 
 * Display summary statistics for queries per second, average query cpu time,
   average query elapsed time, etc.
-
-* Display i/o statistics per process.
 
 * Renamed number of processs to be number of connections since that is more
   accurate:

@@ -46,4 +46,4 @@ See /usr/include/sys/vmmeter.h and  /sys/vm/vm_meter.c.
 Christos Zoulas, Steven Wallace, Wolfram Schneider, Monte Mitzelfelt.
 
 .PP
-This module was retrofitted from FreeBSD 4.6.2 sources.
+This module was retrofitted from FreeBSD 9.1 sources.

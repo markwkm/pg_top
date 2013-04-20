@@ -4,6 +4,10 @@ Release 3.7.0
 
      * Added support for monitoring databases on remote systems.
      * Added support for monitoring i/o statistics on Linux.
+     * Updated for changed introduced in PostgreSQL 9.2.
+     * Updated for OpenBSD 5.2.
+     * Updated for FreeBSD 9.1.
+     * Updated for OS X Mountain Lion (10.8).
 
 Release 3.6.2
 
