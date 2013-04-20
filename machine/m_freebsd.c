@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/param.h>
+#include <err.h>
 
 #include "config.h"
 #include <stdio.h>
@@ -51,10 +52,23 @@
 #include "machine.h"
 #include "utils.h"
 
-static int check_nlist __P((struct nlist *));
+#define GETSYSCTL(name, var) getsysctl(name, &(var), sizeof(var))
+
 static int getkval __P((unsigned long, int *, int, char *));
 extern char *printable __P((char *));
+static void getsysctl(const char *name, void *ptr, size_t len);
 int swapmode __P((int *retavail, int *retfree));
+
+static int maxcpu;
+static int	maxid;
+static int ncpus;
+static u_long cpumask;
+static long *times;
+static long *pcpu_cp_time;
+static long *pcpu_cp_old;
+static long *pcpu_cp_diff;
+static int64_t *pcpu_cpu_states;
+
 static int	smpmode;
 static int	namelength;
 static int	cmdlength;
@@ -182,7 +196,7 @@ static load_avg ccpu;
 static unsigned long cp_time_offset;
 static unsigned long avenrun_offset;
 static unsigned long lastpid_offset;
-static long lastpid;
+static int lastpid;
 static unsigned long cnt_offset;
 static unsigned long bufspace_offset;
 
@@ -263,16 +277,15 @@ int
 machine_init(struct statics * statics)
 
 {
-	register int i = 0;
 	register int pagesize;
-	size_t		modelen;
+	size_t		size;
 	struct passwd *pw;
-	struct timeval boottime;
+	int i, j, empty;
 
-	modelen = sizeof(smpmode);
-	if ((sysctlbyname("machdep.smp_active", &smpmode, &modelen, NULL, 0) < 0 &&
-		 sysctlbyname("smp.smp_active", &smpmode, &modelen, NULL, 0) < 0) ||
-		modelen != sizeof(smpmode))
+	size = sizeof(smpmode);
+	if ((sysctlbyname("machdep.smp_active", &smpmode, &size, NULL, 0) != 0 &&
+			sysctlbyname("smp.smp_active", &smpmode, &size, NULL, 0) != 0) ||
+			size != sizeof(smpmode))
 		smpmode = 0;
 
 	while ((pw = getpwent()) != NULL)
@@ -287,31 +300,15 @@ machine_init(struct statics * statics)
 	else if (namelength > 15)
 		namelength = 15;
 
-	if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "kvm_open")) == NULL)
+	/*
+	 * Silence kvm_open in the event that the pid from the database is gone
+	 * before we ask the operating system about it.
+	 */
+	if ((kd = kvm_open(NULL, "/dev/null", NULL, O_RDONLY, NULL)) == NULL)
 		return -1;
 
-
-	/* get the list of symbols we want to access in the kernel */
-	(void) kvm_nlist(kd, nlst);
-	if (nlst[0].n_type == 0)
-	{
-		fprintf(stderr, "pg_top: nlist failed\n");
-		return (-1);
-	}
-
-	/* make sure they were all found */
-	if (i > 0 && check_nlist(nlst) > 0)
-	{
-		return (-1);
-	}
-
 	/* get number of cpus */
-	(void) getkval(nlst[X_CCPU].n_value, (int *) (&ccpu), sizeof(ccpu),
-				   nlst[X_CCPU].n_name);
-
-	/* get boot time */
-	(void) getkval(nlst[X_BOOTTIME].n_value, (int *) (&boottime),
-				   sizeof(boottime), nlst[X_BOOTTIME].n_name);
+	GETSYSCTL("kern.ccpu", ccpu);
 
 	/* stash away certain offsets for later use */
 	cp_time_offset = nlst[X_CP_TIME].n_value;
@@ -327,6 +324,7 @@ machine_init(struct statics * statics)
 	pref = NULL;
 	nproc = 0;
 	onproc = -1;
+
 	/* get the page size with "getpagesize" and calculate pageshift from it */
 	pagesize = getpagesize();
 	pageshift = 0;
@@ -343,10 +341,38 @@ machine_init(struct statics * statics)
 	statics->procstate_names = procstatenames;
 	statics->cpustate_names = cpustatenames;
 	statics->memory_names = memorynames;
-	statics->boottime = boottime.tv_sec;
 	statics->swap_names = swapnames;
 	statics->order_names = ordernames;
 	statics->flags.fullcmds = 1;
+
+	/* Allocate state for per-CPU stats. */
+	cpumask = 0;
+	ncpus = 0;
+	GETSYSCTL("kern.smp.maxcpus", maxcpu);
+	size = sizeof(long) * maxcpu * CPUSTATES;
+	times = malloc(size);
+	if (times == NULL)
+		err(1, "malloc %zd bytes", size);
+	if (sysctlbyname("kern.cp_times", times, &size, NULL, 0) == -1)
+		err(1, "sysctlbyname kern.cp_times");
+	pcpu_cp_time = calloc(1, size);
+	maxid = (size / CPUSTATES / sizeof(long)) - 1;
+	for (i = 0; i <= maxid; i++) {
+		empty = 1;
+		for (j = 0; empty && j < CPUSTATES; j++) {
+			if (times[i * CPUSTATES + j] != 0)
+				empty = 0;
+		}
+		if (!empty) {
+			cpumask |= (1ul << i);
+			ncpus++;
+		}
+	}
+	size = sizeof(long) * ncpus * CPUSTATES;
+	pcpu_cp_old = calloc(1, size);
+	pcpu_cp_diff = calloc(1, size);
+	pcpu_cpu_states = calloc(1, size);
+	statics->ncpus = ncpus;
 
 	/* all done! */
 	return (0);
@@ -374,65 +400,64 @@ void
 get_system_info(struct system_info * si)
 
 {
-	long		total;
-	load_avg	avenrun[3];
+	struct loadavg sysload;
+	size_t		size;
+	int			i, j;
 
-	/* get the cp_time array */
-	(void) getkval(cp_time_offset, (int *) cp_time, sizeof(cp_time),
-				   nlst[X_CP_TIME].n_name);
-	(void) getkval(avenrun_offset, (int *) avenrun, sizeof(avenrun),
-				   nlst[X_AVENRUN].n_name);
-
-	(void) getkval(lastpid_offset, (int *) (&lastpid), sizeof(lastpid),
-				   "!");
+	/* get the CPU stats */
+	size = (maxid + 1) * CPUSTATES * sizeof(long);
+	if (sysctlbyname("kern.cp_times", pcpu_cp_time, &size, NULL, 0) == -1)
+		err(1, "sysctlbyname kern.cp_times");
+	GETSYSCTL("kern.cp_time", cp_time);
+	GETSYSCTL("vm.loadavg", sysload);
+	GETSYSCTL("kern.lastpid", lastpid);
 
 	/* convert load averages to doubles */
-	{
-		register int i;
-		register double *infoloadp;
-		load_avg   *avenrunp;
-
-#ifdef notyet
-		struct loadavg sysload;
-		int			size;
-
-		getkerninfo(KINFO_LOADAVG, &sysload, &size, 0);
-#endif
-
-		infoloadp = si->load_avg;
-		avenrunp = avenrun;
-		for (i = 0; i < 3; i++)
-		{
-#ifdef notyet
-			*infoloadp++ = ((double) sysload.ldavg[i]) / sysload.fscale;
-#endif
-			*infoloadp++ = loaddouble(*avenrunp++);
-		}
-	}
+	for (i = 0; i < 3; i++)
+		si->load_avg[i] = (double)sysload.ldavg[i] / sysload.fscale;
 
 	/* convert cp_time counts to percentages */
-	total = percentages(CPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
+	for (i = j = 0; i <= maxid; i++) {
+		if ((cpumask & (1ul << i)) == 0)
+			continue;
+		percentages(CPUSTATES, &pcpu_cpu_states[j * CPUSTATES],
+				&pcpu_cp_time[j * CPUSTATES],
+				&pcpu_cp_old[j * CPUSTATES],
+				&pcpu_cp_diff[j * CPUSTATES]);
+		j++;
+	}
+	percentages(CPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
 
 	/* sum memory & swap statistics */
 	{
-		struct vmmeter sum;
 		static unsigned int swap_delay = 0;
 		static int	swapavail = 0;
 		static int	swapfree = 0;
 		static int	bufspace = 0;
+		static int nspgsin, nspgsout;
 
-		(void) getkval(cnt_offset, (int *) (&sum), sizeof(sum),
-					   "_cnt");
-		(void) getkval(bufspace_offset, (int *) (&bufspace), sizeof(bufspace),
-					   "_bufspace");
+		/*
+		 * Use this temporary int array because we use longs for the other
+		 * patforms.
+		 */
+		int tmp_memory_stats[7];
+
+		GETSYSCTL("vfs.bufspace", bufspace);
+		GETSYSCTL("vm.stats.vm.v_active_count", tmp_memory_stats[0]);
+		GETSYSCTL("vm.stats.vm.v_inactive_count", tmp_memory_stats[1]);
+		GETSYSCTL("vm.stats.vm.v_wire_count", tmp_memory_stats[2]);
+		GETSYSCTL("vm.stats.vm.v_cache_count", tmp_memory_stats[3]);
+		GETSYSCTL("vm.stats.vm.v_free_count", tmp_memory_stats[5]);
+		GETSYSCTL("vm.stats.vm.v_swappgsin", nspgsin);
+		GETSYSCTL("vm.stats.vm.v_swappgsout", nspgsout);
 
 		/* convert memory stats to Kbytes */
-		memory_stats[0] = pagetok(sum.v_active_count);
-		memory_stats[1] = pagetok(sum.v_inactive_count);
-		memory_stats[2] = pagetok(sum.v_wire_count);
-		memory_stats[3] = pagetok(sum.v_cache_count);
+		memory_stats[0] = pagetok(tmp_memory_stats[0]);
+		memory_stats[1] = pagetok(tmp_memory_stats[1]);
+		memory_stats[2] = pagetok(tmp_memory_stats[2]);
+		memory_stats[3] = pagetok(tmp_memory_stats[3]);
 		memory_stats[4] = bufspace / 1024;
-		memory_stats[5] = pagetok(sum.v_free_count);
+		memory_stats[5] = pagetok(tmp_memory_stats[5]);
 		memory_stats[6] = -1;
 
 		/* first interval */
@@ -445,12 +470,12 @@ get_system_info(struct system_info * si)
 		/* compute differences between old and new swap statistic */
 		else
 		{
-			swap_stats[4] = pagetok(((sum.v_swappgsin - swappgsin)));
-			swap_stats[5] = pagetok(((sum.v_swappgsout - swappgsout)));
+			swap_stats[4] = pagetok(((nspgsin - swappgsin)));
+			swap_stats[5] = pagetok(((nspgsout - swappgsout)));
 		}
 
-		swappgsin = sum.v_swappgsin;
-		swappgsout = sum.v_swappgsout;
+		swappgsin = nspgsin;
+		swappgsout = nspgsout;
 
 		/* call CPU heavy swapmode() only for changes */
 		if (swap_stats[4] > 0 || swap_stats[5] > 0 || swap_delay == 0)
@@ -544,10 +569,6 @@ get_process_info(struct system_info * si,
 		struct kinfo_proc *junk2;
 		int			junk;
 
-		/*
-		 * FIXME: How do we keep 'kvm_open: kvm_getprocs: No such process'
-		 * from displaying when the process doesn't exist when we get here?
-		 */
 		junk2 = kvm_getprocs(kd, KERN_PROC_PID,
 							 atoi(PQgetvalue(pgresult, i, 0)), &junk);
 		if (junk2 == NULL)
@@ -745,39 +766,6 @@ format_next_process(caddr_t handle, char *(*get_userid) (uid_t))
 
 	/* return the result */
 	return (fmt);
-}
-
-
-/*
- * check_nlist(nlst) - checks the nlist to see if any symbols were not
- *		found.	For every symbol that was not found, a one-line
- *		message is printed to stderr.  The routine returns the
- *		number of symbols NOT found.
- */
-
-static int
-check_nlist(struct nlist * nlst)
-
-{
-	register int i;
-
-	/* check to see if we got ALL the symbols we requested */
-	/* this will write one line to stderr for every symbol not found */
-
-	i = 0;
-	while (nlst->n_name != NULL)
-	{
-		if (nlst->n_type == 0)
-		{
-			/* this one wasn't found */
-			(void) fprintf(stderr, "kernel: no symbol named `%s'\n",
-						   nlst->n_name);
-			i = 1;
-		}
-		nlst++;
-	}
-
-	return (i);
 }
 
 
@@ -1025,6 +1013,23 @@ proc_owner(pid_t pid)
 	return (-1);
 }
 
+
+static void
+getsysctl(const char *name, void *ptr, size_t len)
+{
+	size_t nlen = len;
+
+	if (sysctlbyname(name, ptr, &nlen, NULL, 0) == -1) {
+		fprintf(stderr, "top: sysctl(%s...) failed: %s\n", name,
+				strerror(errno));
+		quit(23);
+	}
+	if (nlen != len) {
+		fprintf(stderr, "top: sysctl(%s...) expected %lu, got %lu\n",
+				name, (unsigned long)len, (unsigned long)nlen);
+		quit(23);
+	}
+}
 
 /*
  * swapmode is based on a program called swapinfo written

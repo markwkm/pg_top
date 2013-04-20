@@ -45,6 +45,7 @@ struct statics
 	char	  **order_names_io;	/* optional */
 	char	  **color_names;	/* optional */
 	time_t		boottime;		/* optional */
+	int		    ncpus;
 	struct
 	{
 		unsigned int fullcmds:1;
