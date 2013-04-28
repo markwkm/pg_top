@@ -34,13 +34,16 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/dkstat.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/swap.h>
+#include <sys/sysctl.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/sysctl.h>
-#include <sys/dkstat.h>
-#include <sys/swap.h>
 #include <err.h>
 #include <errno.h>
 
@@ -85,8 +88,6 @@ static char header[] =
 char	*state_abbrev[] = {
 	"", "start", "run", "sleep", "stop", "zomb", "dead", "onproc"
 };
-
-static int      stathz;
 
 /* these are for calculating cpu state percentages */
 static int64_t     **cp_time;
@@ -151,20 +152,6 @@ int		ncpu;
 
 unsigned int	maxslp;
 
-static int
-getstathz(void)
-{
-	struct clockinfo cinf;
-	size_t size = sizeof(cinf);
-	int mib[2];
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_CLOCKRATE;
-	if (sysctl(mib, 2, &cinf, &size, NULL, 0) == -1)
-		return (-1);
-	return (cinf.stathz);
-}
-
 int
 machine_init(struct statics *statics)
 {
@@ -191,10 +178,6 @@ machine_init(struct statics *statics)
 		    cp_diff[cpu] == NULL)
 			err(1, NULL);
 	}
-
-	stathz = getstathz();
-	if (stathz == -1)
-		return (-1);
 
 	pbase = NULL;
 	pref = NULL;
@@ -477,7 +460,7 @@ format_comm(struct kinfo_proc *kp)
 char *
 format_next_process(caddr_t handle, char *(*get_userid)(uid_t))
 {
-	char *p_wait, waddr[sizeof(void *) * 2 + 3];	/* Hexify void pointer */
+	char *p_wait;
 	struct kinfo_proc *pp;
 	struct handle *hp;
 	int cputime;
@@ -488,20 +471,14 @@ format_next_process(caddr_t handle, char *(*get_userid)(uid_t))
 	pp = *(hp->next_proc++);
 	hp->remaining--;
 
-	cputime = (pp->p_uticks + pp->p_sticks + pp->p_iticks) / stathz;
+	cputime = pp->p_rtime_sec + ((pp->p_rtime_usec + 500000) / 1000000);
 
 	/* calculate the base for cpu percentages */
 	pct = pctdouble(pp->p_pctcpu);
 
-	if (pp->p_wchan) {
-		if (pp->p_wmesg)
-			p_wait = pp->p_wmesg;
-		else {
-			snprintf(waddr, sizeof(waddr), "%llx",
-			    (unsigned long long)pp->p_wchan);
-			p_wait = waddr;
-		}
-	} else
+	if (pp->p_wmesg[0])
+		p_wait = pp->p_wmesg;
+	else
 		p_wait = "-";
 
 	/* format this entry */
