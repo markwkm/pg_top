@@ -34,6 +34,7 @@ char	   *copyright =
 #include <setjmp.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <getopt.h>
 
 /* determine which type of signal functions to use */
 #ifdef HAVE_SIGACTION
@@ -86,6 +87,11 @@ static int	max_topn;			/* maximum displayable processes */
 char	   *myname = "top";
 jmp_buf		jmp_int;
 
+/* internal variables */
+static const char *progname = "pg_top";
+
+static void usage(const char *progname);
+
 /* pointers to display routines */
 void		(*d_loadave) (int, double *) = i_loadave;
 void		(*d_minibar) (
@@ -109,6 +115,43 @@ int			mode_stats = STATS_DIFF;
  * Mode for monitoring a remote database system.
  */
 int mode_remote = 0;
+
+/*
+ *	usage - print help message with details about commands
+ */
+static void
+usage(const char *progname)
+{
+	printf("%s monitors a PostgreSQL database cluster.\n\n", progname);
+	printf("Usage:\n");
+	printf("  %s [OPTION]... [NUMBER]\n", progname);
+	printf("\nOptions:\n");
+	printf("  -b, --batch               use batch mode\n");
+	printf("  -c, --show-command        display command name of each process\n");
+	printf("  -C, --color-mode          turn off color mode\n");
+	printf("  -i, --interactive         use interactive mode\n");
+	printf("  -I, --hide-idle           hide idle processes\n");
+	printf("  -n, --non-interactive     use non-interactive mode\n");
+	printf("  -o, --order-field=FIELD   select sort order\n");
+	printf("  -q, --quick-mode          modify schedule priority\n");
+	printf("                            usable only by root\n");
+	printf("  -r, --remote-mode         activate remote mode\n");
+	printf("  -s, --set-delay=SECOND    set delay between screen updates\n");
+	printf("  -T, --show-tags           show color tags\n");
+	printf("  -u, --show-uid            show UID instead of username\n");
+	printf("  -V, --version             output version information, then exit\n");
+	printf("  -x, --set-display=COUNT   set maximum number of displays\n");
+	printf("                            exit once this number is reached\n");
+	printf("  -z, --show-username=NAME  display only processes owned by given\n");
+	printf("                            username\n");
+	printf("  -?, --help                show this help, then exit\n");
+	printf("\nConnection options:\n");
+	printf("  -d, --dbname=DBNAME       database to connect to\n");
+	printf("  -h, --host=HOSTNAME       database server host or socket directory\n");
+	printf("  -p, --port=PORT           database server port\n");
+	printf("  -U, --username=USERNAME   user name to connect as\n");
+	printf("  -W, --password            force password prompt\n");
+}
 
 /*
  *	reset_display() - reset all the display routine pointers so that entire
@@ -243,11 +286,36 @@ onalrm(int i)					/* SIGALRM handler */
 
 int
 main(int argc, char *argv[])
-
 {
 	register int i;
 	register int active_procs;
 	register int change;
+
+	/* List of all the options available */
+	static struct option long_options[] = {
+		{"batch", no_argument, NULL, 'b'},
+		{"show-command", no_argument, NULL, 'c'},
+		{"color-mode", no_argument, NULL, 'C'},
+		{"interactive", no_argument, NULL, 'i'},
+		{"hide-idle", no_argument, NULL, 'I'},
+		{"non-interactive", no_argument, NULL, 'n'},
+		{"order-field", required_argument, NULL, 'o'},
+		{"quick-mode", no_argument, NULL, 'q'},
+		{"remote-mode", no_argument, NULL, 'r'},
+		{"set-delay", required_argument, NULL, 's'},
+		{"show-tags", no_argument, NULL, 'T'},
+		{"show-uid", no_argument, NULL, 'u'},
+		{"version", no_argument, NULL, 'V'},
+		{"set-display", required_argument, NULL, 'x'},
+		{"show-username", required_argument, NULL, 'z'},
+		{"help", no_argument, NULL, '?'},
+		{"dbname",  required_argument, NULL, 'd'},
+		{"host", required_argument, NULL, 'h'},
+		{"port", required_argument, NULL, 'p'},
+		{"username", required_argument, NULL, 'U'},
+		{"password",  no_argument, NULL, 'W'},
+		{NULL, 0, NULL, 0}
+	};
 
 	struct system_info system_info;
 	struct statics statics;
@@ -259,6 +327,7 @@ main(int argc, char *argv[])
 #ifdef BSD_SIGNALS
 	int			old_sigmask;	/* only used for BSD-style signals */
 #endif   /* BSD_SIGNALS */
+	int			option_index;
 	int			topn = 0;
 	int			delay = Default_DELAY;
 	int			displays = 0;	/* indicates unspecified */
@@ -354,6 +423,21 @@ main(int argc, char *argv[])
 #define CMD_explain_analyze 27
 #define CMD_toggle 28
 
+	/* Show help or version number if necessary */
+    if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
+		{
+			usage(progname);
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
+		{
+			printf("pg_top %s\n", version_string());
+			exit(0);
+		}
+	}
+
 	/* set the buffer for stdout */
 	setbuffer(stdout, stdoutbuf, Buffersize);
 
@@ -419,7 +503,9 @@ main(int argc, char *argv[])
 			optind = 1;
 		}
 
-		while ((i = getopt(ac, av, "CDITbcinqruvh:s:d:U:o:Wp:x:z:")) != EOF)
+		while ((i = getopt_long(ac, av,
+								"CDITbcinqruVh:s:d:U:o:Wp:x:z:",
+								long_options, &option_index)) != EOF)
 		{
 			switch (i)
 			{
@@ -433,10 +519,9 @@ main(int argc, char *argv[])
 					debug_set(1);
 					break;
 
-				case 'v':		/* show version number */
-					fprintf(stderr, "%s: version %s\n",
-							myname, version_string());
-					exit(1);
+				case 'V':		/* show version number */
+					printf("pg_top %s\n", version_string());
+					exit(0);
 					break;
 
 				case 'u':		/* toggle uid/username display */
@@ -551,11 +636,7 @@ main(int argc, char *argv[])
 					break;
 
 				default:
-					fprintf(stderr, "\
-pg_top version %s\n\
-Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
-          [-p PORT] [-U USER] [-d DBNAME] [-h HOSTNAME] [number]\n",
-							version_string(), myname);
+					fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
 					exit(1);
 			}
 		}
@@ -1507,7 +1588,7 @@ Usage: %s [-ITWbcinqru] [-x x] [-s x] [-o field] [-z username]\n\
 										 */
 										reset_display();
 										break;
-								
+
 									case CMD_explain_analyze:
 										new_message(MT_standout,
 												 "Re-run SQL for analysis: ");

@@ -8,29 +8,7 @@
 pg_top \- display and update information about the top cpu PostgreSQL processes
 .SH SYNOPSIS
 .B pg_top
-[
-.B \-ITWbcinqu
-] [
-.BI \-d DBNAME
-] [
-.BI \-h HOSTNAME
-] [
-.BI \-o field
-] [
-.BI \-p PORT
-] [
-.BI \-r
-] [
-.BI \-s time
-] [
-.BI \-U USER
-] [
-.BI \-x count
-] [
-.BI \-z username
-] [
-.I number
-]
+[ OPTIONS ] [ NUMBER ]
 .SH DESCRIPTION
 .\" This defines appropriate quote strings for nroff and troff
 .ds lq \&"
@@ -68,30 +46,30 @@ is redirected to a file, it acts as if it were being run on a dumb
 terminal.
 .SH OPTIONS
 .TP
-.B \-C
+.B \-C, \-\-color-mode
 Turn off the use of color in the display.
 .TP
-.B \-I
+.B \-I, \-\-hide-idle
 Do not display idle processes.
 By default, pg_top displays both active and idle processes.
 .TP
-.B \-T
+.B \-T, \-\-show-tags
 List all available color tags and the current set of tests used for
 color highlighting, then exit.
 .TP
-.B \-W
+.B \-W, \-\-password
 Forces pg_top to prompt for a password before connecting to a database.
 .TP
-.B \-b
+.B \-b, \-\-batch
 Use \*(lqbatch\*(rq mode.  In this mode, all input from the terminal is
 ignored.  Interrupt characters (such as ^C and ^\e) still have an effect.
 This is the default on a dumb terminal, or when the output is not a terminal.
 .TP
-.B \-c
+.B \-c, \-\-show-command
 Show the command name for each process. Default is to show the full
 command line.  This option is not supported on all platforms.
 .TP
-.B \-i
+.B \-i, \-\-interactive
 Use \*(lqinteractive\*(rq mode.  In this mode, any input is immediately
 read for processing.  See the section on \*(lqInteractive Mode\*(rq
 for an explanation of
@@ -100,24 +78,24 @@ screen will immediately be updated, even if the command was not
 understood.  This mode is the default when standard output is an
 intelligent terminal.
 .TP
-.B \-n
+.B \-n, \-\-non-interactive
 Use \*(lqnon-interactive\*(rq mode.  This is indentical to \*(lqbatch\*(rq
 mode.
 .TP
-.B \-q
+.B \-q, \-\-quick-mode
 Renice
 .I pg_top
 to \-20 so that it will run faster.  This can be used when the system is
 being very sluggish to improve the possibility of discovering the problem.
 This option can only be used by root.
 .TP
-.B \-r
+.B \-r, \-\-remote-mode
 Monitor a remote database where the database is on a system other than where
 pg_top is running from.
 .I pg_top
 will monitor a remote database if it has the pg_proctab extension installed.
 .TP
-.B \-u
+.B \-u, \-\-show-uid
 Do not take the time to map uid numbers to usernames.  Normally,
 .I pg_top
 will read as much of the file \*(lq/etc/passwd\*(rq as is necessary to map
@@ -125,24 +103,25 @@ all the user id numbers it encounters into login names.  This option
 disables all that, while possibly decreasing execution time.  The uid
 numbers are displayed instead of the names.
 .TP
-.B \-v
+.B \-V, \-\-version
 Write version number information to stderr then exit immediately.
 No other processing takes place when this option is used.  To see current
 revision information while pg_top is running, use the help command \*(lq?\*(rq.
 .TP
-.BI \-s time
+\fB\-s \fR\fB\fITIME\fR\fR, \fB\-\-set-delay=\fR\fB\fITIME\fR\fR
+.I TIME
 Set the delay between screen updates to
-.I time
+.I TIME
 seconds.  The default delay between updates is \nD seconds.
 .TP
-.BI \-o field
+\fB\-o \fR\fB\fIFIELD\fR\fR, \fB\-\-order-field=\fR\fB\fIFIELD\fR\fR
 Sort the process display area on the specified field.  The field name is
 the name of the column as seen in the output, but in lower case.  Likely
 values are \*(lqcpu\*(rq, \*(lqsize\*(rq, \*(lqres\*(rq, and \*(lqtime\*(rq,
 but may vary on different operating systems.  Note that
 not all operating systems support this option.
 .TP
-.BI \-x count
+\fB\-x \fR\fB\fICOUNT\fR\fR, \fB\-\-set-display=\fR\fB\fICOUNT\fR\fR
 Show only
 .I count
 displays, then exit.  A display is considered to be one update of the
@@ -152,16 +131,33 @@ wants to see before
 automatically exits.  For intelligent terminals, no upper limit
 is set.  The default is 1 for dumb terminals.
 .TP
-.BI \-z username
+\fB\-z \fR\fB\fIUSERNAME\fR\fR, \fB\-\-show-username=\fR\fB\fIUSERNAME\fR\fR
 Show only those processes owned by
-.IR username .
+.IR USERNAME .
 This option currently only accepts usernames and will not understand
 uid numbers.
+.TP
+\fB\-h \fR\fB\fIHOST\fR\fR, \fB\-\-host=\fR\fB\fIHOST\fR\fR
+Specifies the host name of the machine on which the server is running. If
+the value begins with a slash, it is used as the directory for the Unix
+domain socket. The default is taken from the PGHOST environment variable,
+if set.
+.TP
+\fB\-p \fR\fB\fIPORT\fR\fR, \fB\-\-port=\fR\fB\fIPORT\fR\fR
+Specifies the TCP port or local Unix domain socket file extension on which
+the server is listening for connections. Defaults to the PGPORT environment
+variable, if set.
+.TP
+\fB\-U \fR\fB\fIUSERNAME\fR\fR, \fB\-\-username=\fR\fB\fIUSERNAME\fR\fR
+User name to connect as.
+.TP
+.B \-W, \-\-password
+Force pg_top to prompt for a password before connecting to a database.
 .PP
 Both
-.I count
+.I COUNT
 and
-.I number
+.I NUMBER
 fields can be specified as \*(lqinfinite\*(rq, indicating that they can
 stretch as far as possible.  This is accomplished by using any proper
 prefix of the keywords
