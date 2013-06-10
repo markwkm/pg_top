@@ -103,6 +103,7 @@ void		(*d_cpustates) (int64_t *) = i_cpustates;
 void		(*d_memory) (long *) = i_memory;
 void		(*d_swap) (long *) = i_swap;
 void		(*d_db) (struct db_info *) = i_db;
+void		(*d_io) (struct io_info *) = i_io;
 void		(*d_message) () = i_message;
 void		(*d_header) (char *) = i_header;
 void		(*d_process) (int, char *) = i_process;
@@ -172,6 +173,7 @@ reset_display()
 	d_memory = i_memory;
 	d_swap = i_swap;
 	d_db = i_db;
+	d_io = i_io;
 	d_message = i_message;
 	d_header = i_header;
 	d_process = i_process;
@@ -324,6 +326,7 @@ main(int argc, char *argv[])
 	struct statics statics;
 	caddr_t		processes;
 	struct db_info db_info;
+	struct io_info io_info;
 
 	static char tempbuf1[50];
 	static char tempbuf2[50];
@@ -889,6 +892,9 @@ main(int argc, char *argv[])
 		/* Get database activity information */
 		get_database_info(&db_info, conninfo);
 
+		/* Get database I/O information */
+		get_io_info(&io_info);
+
 		timeout.tv_sec = 1;
 		timeout.tv_usec = 0;
 		select(0, NULL, NULL, NULL, &timeout);
@@ -934,6 +940,9 @@ main(int argc, char *argv[])
 		/* Get database activity information */
 		get_database_info(&db_info, conninfo);
 
+		/* Get database I/O information */
+		get_io_info(&io_info);
+
 		/* display the load averages */
 		(*d_loadave) (system_info.last_pid,
 					  system_info.load_avg);
@@ -978,6 +987,9 @@ main(int argc, char *argv[])
 
 		/* display database activity */
 		(*d_db) (&db_info);
+
+		/* display database I/O */
+		(*d_io) (&io_info);
 
 		/* display swap stats */
 		(*d_swap) (system_info.swap);
@@ -1077,6 +1089,7 @@ main(int argc, char *argv[])
 					d_cpustates = u_cpustates;
 					d_memory = u_memory;
 					d_db = u_db;
+					d_io = u_io;
 					d_swap = u_swap;
 					d_message = u_message;
 					d_header = u_header;

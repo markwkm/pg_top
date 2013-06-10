@@ -892,3 +892,10 @@ u_int64_t  *diffs;
 	for (i = 0; i < cnt; i++)
 		*out++ = (int) ((*diffs++ * 1000 + half_total) / total_change);
 }
+
+void
+get_io_info(struct io_info *io_info)
+{
+    /* Not supported yet */
+    memset(io_info, 0, sizeof(*io_info));
+}

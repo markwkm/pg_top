@@ -15,6 +15,8 @@
  * AUTHOR: Richard Henderson <rth@tamu.edu>
  * Order support added by Alexey Klimkin <kad@klon.tme.mcst.ru>
  * Ported to 2.4 by William LeFebvre
+ *
+ * Portions Copyright (c) 2013 VMware, Inc. All Rights Reserved.
  */
 
 #include "config.h"
@@ -1305,7 +1307,7 @@ compare_cmd(
 	return result == 0 ? 0 : result < 0 ? -1 : 1;
 }
 
-int	
+int
 compare_pid(struct top_proc ** pp1, struct top_proc ** pp2)
 {
 	register struct top_proc *p1;
@@ -1655,4 +1657,77 @@ upsert_io_stats(struct io_node *head, pid_t pid, long long rchar,
 			write_bytes, cancelled_write_bytes);
 	head = insert_io_stats(head, c);
 	return head;
+}
+
+/*
+ * Get IO information for the SCSI devices in the system.  Returns
+ * read/write IOs per second and bandwidth by comparing current values
+ * with previous values.
+ */
+void
+get_io_info(struct io_info *io_info)
+{
+	struct timeval thistime;
+	double timediff;
+	static struct timeval lasttime;
+	struct io_info cur_info;
+	static struct io_info last_io_info;
+	FILE *fp;
+	char line[256];
+	int major, minor;
+	char dev_name[32];
+	int64_t reads, readsectors, skip, writes, writesectors;
+	int i;
+
+	/* calculate the time difference since our last check */
+	gettimeofday(&thistime, 0);
+	if (lasttime.tv_sec)
+		timediff = ((thistime.tv_sec - lasttime.tv_sec) +
+					(thistime.tv_usec - lasttime.tv_usec) * 1e-6);
+	else
+		timediff = 0;
+
+	lasttime = thistime;
+
+	fp = fopen("/proc/diskstats", "r");
+	if (fp == NULL)
+	{
+		memset(io_info, 0, sizeof(*io_info));
+		return;
+	}
+
+	memset(&cur_info, 0, sizeof(cur_info));
+	while (fgets(line, 256, fp) != NULL)
+	{
+		i = sscanf(line, "%d %d %31s %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld",
+				   &major, &minor, dev_name,
+				   &reads, &skip, &readsectors, &skip,
+				   &writes, &skip, &writesectors, &skip,
+				   &skip, &skip, &skip);
+		if (i != 14)
+			continue;
+
+		/* Total up full scsi devices (not partitions) */
+		if (major == 8 && (minor % 16) == 0)
+		{
+			cur_info.reads += reads;
+			cur_info.readsectors += readsectors;
+			cur_info.writes += writes;
+			cur_info.writesectors += writesectors;
+		}
+    }
+	fclose(fp);
+	if (timediff == 0)
+	{
+		last_io_info = cur_info;
+		memset(io_info, 0, sizeof(*io_info));
+		return;
+	}
+
+	/* Compute the rate information */
+	io_info->reads = (double)(cur_info.reads - last_io_info.reads) / timediff;
+	io_info->readsectors = (double)(cur_info.readsectors - last_io_info.readsectors) / timediff;
+	io_info->writes = (double)(cur_info.writes - last_io_info.writes) / timediff;
+	io_info->writesectors = (double)(cur_info.writesectors - last_io_info.writesectors) / timediff;
+	last_io_info = cur_info;
 }
