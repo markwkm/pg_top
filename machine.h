@@ -2,6 +2,8 @@
  *	This file defines the interface between top and the machine-dependent
  *	module.  It is NOT machine dependent and should not need to be changed
  *	for any specific machine.
+ *
+ *	Portions Copyright (c) 2013 VMware, Inc. All Rights Reserved.
  */
 
 #ifndef _MACHINE_H_
@@ -81,6 +83,20 @@ struct system_info
  */
 
 /*
+ * Database activity information
+ */
+struct db_info {
+	int numDb;
+	int64_t numXact;
+	int64_t numRollback;
+	int64_t numBlockRead;
+	int64_t numBlockHit;
+	int64_t numTupleFetched;
+	int64_t numTupleAltered;
+	int64_t numConflict;
+};
+
+/*
  * the process_select struct tells get_process_info what processes we
  * are interested in seeing
  */
@@ -103,6 +119,7 @@ caddr_t get_process_info(struct system_info *, struct process_select *, int,
 caddr_t get_process_info(struct system_info *, struct process_select *, int,
 				 char *);
 #endif /* __linux__ */
+void		get_database_info(struct db_info *db_info, char *conninfo);
 char	   *format_header(char *);
 char	   *format_next_io(caddr_t, char *(*) (uid_t));
 char	   *format_next_process(caddr_t, char *(*) (uid_t));

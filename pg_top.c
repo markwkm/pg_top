@@ -12,6 +12,7 @@ char	   *copyright =
  *	Copyright (c) 1994, 1995, William LeFebvre, Argonne National Laboratory
  *	Copyright (c) 1996, William LeFebvre, Group sys Consulting
  *	Copyright (c) 2007-2008, Mark Wong
+ *	Portions Copyright (c) 2013 VMware, Inc. All Rights Reserved.
  */
 
 /*
@@ -101,6 +102,7 @@ void		(*d_procstates) (int, int *) = i_procstates;
 void		(*d_cpustates) (int64_t *) = i_cpustates;
 void		(*d_memory) (long *) = i_memory;
 void		(*d_swap) (long *) = i_swap;
+void		(*d_db) (struct db_info *) = i_db;
 void		(*d_message) () = i_message;
 void		(*d_header) (char *) = i_header;
 void		(*d_process) (int, char *) = i_process;
@@ -169,6 +171,7 @@ reset_display()
 	d_cpustates = i_cpustates;
 	d_memory = i_memory;
 	d_swap = i_swap;
+	d_db = i_db;
 	d_message = i_message;
 	d_header = i_header;
 	d_process = i_process;
@@ -320,6 +323,7 @@ main(int argc, char *argv[])
 	struct system_info system_info;
 	struct statics statics;
 	caddr_t		processes;
+	struct db_info db_info;
 
 	static char tempbuf1[50];
 	static char tempbuf2[50];
@@ -881,6 +885,10 @@ main(int argc, char *argv[])
 			get_system_info_r(&system_info, conninfo);
 			(void) get_process_info_r(&system_info, &ps, 0, conninfo);
 		}
+
+		/* Get database activity information */
+		get_database_info(&db_info, conninfo);
+
 		timeout.tv_sec = 1;
 		timeout.tv_usec = 0;
 		select(0, NULL, NULL, NULL, &timeout);
@@ -923,6 +931,9 @@ main(int argc, char *argv[])
 					conninfo);
 		}
 
+		/* Get database activity information */
+		get_database_info(&db_info, conninfo);
+
 		/* display the load averages */
 		(*d_loadave) (system_info.last_pid,
 					  system_info.load_avg);
@@ -964,6 +975,9 @@ main(int argc, char *argv[])
 
 		/* display memory stats */
 		(*d_memory) (system_info.memory);
+
+		/* display database activity */
+		(*d_db) (&db_info);
 
 		/* display swap stats */
 		(*d_swap) (system_info.swap);
@@ -1062,6 +1076,7 @@ main(int argc, char *argv[])
 					d_procstates = u_procstates;
 					d_cpustates = u_cpustates;
 					d_memory = u_memory;
+					d_db = u_db;
 					d_swap = u_swap;
 					d_message = u_message;
 					d_header = u_header;

@@ -1,4 +1,5 @@
 /* interface declaration for display.c */
+/* Portions Copyright (c) 2013 VMware, Inc. All Rights Reserved. */
 
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
@@ -28,6 +29,8 @@ void		i_memory(long *stats);
 void		u_memory(long *stats);
 void		i_swap(long *stats);
 void		u_swap(long *stats);
+void		i_db(struct db_info *db_info);
+void		u_db(struct db_info *db_info);
 void		i_message();
 void		u_message();
 void		i_header(char *text);
