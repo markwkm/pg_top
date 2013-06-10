@@ -85,7 +85,8 @@ struct system_info
 /*
  * Database activity information
  */
-struct db_info {
+struct db_info
+{
 	int numDb;
 	int64_t numXact;
 	int64_t numRollback;
@@ -100,11 +101,21 @@ struct db_info {
  * Info on reads/writes happening on disk.
  * On Linux, this can be obtained from /proc/diskstats.
  */
-struct io_info {
+struct io_info
+{
 	int64_t reads;
 	int64_t readsectors;
 	int64_t writes;
 	int64_t writesectors;
+};
+
+/*
+ * Database disk(s) info
+ */
+struct disk_info
+{
+	int64_t size;
+	int64_t avail;
 };
 
 /*
@@ -130,8 +141,10 @@ caddr_t get_process_info(struct system_info *, struct process_select *, int,
 caddr_t get_process_info(struct system_info *, struct process_select *, int,
 				 char *);
 #endif /* __linux__ */
-void		get_database_info(struct db_info *, char *);
+void		get_disk_info(struct disk_info *, char *);
 void		get_io_info(struct io_info *);
+void		get_database_info(struct db_info *, char *);
+char	   *get_data_directory(char *);
 char	   *format_header(char *);
 char	   *format_next_io(caddr_t, char *(*) (uid_t));
 char	   *format_next_process(caddr_t, char *(*) (uid_t));

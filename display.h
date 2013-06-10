@@ -33,6 +33,8 @@ void		i_db(struct db_info *db_info);
 void		u_db(struct db_info *db_info);
 void		i_io(struct io_info *io_info);
 void		u_io(struct io_info *io_info);
+void		i_disk(struct disk_info *disk_info);
+void		u_disk(struct disk_info *disk_info);
 void		i_message();
 void		u_message();
 void		i_header(char *text);

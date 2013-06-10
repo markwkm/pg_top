@@ -20,6 +20,11 @@
 		"       tup_inserted, tup_updated, tup_deleted, conflicts \n" \
 		"FROM pg_stat_database;"
 
+#define QUERY_DATA_DIRECTORY "SHOW data_directory;"
+
+/* Store data directory to avoid unnecessary requests to server */
+static char *data_directory = NULL;
+
 /*
  * Get database info via the above QUERY_STAT_DB info.
  * Returns rate info on the various statistics by comparing current
@@ -98,4 +103,45 @@ get_database_info(struct db_info *db_info, char *conninfo)
 	db_info->numTupleAltered = (double)(cur_info.numTupleAltered - last_db_info.numTupleAltered) / timediff;
 	db_info->numConflict = (double)(cur_info.numConflict - last_db_info.numConflict) / timediff;
 	last_db_info = cur_info;
+}
+
+/*
+ * Obtain data directory of server if necessary. if this has already been
+ * queried to server, return existing value.
+ */
+char *
+get_data_directory(char *conninfo)
+{
+	PGconn	   *pgconn;
+	PGresult   *pgresult = NULL;
+	int			rows;
+
+	/* Return existing value if any */
+	if (data_directory)
+		return data_directory;
+
+	/* No existing value, so query server */
+	rows = 0;
+	pgconn = connect_to_db(conninfo);
+	if (pgconn != NULL)
+	{
+		pgresult = PQexec(pgconn, QUERY_DATA_DIRECTORY);
+		if (PQresultStatus(pgresult) == PGRES_TUPLES_OK)
+			rows = PQntuples(pgresult);
+	}
+
+	if (rows != 0)
+	{
+		char *dir;
+		dir = PQgetvalue(pgresult, 0, 0);
+		if (dir != NULL)
+			data_directory = strdup(dir);
+	}
+
+	/* Clean up */
+	if (pgresult != NULL)
+		PQclear(pgresult);
+	PQfinish(pgconn);
+
+	return data_directory;
 }

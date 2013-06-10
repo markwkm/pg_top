@@ -82,6 +82,12 @@ struct io_info {
     int64_t writesectors;
 };
 
+The disk_info struct is filled in by get_disk_info.
+struct disk_info
+{
+    int64_t size;
+    int64_t avail;
+};
 
 The last three pointers each point to an array of integers.  The
 length of the array is determined by the length of the corresponding
@@ -132,6 +138,8 @@ uid_t proc_owner(pid_t)
 	pg_top may pose a security risk.
 
 void get_io_info(struct io_info *)
+
+void get_disk_info(struct disk_info *)
 
 get_process_info is called immediately after get_system_info.  In
 fact, the two functions could be rolled in to one.  The reason they

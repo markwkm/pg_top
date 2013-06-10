@@ -77,6 +77,8 @@ static int	x_db = X_DB;
 static int	y_db = Y_DB;
 static int	x_io = X_IO;
 static int	y_io = Y_IO;
+static int	x_disk = X_DISK;
+static int	y_disk = Y_DISK;
 static int	x_header = X_HEADER;
 static int	y_header = Y_HEADER;
 static int	x_idlecursor = X_IDLECURSOR;
@@ -1269,6 +1271,29 @@ void
 u_io(struct io_info *io_info)
 {
 	i_io(io_info);
+}
+
+/*
+ *	*_disk(disk_info) - print "DB disk: " followed by summary of
+ *						the disk space where the data directory is located.
+ */
+void
+i_disk(struct disk_info *disk_info)
+{
+	char buf[128];
+
+	display_write(x_disk, y_disk, 0, 0, "DB disk: ");
+	snprintf(buf, 80, "%2.1f GB total, %2.1f GB free (%ld%% used)",
+			 (double)disk_info->size / (1024 * 1024 * 1024),
+			 (double)disk_info->avail / (1024 * 1024 * 1024),
+			 disk_info->size == 0 ? 100 : (disk_info->size - disk_info->avail) * 100 / disk_info->size);
+	display_write(-1, -1, 0, 0, buf);
+}
+
+void
+u_disk(struct disk_info *disk_info)
+{
+	i_disk(disk_info);
 }
 
 /*

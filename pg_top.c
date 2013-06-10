@@ -104,6 +104,7 @@ void		(*d_memory) (long *) = i_memory;
 void		(*d_swap) (long *) = i_swap;
 void		(*d_db) (struct db_info *) = i_db;
 void		(*d_io) (struct io_info *) = i_io;
+void		(*d_disk) (struct disk_info *) = i_disk;
 void		(*d_message) () = i_message;
 void		(*d_header) (char *) = i_header;
 void		(*d_process) (int, char *) = i_process;
@@ -174,6 +175,7 @@ reset_display()
 	d_swap = i_swap;
 	d_db = i_db;
 	d_io = i_io;
+	d_disk = i_disk;
 	d_message = i_message;
 	d_header = i_header;
 	d_process = i_process;
@@ -327,6 +329,7 @@ main(int argc, char *argv[])
 	caddr_t		processes;
 	struct db_info db_info;
 	struct io_info io_info;
+	struct disk_info disk_info;
 
 	static char tempbuf1[50];
 	static char tempbuf2[50];
@@ -895,6 +898,9 @@ main(int argc, char *argv[])
 		/* Get database I/O information */
 		get_io_info(&io_info);
 
+		/* Get database disk information */
+		get_disk_info(&disk_info, get_data_directory(conninfo));
+
 		timeout.tv_sec = 1;
 		timeout.tv_usec = 0;
 		select(0, NULL, NULL, NULL, &timeout);
@@ -943,6 +949,9 @@ main(int argc, char *argv[])
 		/* Get database I/O information */
 		get_io_info(&io_info);
 
+		/* display database disk info */
+		get_disk_info(&disk_info, get_data_directory(conninfo));
+
 		/* display the load averages */
 		(*d_loadave) (system_info.last_pid,
 					  system_info.load_avg);
@@ -990,6 +999,9 @@ main(int argc, char *argv[])
 
 		/* display database I/O */
 		(*d_io) (&io_info);
+
+		/* display database disk info */
+		(*d_disk) (&disk_info);
 
 		/* display swap stats */
 		(*d_swap) (system_info.swap);
@@ -1090,6 +1102,7 @@ main(int argc, char *argv[])
 					d_memory = u_memory;
 					d_db = u_db;
 					d_io = u_io;
+					d_disk = u_disk;
 					d_swap = u_swap;
 					d_message = u_message;
 					d_header = u_header;
