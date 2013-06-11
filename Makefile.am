@@ -21,7 +21,6 @@ EXTRA_pg_top_SOURCES = \
 		machine/m_freebsd.c \
 		machine/m_hpux10.c \
 		machine/m_hpux7.c \
-		machine/m_hpux8.c \
 		machine/m_hpux9.c \
 		machine/m_irix5.c \
 		machine/m_irixsgi.c \

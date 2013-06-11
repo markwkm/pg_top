@@ -188,7 +188,6 @@ else
 	osf5*)		MODULE=decosf1;;
         freebsd*)	MODULE=freebsd; USE_KMEM=1;;
 	hpux7*)		MODULE=hpux7;;
-	hpux8*)		MODULE=hpux8;;
 	hpux9*)		MODULE=hpux9;;
 	hpux10*)	MODULE=hpux10;;
 	hpux11*)	MODULE=hpux10;;
