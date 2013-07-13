@@ -8,6 +8,10 @@ Release 3.7.0
      * Updated for OpenBSD 5.2.
      * Updated for FreeBSD 9.1.
      * Updated for OS X Mountain Lion (10.8).
+     * Add monitoring for database activity
+     * Add monitoring for disk activity
+     * Add monitoring for disk space
+     * Add long options
 
 Release 3.6.2
 

@@ -8,8 +8,8 @@
 * Display SQL statement type currently executing, i.e. SELECT, UPDATE,
   VACUUM, etc.
 
-* Display summary statistics for queries per second, average query cpu time,
-  average query elapsed time, etc.
+* Display summary statistics for average query cpu time, average query elapsed
+  time, etc.
 
 * Renamed number of processs to be number of connections since that is more
   accurate:
@@ -46,3 +46,6 @@
    pgbenchtest |           1 |  3085 |  321558 |      485894
 
 * Display the size of each database.
+
+* Make new TPS and i/o activity and disk space usage work on remote
+  connections.
