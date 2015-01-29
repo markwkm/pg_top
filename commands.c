@@ -254,7 +254,7 @@ show_help(struct statics * stp)
 		sprintf(fullhelp, help_text, p, q);
 	}
 
-	display_pager("Top version ");
+	display_pager("pg_top version ");
 	display_pager(version_string());
 	display_pager(", ");
 	display_pager(copyright);

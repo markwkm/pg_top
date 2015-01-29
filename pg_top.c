@@ -85,7 +85,7 @@ extern int	overstrike;
 static int	max_topn;			/* maximum displayable processes */
 
 /* miscellaneous things */
-char	   *myname = "top";
+char	   *myname = "pg_top";
 jmp_buf		jmp_int;
 
 /* internal variables */

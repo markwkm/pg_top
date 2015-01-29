@@ -4,7 +4,7 @@
 #define _HELP_H_
 
 char	   *help_text = "\n\
-A top users display for Unix\n\
+A top users display for PostgreSQL\n\
 \n\
 These single-character commands are available:\n\
 \n\
