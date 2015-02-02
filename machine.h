@@ -32,6 +32,7 @@
 #define MODE_TABLE_STATS 1
 #define MODE_INDEX_STATS 2
 #define MODE_IO_STATS 3
+#define MODE_STATEMENTS 4
 
 /*
  * The statics struct is filled in by machine_init.  Fields marked as

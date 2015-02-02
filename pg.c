@@ -569,7 +569,6 @@ pg_display_index_stats(char *conninfo, int compare_index, int max_topn)
 
 	int			max_lines;
 
-	/* Get the currently running query. */
 	pgconn = connect_to_db(conninfo);
 	if (pgconn != NULL)
 	{
@@ -645,7 +644,6 @@ pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
 
 	int			max_lines;
 
-	/* Get the currently running query. */
 	pgconn = connect_to_db(conninfo);
 	if (pgconn != NULL)
 	{
@@ -713,6 +711,48 @@ pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
 				 	procs[i]->total_n_tup_del,
 				 	PQgetvalue(pgresult, procs[i]->name_index, 1));
 		}
+		u_process(rows - i - 1, line);
+	}
+
+	if (pgresult != NULL)
+		PQclear(pgresult);
+}
+
+void
+pg_display_statements(char *conninfo, int max_topn)
+{
+	int			i;
+	int			rows;
+	PGconn	   *pgconn;
+	PGresult   *pgresult = NULL;
+	static char line[512];
+
+	int			max_lines;
+
+	pgconn = connect_to_db(conninfo);
+	if (pgconn != NULL)
+	{
+		pgresult = PQexec(pgconn, SELECT_STATEMENTS);
+		rows = PQntuples(pgresult);
+	}
+	else
+	{
+		PQfinish(pgconn);
+		return;
+	}
+	PQfinish(pgconn);
+
+	max_lines = rows < max_topn ? rows : max_topn;
+
+	/* Display stats. */
+	for (i = rows - 1; i > rows - max_lines - 1; i--)
+	{
+		snprintf(line, sizeof(line), "%5s %6.1f %10s %8s %s",
+				 PQgetvalue(pgresult, i, 1),
+				 atof(PQgetvalue(pgresult, i, 3)),
+				 PQgetvalue(pgresult, i, 2),
+				 PQgetvalue(pgresult, i, 4),
+				 PQgetvalue(pgresult, i, 0));
 		u_process(rows - i - 1, line);
 	}
 

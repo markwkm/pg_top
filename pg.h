@@ -17,6 +17,21 @@
 		"FROM pg_stat_user_tables\n" \
 		"ORDER BY relname"
 
+#define SELECT_STATEMENTS \
+		"WITH aggs AS (\n" \
+		"    SELECT sum(calls) AS calls_total\n" \
+		"    FROM pg_stat_statements\n" \
+		")\n" \
+		"SELECT regexp_replace(query, E'[\\n\\r]+', ' ', 'g' ),\n" \
+		"       calls,\n" \
+		"       to_char(INTERVAL '1 milliseconds' * total_time,\n" \
+		"               'HH24:MI:SS.MS'),\n" \
+		"       calls / calls_total AS calls_percentage,\n" \
+		"       to_char(INTERVAL '1 milliseconds' * (total_time / calls),\n" \
+		"               'HH24:MI:SS.MS') AS average_time\n" \
+		"FROM pg_stat_statements, aggs\n" \
+		"ORDER BY calls ASC"
+
 /* Table statistics comparison functions for qsort. */
 int			compare_idx_scan_t(const void *, const void *);
 int			compare_idx_tup_fetch_t(const void *, const void *);
@@ -35,6 +50,7 @@ PGconn	   *connect_to_db(char *);
 
 void		pg_display_index_stats(char *, int, int);
 void		pg_display_table_stats(char *, int, int);
+void		pg_display_statements(char *, int);
 
 PGresult   *pg_locks(PGconn *, int);
 PGresult   *pg_processes(PGconn *);

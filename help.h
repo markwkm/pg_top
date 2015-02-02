@@ -19,6 +19,7 @@ M       - sort by memory usage\n\
 N       - sort by pid\n\
 P       - sort by CPU usage\n\
 R       - show user table statistics\n\
+S       - show pg_stat_statements statistics\n\
 Q       - show current query of a process\n\
 T       - sort by time\n\
 X       - show user index statistics\n\

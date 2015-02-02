@@ -393,13 +393,14 @@ main(int argc, char *argv[])
 
 	int			mode = MODE_PROCESSES;
 	char	   *header_processes;
-	char		header_index_stats[80] =
+	char		header_index_stats[43] =
 	"  I_SCANS   I_READS I_FETCHES INDEXRELNAME";
-	char		header_table_stats[80] =
+	char		header_table_stats[78] =
 	"SEQ_SCANS SEQ_READS   I_SCANS I_FETCHES   INSERTS   UPDATES   DELETES RELNAME";
-	char		header_io_stats[80] = "  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
+	char		header_io_stats[64] = "  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
+	char		header_statements[44] = "CALLS CALLS%   TOTAL_TIME     AVG_TIME QUERY";
 
-	static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLERXAt";
+	static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLERXAtS";
 
 /* these defines enumerate the "strchr"s of the commands in command_chars */
 #define CMD_redraw	0
@@ -432,6 +433,7 @@ main(int argc, char *argv[])
 #define CMD_indexes 26
 #define CMD_explain_analyze 27
 #define CMD_toggle 28
+#define CMD_statements 29
 
 	/* Show help or version number if necessary */
     if (argc > 1)
@@ -1033,6 +1035,9 @@ main(int argc, char *argv[])
 			/* Now show the top "n" processes or other statistics. */
 			switch (mode)
 			{
+				case MODE_STATEMENTS:
+					pg_display_statements(conninfo, max_topn);
+					break;
 				case MODE_INDEX_STATS:
 					pg_display_index_stats(conninfo, index_order_index,
 							max_topn);
@@ -1667,6 +1672,20 @@ main(int argc, char *argv[])
 										{
 											mode = MODE_IO_STATS;
 											header_text = header_io_stats;
+										}
+										reset_display();
+										break;
+
+									case CMD_statements:
+										if (mode == MODE_STATEMENTS)
+										{
+											mode = MODE_PROCESSES;
+											header_text = header_processes;
+										}
+										else
+										{
+											mode = MODE_STATEMENTS;
+											header_text = header_statements;
 										}
 										reset_display();
 										break;
