@@ -1,4 +1,4 @@
-/*	Copyright (c) 2007, Mark Wong */
+/*	Copyright (c) 2007-2015, Mark Wong */
 
 #include <stdlib.h>
 #include <string.h>
@@ -718,7 +718,7 @@ pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
 		PQclear(pgresult);
 }
 
-void
+int
 pg_display_statements(char *conninfo, int max_topn)
 {
 	int			i;
@@ -732,13 +732,17 @@ pg_display_statements(char *conninfo, int max_topn)
 	pgconn = connect_to_db(conninfo);
 	if (pgconn != NULL)
 	{
+		pgresult = PQexec(pgconn, CHECK_FOR_STATEMENTS_X);
+		if (PQntuples(pgresult) == 0)
+			return 1;
+
 		pgresult = PQexec(pgconn, SELECT_STATEMENTS);
 		rows = PQntuples(pgresult);
 	}
 	else
 	{
 		PQfinish(pgconn);
-		return;
+		return 0;
 	}
 	PQfinish(pgconn);
 
@@ -758,6 +762,8 @@ pg_display_statements(char *conninfo, int max_topn)
 
 	if (pgresult != NULL)
 		PQclear(pgresult);
+
+	return 0;
 }
 
 PGresult *
