@@ -11,7 +11,7 @@ char	   *copyright =
  *	Copyright (c) 1989 - 1994, William LeFebvre, Northwestern University
  *	Copyright (c) 1994, 1995, William LeFebvre, Argonne National Laboratory
  *	Copyright (c) 1996, William LeFebvre, Group sys Consulting
- *	Copyright (c) 2007-2008, Mark Wong
+ *	Copyright (c) 2007-2015, Mark Wong
  *	Portions Copyright (c) 2013 VMware, Inc. All Rights Reserved.
  */
 
@@ -1036,7 +1036,9 @@ main(int argc, char *argv[])
 			switch (mode)
 			{
 				case MODE_STATEMENTS:
-					pg_display_statements(conninfo, max_topn);
+					if (pg_display_statements(conninfo, max_topn) != 0)
+						new_message(MT_standout | MT_delayed,
+								" Extension pg_stat_statments not found");
 					break;
 				case MODE_INDEX_STATS:
 					pg_display_index_stats(conninfo, index_order_index,

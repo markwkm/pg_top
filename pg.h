@@ -1,9 +1,14 @@
-/*	Copyright (c) 2007, Mark Wong */
+/*	Copyright (c) 2007-2015, Mark Wong */
 
 #ifndef _PG_H_
 #define _PG_H_
 
 #include <libpq-fe.h>
+
+#define CHECK_FOR_STATEMENTS_X \
+		"SELECT 1\n" \
+		"FROM pg_extension\n" \
+		"WHERE extname = 'pg_stat_statements'"
 
 #define SELECT_INDEX_STATS \
 		"SELECT indexrelid, indexrelname, idx_scan, idx_tup_read,\n" \
@@ -50,7 +55,7 @@ PGconn	   *connect_to_db(char *);
 
 void		pg_display_index_stats(char *, int, int);
 void		pg_display_table_stats(char *, int, int);
-void		pg_display_statements(char *, int);
+int			pg_display_statements(char *, int);
 
 PGresult   *pg_locks(PGconn *, int);
 PGresult   *pg_processes(PGconn *);
