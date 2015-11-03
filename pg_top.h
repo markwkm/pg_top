@@ -7,8 +7,7 @@
 #ifndef _PG_TOPP_H_
 #define _PG_TOPP_H_
 
-/* Maximum number of columns allowed for display */
-#define MAX_COLS	255
+#include "machine.h"
 
 /* Log base 2 of 1024 is 10 (2^10 == 1024) */
 #define LOG1024		10
@@ -19,12 +18,6 @@
 
 /* maximum number we can have */
 #define Largest		0x7fffffff
-
-/*
- * The entire display is based on these next numbers being defined as is.
- */
-
-#define NUM_AVERAGES	3
 
 struct ext_decl
 {
@@ -78,13 +71,33 @@ struct ext_decl
 #undef RANDOM_PW
 #endif
 
-/* Display modes for table and index statistics. */
-#define STATS_DIFF 0
-#define STATS_CUMULATIVE 1
+struct pg_top_context
+{
+#ifdef ENABLE_COLOR
+	int color_on;
+#endif
+	char conninfo[4096];
+	struct db_info db_info;
+	int delay;
+	struct disk_info disk_info;
+	int displays;
+	char dostates;
+	char *(*get_userid)(uid_t);
+	char *header_text;
+	char *header_processes;
+	char interactive;
+	struct io_info io_info;
+	int mode;
+	int order_index;
+	struct process_select ps;
+	struct statics statics;
+	struct system_info system_info;
+	struct timeval timeout;
+	int topn;
+
+};
 
 void		quit(int);
 void		reset_display();
-
-extern int	mode_stats;
 
 #endif   /* _PG_TOPP_H_ */

@@ -11,8 +11,8 @@ sigdesc.h: sigconv.awk $(SIGNAL_H)
 
 bin_PROGRAMS = pg_top
 
-pg_top_SOURCES = color.c commands.c display.c getopt.c screen.c sprompt.c pg.c \
-		pg_top.c username.c utils.c version.c machine/m_remote.c \
+pg_top_SOURCES = color.c commands.c display.c getopt.c screen.c sprompt.c \
+		pg.c pg_top.c username.c utils.c version.c machine/m_remote.c \
 		machine/m_common.c
 EXTRA_pg_top_SOURCES = \
 		machine/m_aix43.c \

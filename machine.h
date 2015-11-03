@@ -12,7 +12,6 @@
 #include <time.h>
 #include <sys/types.h>
 
-#include "pg_top.h"
 #include "pg.h"
 
 /*
@@ -33,6 +32,19 @@
 #define MODE_INDEX_STATS 2
 #define MODE_IO_STATS 3
 #define MODE_STATEMENTS 4
+
+/* Display modes for table and index statistics. */
+#define STATS_DIFF 0
+#define STATS_CUMULATIVE 1
+
+/* Maximum number of columns allowed for display */
+#define MAX_COLS	255
+
+/*
+ * The entire display is based on these next numbers being defined as is.
+ */
+
+#define NUM_AVERAGES	3
 
 /*
  * The statics struct is filled in by machine_init.  Fields marked as
@@ -150,5 +162,7 @@ char	   *format_header(char *);
 char	   *format_next_io(caddr_t, char *(*) (uid_t));
 char	   *format_next_process(caddr_t, char *(*) (uid_t));
 uid_t			proc_owner(pid_t);
+
+extern int	mode_stats;
 
 #endif   /* _MACHINE_H_ */
