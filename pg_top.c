@@ -92,6 +92,32 @@ static const char *progname = "pg_top";
 
 static void usage(const char *progname);
 
+/* List of all the options available */
+static struct option long_options[] = {
+	{"batch", no_argument, NULL, 'b'},
+	{"show-command", no_argument, NULL, 'c'},
+	{"color-mode", no_argument, NULL, 'C'},
+	{"interactive", no_argument, NULL, 'i'},
+	{"hide-idle", no_argument, NULL, 'I'},
+	{"non-interactive", no_argument, NULL, 'n'},
+	{"order-field", required_argument, NULL, 'o'},
+	{"quick-mode", no_argument, NULL, 'q'},
+	{"remote-mode", no_argument, NULL, 'r'},
+	{"set-delay", required_argument, NULL, 's'},
+	{"show-tags", no_argument, NULL, 'T'},
+	{"show-uid", no_argument, NULL, 'u'},
+	{"version", no_argument, NULL, 'V'},
+	{"set-display", required_argument, NULL, 'x'},
+	{"show-username", required_argument, NULL, 'z'},
+	{"help", no_argument, NULL, '?'},
+	{"dbname",  required_argument, NULL, 'd'},
+	{"host", required_argument, NULL, 'h'},
+	{"port", required_argument, NULL, 'p'},
+	{"username", required_argument, NULL, 'U'},
+	{"password",  no_argument, NULL, 'W'},
+	{NULL, 0, NULL, 0}
+};
+
 /* pointers to display routines */
 void		(*d_loadave) (int, double *) = i_loadave;
 void		(*d_minibar) (
@@ -997,6 +1023,151 @@ do_display(struct pg_top_context *pgtctx)
 	}
 }
 
+void
+process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
+{
+	int i;
+	int option_index;
+	char *password_tmp;
+
+	while ((i = getopt_long(ac, av, "CDITbcinqruVh:s:d:U:o:Wp:x:z:",
+			long_options, &option_index)) != EOF)
+	{
+		switch (i)
+		{
+#ifdef ENABLE_COLOR
+		case 'C':
+			pgtctx->color_on = !pgtctx->color_on;
+			break;
+#endif
+
+		case 'D':
+			debug_set(1);
+			break;
+
+		case 'V':		/* show version number */
+			printf("pg_top %s\n", version_string());
+			exit(0);
+			break;
+
+		case 'u':		/* toggle uid/username display */
+			pgtctx->do_unames = !pgtctx->do_unames;
+			break;
+
+		case 'z':		/* display only username's processes */
+			if ((pgtctx->ps.uid = userid(optarg)) == -1)
+			{
+				fprintf(stderr, "%s: unknown user\n", optarg);
+				exit(1);
+			}
+			break;
+
+		case 'I':		/* show idle processes */
+			pgtctx->ps.idle = !pgtctx->ps.idle;
+			break;
+
+		case 'T':		/* show color tags */
+			pgtctx->show_tags = 1;
+			break;
+
+		case 'i':		/* go interactive regardless */
+			pgtctx->interactive = Yes;
+			break;
+
+		case 'c':
+			pgtctx->ps.fullcmd = No;
+			break;
+
+		case 'n':		/* batch, or non-interactive */
+		case 'b':
+			pgtctx->interactive = No;
+			break;
+
+		case 'x':		/* number of displays to show */
+			if ((i = atoiwi(optarg)) == Invalid || i == 0)
+			{
+				new_message(MT_standout | MT_delayed,
+							" Bad display count (ignored)");
+			}
+			else
+			{
+				pgtctx->displays = i;
+			}
+			break;
+
+		case 's':
+			if ((pgtctx->delay = atoi(optarg)) < 0 ||
+					(pgtctx->delay == 0 && getuid() != 0))
+			{
+				new_message(MT_standout | MT_delayed,
+							" Bad seconds delay (ignored)");
+				pgtctx->delay = Default_DELAY;
+			}
+			break;
+
+		case 'q':		/* be quick about it */
+			/* only allow this if user is really root */
+			if (getuid() == 0)
+			{
+				/* be very un-nice! */
+				(void) nice(-20);
+			}
+			else
+			{
+				new_message(MT_standout | MT_delayed,
+							" Option -q can only be used by root");
+			}
+			break;
+
+		case 'o':		/* select sort order */
+			pgtctx->order_name = optarg;
+			break;
+
+		case 'p':		/* database port */
+			if ((i = atoiwi(optarg)) == Invalid || i == 0)
+			{
+				new_message(MT_standout | MT_delayed,
+							" Bad port number (ignored)");
+			}
+			else
+			{
+				pgtctx->dbport = i;
+			}
+			break;
+
+		case 'W':		/* prompt for database password */
+			password_tmp = simple_prompt("Password: ", 1000, 0);
+
+			/*
+			 * get the password in the format we want for the connect string
+			 */
+			sprintf(pgtctx->password, "password=%s", password_tmp);
+			break;
+
+		case 'U':		/* database user name */
+			sprintf(pgtctx->dbusername, "user=%s", optarg);
+			break;
+
+		case 'd':		/* database name */
+			sprintf(pgtctx->dbname, "dbname=%s", optarg);
+			break;
+
+		case 'h':		/* socket location */
+			sprintf(pgtctx->socket, "host=%s", optarg);
+			break;
+
+		case 'r':		/* remote mode */
+			mode_remote = 1;
+			break;
+
+		default:
+			fprintf(stderr, "Try \"%s --help\" for more information.\n",
+					progname);
+			exit(1);
+		}
+	}
+}
+
 /*
  *	reset_display() - reset all the display routine pointers so that entire
  *	screen will get redrawn.
@@ -1129,46 +1300,15 @@ main(int argc, char *argv[])
 	register int i;
 	struct pg_top_context pgtctx;
 
-	/* List of all the options available */
-	static struct option long_options[] = {
-		{"batch", no_argument, NULL, 'b'},
-		{"show-command", no_argument, NULL, 'c'},
-		{"color-mode", no_argument, NULL, 'C'},
-		{"interactive", no_argument, NULL, 'i'},
-		{"hide-idle", no_argument, NULL, 'I'},
-		{"non-interactive", no_argument, NULL, 'n'},
-		{"order-field", required_argument, NULL, 'o'},
-		{"quick-mode", no_argument, NULL, 'q'},
-		{"remote-mode", no_argument, NULL, 'r'},
-		{"set-delay", required_argument, NULL, 's'},
-		{"show-tags", no_argument, NULL, 'T'},
-		{"show-uid", no_argument, NULL, 'u'},
-		{"version", no_argument, NULL, 'V'},
-		{"set-display", required_argument, NULL, 'x'},
-		{"show-username", required_argument, NULL, 'z'},
-		{"help", no_argument, NULL, '?'},
-		{"dbname",  required_argument, NULL, 'd'},
-		{"host", required_argument, NULL, 'h'},
-		{"port", required_argument, NULL, 'p'},
-		{"username", required_argument, NULL, 'U'},
-		{"password",  no_argument, NULL, 'W'},
-		{NULL, 0, NULL, 0}
-	};
-
 #ifdef BSD_SIGNALS
 	int			old_sigmask;	/* only used for BSD-style signals */
 #endif   /* BSD_SIGNALS */
-	int			option_index;
 	char	   *uname_field = "USERNAME";
 	char	   *env_top;
 	char	  **preset_argv;
 	int			preset_argc = 0;
 	char	  **av;
 	int			ac;
-	char		do_unames = Yes;
-	char		show_tags = No;
-
-	char	   *order_name = NULL;
 
 #ifndef FD_SET
 	/* FD_SET and friends are not present:	fake it */
@@ -1182,12 +1322,27 @@ main(int argc, char *argv[])
 	sigset_t	signalset;
 #endif
 
-	char		dbname[1024] = "";
-	char		dbusername[1024] = "";
-	char		password[1001] = "";
-	char		socket[1024] = "";
-	char	   *password_tmp;
-	int			dbport = 5432;
+	/* initialize some selection options */
+	memset(&pgtctx, 0, sizeof(struct pg_top_context));
+#ifdef ENABLE_COLOR
+	pgtctx.color_on = 1;
+#endif
+	pgtctx.dbport = 5432;
+	pgtctx.delay = Default_DELAY;
+	pgtctx.displays = 0; /* indicates unspecified */
+	pgtctx.dostates = No;
+	pgtctx.do_unames = Yes;
+	pgtctx.get_userid = username;
+	pgtctx.index_order_index = 0;
+	pgtctx.interactive = Maybe;
+	pgtctx.mode = MODE_PROCESSES;
+	pgtctx.order_index = 0;
+	pgtctx.ps.idle = Yes;
+	pgtctx.ps.fullcmd = Yes;
+	pgtctx.ps.uid = -1;
+	pgtctx.ps.command = NULL;
+	pgtctx.show_tags = No;
+	pgtctx.topn = 0;
 
 	/* Show help or version number if necessary */
     if (argc > 1)
@@ -1216,19 +1371,19 @@ main(int argc, char *argv[])
 	/* Get default values from the environment. */
 	env_top = getenv("PGDATABASE");
 	if (env_top != NULL)
-		sprintf(dbname, "dbname=%s", getenv("PGDATABASE"));
+		sprintf(pgtctx.dbname, "dbname=%s", getenv("PGDATABASE"));
 
 	env_top = getenv("PGHOST");
 	if (env_top != NULL)
-		sprintf(socket, "host=%s", getenv("PGHOST"));
+		sprintf(pgtctx.socket, "host=%s", getenv("PGHOST"));
 
 	env_top = getenv("PGPORT");
 	if (env_top != NULL)
-		dbport = atoi(getenv("PGPORT"));
+		pgtctx.dbport = atoi(getenv("PGPORT"));
 
 	env_top = getenv("PGUSER");
 	if (env_top != NULL)
-		sprintf(dbusername, "user=%s", getenv("PGUSER"));
+		sprintf(pgtctx.dbusername, "user=%s", getenv("PGUSER"));
 
 	/* get our name */
 	if (argc > 0)
@@ -1242,24 +1397,6 @@ main(int argc, char *argv[])
 			myname++;
 		}
 	}
-
-	/* initialize some selection options */
-	memset(&pgtctx, 0, sizeof(struct pg_top_context));
-#ifdef ENABLE_COLOR
-	pgtctx.color_on = 1;
-#endif
-	pgtctx.delay = Default_DELAY;
-	pgtctx.displays = 0; /* indicates unspecified */
-	pgtctx.dostates = No;
-	pgtctx.get_userid = username;
-	pgtctx.interactive = Maybe;
-	pgtctx.mode = MODE_PROCESSES;
-	pgtctx.order_index = 0;
-	pgtctx.ps.idle = Yes;
-	pgtctx.ps.fullcmd = Yes;
-	pgtctx.ps.uid = -1;
-	pgtctx.ps.command = NULL;
-	pgtctx.topn = 0;
 
 	/* get preset options from the environment */
 	if ((env_top = getenv("PG_TOP")) != NULL)
@@ -1286,148 +1423,12 @@ main(int argc, char *argv[])
 			/* this should keep getopt happy... */
 			optind = 1;
 		}
-
-		while ((i = getopt_long(ac, av,
-								"CDITbcinqruVh:s:d:U:o:Wp:x:z:",
-								long_options, &option_index)) != EOF)
-		{
-			switch (i)
-			{
-#ifdef ENABLE_COLOR
-				case 'C':
-					pgtctx.color_on = !pgtctx.color_on;
-					break;
-#endif
-
-				case 'D':
-					debug_set(1);
-					break;
-
-				case 'V':		/* show version number */
-					printf("pg_top %s\n", version_string());
-					exit(0);
-					break;
-
-				case 'u':		/* toggle uid/username display */
-					do_unames = !do_unames;
-					break;
-
-				case 'z':		/* display only username's processes */
-					if ((pgtctx.ps.uid = userid(optarg)) == -1)
-					{
-						fprintf(stderr, "%s: unknown user\n", optarg);
-						exit(1);
-					}
-					break;
-
-				case 'I':		/* show idle processes */
-					pgtctx.ps.idle = !pgtctx.ps.idle;
-					break;
-
-				case 'T':		/* show color tags */
-					show_tags = 1;
-					break;
-
-				case 'i':		/* go interactive regardless */
-					pgtctx.interactive = Yes;
-					break;
-
-				case 'c':
-					pgtctx.ps.fullcmd = No;
-					break;
-
-				case 'n':		/* batch, or non-interactive */
-				case 'b':
-					pgtctx.interactive = No;
-					break;
-
-				case 'x':		/* number of displays to show */
-					if ((i = atoiwi(optarg)) == Invalid || i == 0)
-					{
-						new_message(MT_standout | MT_delayed,
-									" Bad display count (ignored)");
-					}
-					else
-					{
-						pgtctx.displays = i;
-					}
-					break;
-
-				case 's':
-					if ((pgtctx.delay = atoi(optarg)) < 0 ||
-							(pgtctx.delay == 0 && getuid() != 0))
-					{
-						new_message(MT_standout | MT_delayed,
-									" Bad seconds delay (ignored)");
-						pgtctx.delay = Default_DELAY;
-					}
-					break;
-
-				case 'q':		/* be quick about it */
-					/* only allow this if user is really root */
-					if (getuid() == 0)
-					{
-						/* be very un-nice! */
-						(void) nice(-20);
-					}
-					else
-					{
-						new_message(MT_standout | MT_delayed,
-									" Option -q can only be used by root");
-					}
-					break;
-
-				case 'o':		/* select sort order */
-					order_name = optarg;
-					break;
-
-				case 'p':		/* database port */
-					if ((i = atoiwi(optarg)) == Invalid || i == 0)
-					{
-						new_message(MT_standout | MT_delayed,
-									" Bad port number (ignored)");
-					}
-					else
-					{
-						dbport = i;
-					}
-					break;
-
-				case 'W':		/* prompt for database password */
-					password_tmp = simple_prompt("Password: ", 1000, 0);
-
-					/*
-					 * get the password in the format we want for the connect
-					 * string
-					 */
-					sprintf(password, "password=%s", password_tmp);
-					break;
-
-				case 'U':		/* database user name */
-					sprintf(dbusername, "user=%s", optarg);
-					break;
-
-				case 'd':		/* database name */
-					sprintf(dbname, "dbname=%s", optarg);
-					break;
-
-				case 'h':		/* socket location */
-					sprintf(socket, "host=%s", optarg);
-					break;
-
-				case 'r':		/* remote mode */
-					mode_remote = 1;
-					break;
-
-				default:
-					fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
-					exit(1);
-			}
-		}
+		process_arguments(&pgtctx, ac, av);
 
 		/* connect to the database */
 		sprintf(pgtctx.conninfo, "port=%d %s %s %s %s",
-				dbport, dbname, socket, dbusername, password);
+				pgtctx.dbport, pgtctx.dbname, pgtctx.socket, pgtctx.dbusername,
+				pgtctx.password);
 
 		/* get count of top processes to display (if any) */
 		if (optind < ac && *av[optind])
@@ -1451,7 +1452,7 @@ main(int argc, char *argv[])
 	} while (i != 0);
 
 	/* set constants for username/uid display correctly */
-	if (!do_unames)
+	if (!pgtctx.do_unames)
 	{
 		uname_field = "   UID  ";
 		pgtctx.get_userid = itoa7;
@@ -1487,20 +1488,20 @@ main(int argc, char *argv[])
 		exit(1);
 
 	/* determine sorting order index, if necessary */
-	if (order_name != NULL)
+	if (pgtctx.order_name != NULL)
 	{
 		if (pgtctx.statics.order_names == NULL)
 		{
 			new_message(MT_standout | MT_delayed,
 						" This platform does not support arbitrary ordering");
 		}
-		else if ((pgtctx.order_index = string_index(order_name,
+		else if ((pgtctx.order_index = string_index(pgtctx.order_name,
 				pgtctx.statics.order_names)) == -1)
 		{
 			char	  **pp;
 
 			fprintf(stderr, "%s: '%s' is not a recognized sorting order.\n",
-					myname, order_name);
+					myname, pgtctx.order_name);
 			fprintf(stderr, "\tTry one of these:");
 			pp = pgtctx.statics.order_names;
 			while (*pp != NULL)
@@ -1542,7 +1543,7 @@ main(int argc, char *argv[])
 	}
 
 	/* handle request for color tags */
-	if (show_tags)
+	if (pgtctx.show_tags)
 	{
 		color_dump(stdout);
 		exit(0);

@@ -78,9 +78,13 @@ struct pg_top_context
 #endif
 	char conninfo[4096];
 	struct db_info db_info;
+	char dbname[1024];
+	int dbport;
+	char dbusername[1024];
 	int delay;
 	struct disk_info disk_info;
 	int displays;
+	char do_unames;
 	char dostates;
 	char *(*get_userid)(uid_t);
 	char *header_text;
@@ -89,7 +93,11 @@ struct pg_top_context
 	struct io_info io_info;
 	int mode;
 	int order_index;
+	char *order_name;
+	char password[1001];
 	struct process_select ps;
+	char show_tags;
+	char socket[1024];
 	struct statics statics;
 	struct system_info system_info;
 	struct timeval timeout;
