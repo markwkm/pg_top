@@ -89,8 +89,10 @@ struct pg_top_context
 	char *(*get_userid)(uid_t);
 	char *header_text;
 	char *header_processes;
+	int index_order_index;
 	char interactive;
 	struct io_info io_info;
+	int io_order_index;
 	int mode;
 	int order_index;
 	char *order_name;
@@ -101,8 +103,8 @@ struct pg_top_context
 	struct statics statics;
 	struct system_info system_info;
 	struct timeval timeout;
+	int table_order_index;
 	int topn;
-
 };
 
 void		quit(int);
