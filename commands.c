@@ -35,6 +35,8 @@
 #include "display.h"
 #include "pg.h"
 #include "commands.h"
+#include "screen.h"
+#include "username.h"
 
 extern int	errno;
 
@@ -42,6 +44,8 @@ extern char *copyright;
 
 /* imported from screen.c */
 extern int	overstrike;
+
+extern int max_topn;
 
 /*
  *	Some of the commands make system calls that could generate errors.
@@ -65,6 +69,13 @@ static char *err_toomany = " too many errors occurred";
 static char *err_listem =
 " Many errors occurred.  Press `e' to display the list of errors.";
 
+char header_index_stats[43] = "  I_SCANS   I_READS I_FETCHES INDEXRELNAME";
+char header_io_stats[64] =
+		"  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
+char header_statements[44] = "CALLS CALLS%   TOTAL_TIME     AVG_TIME QUERY";
+char header_table_stats[78] =
+	"SEQ_SCANS SEQ_READS   I_SCANS I_FETCHES   INSERTS   UPDATES   DELETES RELNAME";
+
 /* These macros get used to reset and log the errors */
 #define ERR_RESET	errcnt = 0
 #define ERROR(p, e) if (errcnt >= ERRMAX) \
@@ -79,6 +90,602 @@ static char *err_listem =
 
 #define BEGIN "BEGIN;"
 #define ROLLBACK "ROLLBACK;"
+
+#ifdef ENABLE_COLOR
+void
+cmd_color(struct pg_top_context *pgtctx)
+{
+	reset_display(pgtctx);
+	if (pgtctx->color_on)
+	{
+		pgtctx->color_on = 0;
+		display_resize(); /* To realloc screenbuf */
+		new_message(MT_standout | MT_delayed, " Color off");
+	}
+	else
+	{
+		if (!smart_terminal)
+		{
+			new_message(MT_standout | MT_delayed,
+						" Sorry, cannot do colors on this terminal type");
+		}
+		else
+		{
+			pgtctx->color_on = 1;
+			new_message(MT_standout | MT_delayed, " Color on");
+		}
+	}
+}
+#endif /* ENABLE_COLOR */
+
+void
+cmd_cmdline(struct pg_top_context *pgtctx)
+{
+	if (pgtctx->statics.flags.fullcmds)
+	{
+		pgtctx->ps.fullcmd = (pgtctx->ps.fullcmd + 1) % 3;
+		switch (pgtctx->ps.fullcmd) {
+		case 2:
+			new_message(MT_standout | MT_delayed, " Displaying current query.");
+			break;
+		case 1:
+			new_message(MT_standout | MT_delayed,
+					" Displaying full command lines.");
+			break;
+		case 0:
+		default:
+			new_message(MT_standout | MT_delayed,
+			" Not displaying full command lines.");
+		}
+	}
+	else
+	{
+		new_message(MT_standout, " Full command display not supported.");
+		/* no_command = Yes; */
+	}
+	putchar('\r');
+}
+
+void
+cmd_current_query(struct pg_top_context *pgtctx)
+{
+	int newval;
+	char tempbuf1[50];
+
+	new_message(MT_standout, "Current query of process: ");
+	newval = readline(tempbuf1, 8, Yes);
+	reset_display(pgtctx);
+	display_pagerstart();
+	show_current_query(pgtctx->conninfo, newval);
+	display_pagerend();
+}
+
+void
+cmd_delay(struct pg_top_context *pgtctx)
+{
+	int i;
+	char tempbuf[50];
+
+	new_message(MT_standout, "Seconds to delay: ");
+	if ((i = readline(tempbuf, 8, Yes)) > -1)
+	{
+		if ((pgtctx->delay = i) == 0 && getuid() != 0)
+		{
+			pgtctx->delay = 1;
+		}
+	}
+	clear_message();
+}
+
+void
+cmd_displays(struct pg_top_context *pgtctx)
+{
+	int i;
+	char tempbuf[50];
+
+	new_message(MT_standout, "Displays to show (currently %s): ",
+			pgtctx->displays == -1 ? "infinite" : itoa(pgtctx->displays));
+	if ((i = readline(tempbuf, 10, Yes)) > 0)
+	{
+		pgtctx->displays = i;
+	}
+	else if (i == 0)
+	{
+		quit(0);
+	}
+	clear_message();
+}
+
+void
+cmd_errors(struct pg_top_context *pgtctx)
+{
+	char ch;
+
+	if (error_count() == 0)
+	{
+		new_message(MT_standout, " Currently no errors to report.");
+		putchar('\r');
+		/* no_command = Yes; */
+	}
+	else
+	{
+		reset_display(pgtctx);
+		clear();
+		show_errors();
+		standout("Hit any key to continue: ");
+		fflush(stdout);
+		(void) read(0, &ch, 1);
+	}
+}
+
+void
+cmd_explain(struct pg_top_context *pgtctx)
+{
+	int newval;
+	char tempbuf1[50];
+
+	new_message(MT_standout, "Re-determine execution plan: ");
+	newval = readline(tempbuf1, 8, Yes);
+	reset_display(pgtctx);
+	display_pagerstart();
+	show_explain(pgtctx->conninfo, newval, EXPLAIN);
+	display_pagerend();
+}
+
+void
+cmd_explain_analyze(struct pg_top_context *pgtctx)
+{
+	int newval;
+	char tempbuf1[50];
+
+	new_message(MT_standout, "Re-run SQL for analysis: ");
+	newval = readline(tempbuf1, 8, Yes);
+	reset_display(pgtctx);
+	display_pagerstart();
+	show_explain(pgtctx->conninfo, newval, EXPLAIN_ANALYZE);
+	display_pagerend();
+}
+
+void
+cmd_help(struct pg_top_context *pgtctx)
+{
+	reset_display(pgtctx);
+	display_pagerstart();
+	show_help(&pgtctx->statics);
+	display_pagerend();
+}
+
+void
+cmd_idletog(struct pg_top_context *pgtctx)
+{
+	pgtctx->ps.idle = !pgtctx->ps.idle;
+	new_message(MT_standout | MT_delayed, " %sisplaying idle processes.",
+			pgtctx->ps.idle ? "D" : "Not d");
+	putchar('\r');
+}
+
+void
+cmd_indexes(struct pg_top_context *pgtctx)
+{
+	if (pgtctx->mode == MODE_INDEX_STATS)
+	{
+		pgtctx->mode = MODE_PROCESSES;
+		pgtctx->header_text = pgtctx->header_processes;
+	}
+	else
+	{
+		pgtctx->mode = MODE_INDEX_STATS;
+		pgtctx->header_text = header_index_stats;
+	}
+
+	/* Reset display to show changed header text. */
+	reset_display(pgtctx);
+	return No;
+}
+
+void
+cmd_io(struct pg_top_context *pgtctx)
+{
+	if (pgtctx->mode == MODE_IO_STATS)
+	{
+		pgtctx->mode = MODE_PROCESSES;
+		pgtctx->header_text =
+				pgtctx->header_processes;
+	}
+	else
+	{
+		pgtctx->mode = MODE_IO_STATS;
+		pgtctx->header_text = header_io_stats;
+	}
+	reset_display(pgtctx);
+	return No;
+}
+
+#ifdef ENABLE_KILL
+void
+cmd_kill(struct pg_top_context *pgtctx)
+{
+	char *errmsg;
+	char tempbuf[50];
+
+	if (pgtctx->mode_remote == Yes)
+	{
+		new_message(MT_standout, "Cannot kill when accessing a remote database.");
+		putchar('\r');
+		/* no_command = Yes; */
+		return;
+	}
+	new_message(0, "kill ");
+	if (readline(tempbuf, sizeof(tempbuf), No) > 0)
+	{
+		if ((errmsg = kill_procs(tempbuf)) != NULL)
+		{
+			new_message(MT_standout, "%s", errmsg);
+			putchar('\r');
+			/* no_command = Yes; */
+		}
+	}
+	else
+	{
+		clear_message();
+	}
+}
+#endif /* ENABLE_KILL */
+
+void
+cmd_locks(struct pg_top_context *pgtctx)
+{
+	int newval;
+	char tempbuf1[50];
+
+	new_message(MT_standout, "Show locks held by process: ");
+	newval = readline(tempbuf1, 8, Yes);
+	reset_display(pgtctx);
+	display_pagerstart();
+	show_locks(pgtctx->conninfo, newval);
+	display_pagerend();
+}
+
+void
+cmd_number(struct pg_top_context *pgtctx)
+{
+	int newval;
+	char tempbuf[50];
+
+	new_message(MT_standout, "Number of processes to show: ");
+	newval = readline(tempbuf, 8, Yes);
+	if (newval > -1)
+	{
+		if (newval > max_topn)
+		{
+			new_message(MT_standout | MT_delayed,
+						" This terminal can only display %d processes.",
+						max_topn);
+			putchar('\r');
+		}
+
+		if (newval == 0)
+		{
+			/* inhibit the header */
+			display_header(No);
+		}
+		else if (newval > pgtctx->topn && pgtctx->topn == 0)
+		{
+			/* redraw the header */
+			display_header(Yes);
+			pgtctx->d_header = i_header;
+		}
+		pgtctx->topn = newval;
+	}
+}
+
+void
+cmd_quit(struct pg_top_context *pgtctx)
+{
+	quit(0);
+}
+
+void
+cmd_order(struct pg_top_context *pgtctx)
+{
+	int i;
+	char tempbuf[50];
+
+	switch (pgtctx->mode)
+	{
+	case MODE_INDEX_STATS:
+		new_message(MT_standout, "Order to sort: ");
+		if (readline(tempbuf, sizeof(tempbuf), No) > 0)
+		{
+			if ((i = string_index(tempbuf, index_ordernames)) == -1)
+			{
+				new_message(MT_standout, " %s: unrecognized sorting order",
+						tempbuf);
+				/* no_command = Yes; */
+			}
+			else
+			{
+				pgtctx->index_order_index = i;
+			}
+			putchar('\r');
+		}
+		else
+		{
+			clear_message();
+		}
+		break;
+	case MODE_TABLE_STATS:
+		new_message(MT_standout, "Order to sort: ");
+		if (readline(tempbuf, sizeof(tempbuf), No) > 0)
+		{
+			if ((i = string_index(tempbuf, table_ordernames)) == -1)
+			{
+				new_message(MT_standout, " %s: unrecognized sorting order",
+						tempbuf);
+				/* no_command = Yes; */
+			}
+			else
+			{
+				pgtctx->table_order_index = i;
+			}
+			putchar('\r');
+		}
+		else
+		{
+			clear_message();
+		}
+		break;
+	case MODE_IO_STATS:
+		new_message(MT_standout, "Order to sort: ");
+		if (readline(tempbuf, sizeof(tempbuf), No) > 0)
+		{
+			if ((i = string_index(tempbuf, pgtctx->statics.order_names_io)) == -1)
+			{
+				new_message(MT_standout, " %s: unrecognized sorting order",
+							tempbuf);
+				/* no_command = Yes; */
+			}
+			else
+			{
+				pgtctx->io_order_index = i;
+			}
+		}
+		else
+		{
+			clear_message();
+		}
+		break;
+	case MODE_PROCESSES:
+	default:
+		if (pgtctx->statics.order_names == NULL)
+		{
+			new_message(MT_standout, " Ordering not supported.");
+			putchar('\r');
+			/* no_command = Yes; */
+		}
+		else
+		{
+			new_message(MT_standout, "Order to sort: ");
+			if (readline(tempbuf, sizeof(tempbuf), No) > 0)
+			{
+				i = string_index(tempbuf, pgtctx->statics.order_names) == -1;
+				if (i == -1)
+				{
+					new_message(MT_standout, " %s: unrecognized sorting order",
+							tempbuf);
+					/* no_command = Yes; */
+				}
+				else
+				{
+					pgtctx->order_index = i;
+				}
+				putchar('\r');
+			}
+			else
+			{
+				clear_message();
+			}
+		}
+	}
+}
+
+void
+cmd_order_cpu(struct pg_top_context *pgtctx)
+{
+	int i;
+
+	if ((i = string_index("cpu", pgtctx->statics.order_names)) == -1)
+	{
+		new_message(MT_standout, " Unrecognized sorting order");
+		putchar('\r');
+		/* no_command = Yes; */
+	}
+	else
+	{
+		pgtctx->order_index = i;
+	}
+}
+
+void
+cmd_order_mem(struct pg_top_context *pgtctx)
+{
+	int i;
+
+	if ((i = string_index("size", pgtctx->statics.order_names)) == -1)
+	{
+		new_message(MT_standout, " Unrecognized sorting order");
+		putchar('\r');
+		/* no_command = Yes; */
+	}
+	else
+	{
+		pgtctx->order_index = i;
+	}
+}
+
+void
+cmd_order_pid(struct pg_top_context *pgtctx)
+{
+	int i;
+
+	if ((i = string_index("pid", pgtctx->statics.order_names)) == -1)
+	{
+		new_message(MT_standout, " Unrecognized sorting order");
+		putchar('\r');
+		/* no_command = Yes; */
+	}
+	else
+	{
+		pgtctx->order_index = i;
+	}
+}
+
+void
+cmd_order_time(struct pg_top_context *pgtctx)
+{
+	int i;
+
+	if ((i = string_index("time", pgtctx->statics.order_names)) == -1)
+	{
+		new_message(MT_standout, " Unrecognized sorting order");
+		putchar('\r');
+		/* no_command = Yes; */
+	}
+	else
+	{
+		pgtctx->order_index = i;
+	}
+}
+
+void
+cmd_redraw(struct pg_top_context *pgtctx)
+{
+	reset_display(pgtctx);
+}
+
+#ifdef ENABLE_KILL
+void
+cmd_renice(struct pg_top_context *pgtctx)
+{
+	char *errmsg;
+	char tempbuf[50];
+
+	if (pgtctx->mode_remote == Yes)
+	{
+		new_message(MT_standout,
+				"Cannot renice when accessing a remote database.");
+		putchar('\r');
+		/* no_command = Yes; */
+		return;
+	}
+	new_message(0, "renice ");
+	if (readline(tempbuf, sizeof(tempbuf), No) > 0)
+	{
+		if ((errmsg = renice_procs(tempbuf)) != NULL)
+		{
+			new_message(MT_standout, "%s", errmsg);
+			putchar('\r');
+			/* no_command = Yes; */
+		}
+	}
+	else
+	{
+		clear_message();
+	}
+}
+#endif /* ENABLE_KILL */
+
+void
+cmd_statements(struct pg_top_context *pgtctx)
+{
+	if (pgtctx->mode == MODE_STATEMENTS)
+	{
+		pgtctx->mode = MODE_PROCESSES;
+		pgtctx->header_text =
+				pgtctx->header_processes;
+	}
+	else
+	{
+		pgtctx->mode = MODE_STATEMENTS;
+		pgtctx->header_text = header_statements;
+	}
+	reset_display(pgtctx);
+	return No;
+}
+
+void
+cmd_tables(struct pg_top_context *pgtctx)
+{
+	if (pgtctx->mode == MODE_TABLE_STATS)
+	{
+		pgtctx->mode = MODE_PROCESSES;
+		pgtctx->header_text = pgtctx->header_processes;
+	}
+	else
+	{
+		pgtctx->mode = MODE_TABLE_STATS;
+		pgtctx->header_text = header_table_stats;
+	}
+	reset_display(pgtctx);
+	return No;
+}
+
+void
+cmd_toggle(struct pg_top_context *pgtctx)
+{
+	if (mode_stats == STATS_DIFF)
+	{
+		mode_stats = STATS_CUMULATIVE;
+		new_message(MT_standout | MT_delayed,
+					" Displaying cumulative statistics.");
+		putchar('\r');
+	}
+	else
+	{
+		mode_stats = STATS_DIFF;
+		new_message(MT_standout | MT_delayed,
+					" Displaying differential statistics.");
+		putchar('\r');
+	}
+}
+
+void
+cmd_update(struct pg_top_context *pgtctx)
+{
+	/* go home for visual feedback */
+	go_home();
+	fflush(stdout);
+}
+
+void
+cmd_user(struct pg_top_context *pgtctx)
+{
+	int i;
+	char tempbuf[50];
+
+	new_message(MT_standout, "Username to show: ");
+	if (readline(tempbuf, sizeof(tempbuf), No) > 0)
+	{
+		if (tempbuf[0] == '+' && tempbuf[1] == '\0')
+		{
+			pgtctx->ps.uid = -1;
+		}
+		else if ((i = userid(tempbuf)) == -1)
+		{
+			new_message(MT_standout, " %s: unknown user", tempbuf);
+			/* no_command = Yes; */
+		}
+		else
+		{
+			pgtctx->ps.uid = i;
+		}
+		putchar('\r');
+	}
+	else
+	{
+		clear_message();
+	}
+}
 
 /*
  *	err_compar(p1, p2) - comparison routine used by "qsort"

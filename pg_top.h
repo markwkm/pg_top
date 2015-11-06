@@ -84,6 +84,7 @@ struct pg_top_context
 	int delay;
 	struct disk_info disk_info;
 	int displays;
+	void (*d_header)(char *);
 	char do_unames;
 	char dostates;
 	char *(*get_userid)(uid_t);
@@ -94,6 +95,7 @@ struct pg_top_context
 	struct io_info io_info;
 	int io_order_index;
 	int mode;
+	int mode_remote; /* Mode for monitoring a remote database system. */
 	int order_index;
 	char *order_name;
 	char password[1001];
@@ -108,6 +110,6 @@ struct pg_top_context
 };
 
 void		quit(int);
-void		reset_display();
+void		reset_display(struct pg_top_context *);
 
 #endif   /* _PG_TOPP_H_ */

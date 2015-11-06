@@ -81,7 +81,7 @@ extern char *optarg;
 extern int	overstrike;
 
 /* values which need to be accessed by signal handlers */
-static int	max_topn;			/* maximum displayable processes */
+int	max_topn;			/* maximum displayable processes */
 
 /* miscellaneous things */
 char	   *myname = "pg_top";
@@ -132,7 +132,6 @@ void		(*d_db) (struct db_info *) = i_db;
 void		(*d_io) (struct io_info *) = i_io;
 void		(*d_disk) (struct disk_info *) = i_disk;
 void		(*d_message) () = i_message;
-void		(*d_header) (char *) = i_header;
 void		(*d_process) (int, char *) = i_process;
 
 /*
@@ -140,18 +139,6 @@ void		(*d_process) (int, char *) = i_process;
  * index statistics.
  */
 int			mode_stats = STATS_DIFF;
-
-/*
- * Mode for monitoring a remote database system.
- */
-int mode_remote = 0;
-
-char header_index_stats[43] =
-	"  I_SCANS   I_READS I_FETCHES INDEXRELNAME";
-char header_table_stats[78] =
-	"SEQ_SCANS SEQ_READS   I_SCANS I_FETCHES   INSERTS   UPDATES   DELETES RELNAME";
-char header_io_stats[64] = "  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
-char header_statements[44] = "CALLS CALLS%   TOTAL_TIME     AVG_TIME QUERY";
 
 /*
  *	usage - print help message with details about commands
@@ -218,7 +205,7 @@ do_display(struct pg_top_context *pgtctx)
 		tmp_index = 0;
 	}
 	/* get the current stats and processes */
-	if (mode_remote == 0)
+	if (pgtctx->mode_remote == 0)
 	{
 		get_system_info(&pgtctx->system_info);
 #ifdef __linux__
@@ -301,7 +288,7 @@ do_display(struct pg_top_context *pgtctx)
 	(*d_message) ();
 
 	/* update the header area */
-	(*d_header) (pgtctx->header_text);
+	pgtctx->d_header(pgtctx->header_text);
 
 	if (pgtctx->topn > 0)
 	{
@@ -341,7 +328,7 @@ do_display(struct pg_top_context *pgtctx)
 		case MODE_IO_STATS:
 			for (i = 0; i < active_procs; i++)
 			{
-				if (mode_remote == 0)
+				if (pgtctx->mode_remote == 0)
 					(*d_process) (i, format_next_io(processes,
 							pgtctx->get_userid));
 				else
@@ -353,7 +340,7 @@ do_display(struct pg_top_context *pgtctx)
 		default:
 			for (i = 0; i < active_procs; i++)
 			{
-				if (mode_remote == 0)
+				if (pgtctx->mode_remote == 0)
 					(*d_process) (i, format_next_process(processes,
 							pgtctx->get_userid));
 				else
@@ -386,7 +373,7 @@ do_display(struct pg_top_context *pgtctx)
 		{
 			if (overstrike)
 			{
-				reset_display();
+				reset_display(pgtctx);
 			}
 			else
 			{
@@ -401,7 +388,7 @@ do_display(struct pg_top_context *pgtctx)
 				d_disk = u_disk;
 				d_swap = u_swap;
 				d_message = u_message;
-				d_header = u_header;
+				pgtctx->d_header = u_header;
 				d_process = u_process;
 			}
 		}
@@ -554,7 +541,7 @@ process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 			break;
 
 		case 'r':		/* remote mode */
-			mode_remote = 1;
+			pgtctx->mode_remote = 1;
 			break;
 
 		default:
@@ -570,12 +557,8 @@ process_commands(struct pg_top_context *pgtctx)
 {
 	register int change;
 
-	int i;
 	char no_command = Yes;
 	static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLERXAtS";
-
-	static char tempbuf1[50];
-	static char tempbuf2[50];
 
 	fd_set readfds;
 	char ch;
@@ -596,9 +579,6 @@ process_commands(struct pg_top_context *pgtctx)
 		if (select(32, &readfds, (fd_set *) NULL, (fd_set *) NULL,
 				&pgtctx->timeout) > 0)
 		{
-			int newval;
-			char *errmsg;
-
 			/* something to read -- clear the message area first */
 			clear_message();
 
@@ -633,533 +613,123 @@ process_commands(struct pg_top_context *pgtctx)
 				else
 					switch (change)
 					{
-					case CMD_redraw:	/* redraw screen */
-						reset_display();
-						break;
+ 					case CMD_redraw:	/* redraw screen */
+						cmd_redraw(pgtctx);
+ 						break;
 
-					case CMD_update:	/* merely update display */
-						/* go home for visual feedback */
-						go_home();
-						fflush(stdout);
-						break;
+ 					case CMD_update:	/* merely update display */
+						cmd_update(pgtctx);
+ 						break;
 
-					case CMD_quit:		/* quit */
-						quit(0);
-						/* NOTREACHED */
-						break;
+ 					case CMD_quit:		/* quit */
+						cmd_quit(pgtctx);
+ 						/* NOTREACHED */
+ 						break;
 
-					case CMD_help1:		/* help */
-					case CMD_help2:
-						reset_display();
-						display_pagerstart();
-						show_help(&pgtctx->statics);
-						display_pagerend();
-						break;
+ 					case CMD_help1:		/* help */
+ 					case CMD_help2:
+						cmd_help(pgtctx);
+ 						break;
 
-					case CMD_errors:	/* show errors */
-						if (error_count() == 0)
-						{
-							new_message(MT_standout,
-										" Currently no errors to report.");
-							putchar('\r');
-							no_command = Yes;
-						}
-						else
-						{
-							reset_display();
-							clear();
-							show_errors();
-							standout("Hit any key to continue: ");
-							fflush(stdout);
-							(void) read(0, &ch, 1);
-						}
-						break;
+ 					case CMD_errors:	/* show errors */
+						cmd_errors(pgtctx);
+ 						break;
 
-					case CMD_number1:	/* new number */
-					case CMD_number2:
-						new_message(MT_standout,
-							"Number of processes to show: ");
-						newval = readline(tempbuf1, 8, Yes);
-						if (newval > -1)
-						{
-							if (newval > max_topn)
-							{
-								new_message(MT_standout | MT_delayed,
-											" This terminal can only display %d processes.",
-											max_topn);
-								putchar('\r');
-							}
+ 					case CMD_number1:	/* new number */
+ 					case CMD_number2:
+						cmd_number(pgtctx);
+ 						break;
 
-							if (newval == 0)
-							{
-								/* inhibit the header */
-								display_header(No);
-							}
-							else if (newval > pgtctx->topn && pgtctx->topn == 0)
-							{
-								/* redraw the header */
-								display_header(Yes);
-								d_header = i_header;
-							}
-							pgtctx->topn = newval;
-						}
-						break;
+ 					case CMD_delay:		/* new seconds delay */
+						cmd_delay(pgtctx);
+ 						break;
 
-					case CMD_delay:		/* new seconds delay */
-						new_message(MT_standout, "Seconds to delay: ");
-						if ((i = readline(tempbuf1, 8, Yes)) > -1)
-						{
-							if ((pgtctx->delay = i) == 0 &&
-									getuid() != 0)
-							{
-								pgtctx->delay = 1;
-							}
-						}
-						clear_message();
-						break;
+ 					case CMD_displays:	/* change display count */
+						cmd_displays(pgtctx);
+ 						break;
 
-					case CMD_displays:	/* change display count */
-						new_message(MT_standout,
-						 "Displays to show (currently %s): ",
-								pgtctx->displays == -1 ? "infinite" :
-									itoa(pgtctx->displays));
-						if ((i = readline(tempbuf1, 10, Yes)) > 0)
-						{
-							pgtctx->displays = i;
-						}
-						else if (i == 0)
-						{
-							quit(0);
-						}
-						clear_message();
-						break;
+ #ifdef ENABLE_KILL
+ 					case CMD_kill:		/* kill program */
+						cmd_kill(pgtctx);
+ 						break;
 
-#ifdef ENABLE_KILL
-					case CMD_kill:		/* kill program */
-						if (mode_remote == 1)
-						{
-							new_message(MT_standout, "Cannot kill when accessing a remote database.");
-							putchar('\r');
-							no_command = Yes;
-							break;
-						}
-						new_message(0, "kill ");
-						if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
-						{
-							if ((errmsg = kill_procs(tempbuf2)) != NULL)
-							{
-								new_message(MT_standout, "%s", errmsg);
-								putchar('\r');
-								no_command = Yes;
-							}
-						}
-						else
-						{
-							clear_message();
-						}
-						break;
+ 					case CMD_renice:	/* renice program */
+						cmd_renice(pgtctx);
+ 						break;
+ #endif
 
-					case CMD_renice:	/* renice program */
-						if (mode_remote == 1)
-						{
-							new_message(MT_standout, "Cannot renice when accessing a remote database.");
-							putchar('\r');
-							no_command = Yes;
-							break;
-						}
-						new_message(0, "renice ");
-						if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
-						{
-							if ((errmsg = renice_procs(tempbuf2)) != NULL)
-							{
-								new_message(MT_standout, "%s", errmsg);
-								putchar('\r');
-								no_command = Yes;
-							}
-						}
-						else
-						{
-							clear_message();
-						}
-						break;
-#endif
+ 					case CMD_idletog:
+						cmd_idletog(pgtctx);
+ 						break;
 
-					case CMD_idletog:
-						pgtctx->ps.idle = !pgtctx->ps.idle;
-						new_message(MT_standout | MT_delayed,
-							  " %sisplaying idle processes.",
-									pgtctx->ps.idle ? "D" : "Not d");
-						putchar('\r');
-						break;
+ 					case CMD_cmdline:
+						cmd_cmdline(pgtctx);
+ 						break;
 
-					case CMD_cmdline:
-						if (pgtctx->statics.flags.fullcmds)
-						{
-							pgtctx->ps.fullcmd =
-									(pgtctx->ps.fullcmd + 1) % 3;
-							switch (pgtctx->ps.fullcmd) {
-							case 2:
-								new_message(MT_standout | MT_delayed,
-										" Displaying current query.");
-								break;
-							case 1:
-								new_message(MT_standout | MT_delayed,
-										" Displaying full command lines.");
-								break;
-							case 0:
-							default:
-								new_message(MT_standout | MT_delayed,
-								" Not displaying full command lines.");
-							}
-						}
-						else
-						{
-							new_message(MT_standout, " Full command display not supported.");
-							no_command = Yes;
-						}
-						putchar('\r');
-						break;
+ 					case CMD_user:
+						cmd_user(pgtctx);
+ 						break;
 
-					case CMD_user:
-						new_message(MT_standout,
-									"Username to show: ");
-						if (readline(tempbuf2,
-								sizeof(tempbuf2), No) > 0)
-						{
-							if (tempbuf2[0] == '+' &&
-								tempbuf2[1] == '\0')
-							{
-								pgtctx->ps.uid = -1;
-							}
-							else if ((i = userid(tempbuf2)) == -1)
-							{
-								new_message(MT_standout,
-											" %s: unknown user", tempbuf2);
-								no_command = Yes;
-							}
-							else
-							{
-								pgtctx->ps.uid = i;
-							}
-							putchar('\r');
-						}
-						else
-						{
-							clear_message();
-						}
-						break;
+ 					case CMD_order:
+						cmd_order(pgtctx);
+ 						break;
 
-					case CMD_order:
-						switch (pgtctx->mode)
-						{
-						case MODE_INDEX_STATS:
-							new_message(MT_standout, "Order to sort: ");
-							if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
-							{
-								if ((i = string_index(tempbuf2,
-										index_ordernames)) == -1)
-								{
-									new_message(MT_standout,
-											" %s: unrecognized sorting order",
-											tempbuf2);
-									no_command = Yes;
-								}
-								else
-								{
-									pgtctx->index_order_index = i;
-								}
-								putchar('\r');
-							}
-							else
-							{
-								clear_message();
-							}
-							break;
-						case MODE_TABLE_STATS:
-							new_message(MT_standout, "Order to sort: ");
-							if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
-							{
-								if ((i = string_index(tempbuf2,
-										table_ordernames)) == -1)
-								{
-									new_message(MT_standout,
-												" %s: unrecognized sorting order",
-												tempbuf2);
-									no_command = Yes;
-								}
-								else
-								{
-									pgtctx->table_order_index = i;
-								}
-								putchar('\r');
-							}
-							else
-							{
-								clear_message();
-							}
-							break;
-						case MODE_IO_STATS:
-							new_message(MT_standout, "Order to sort: ");
-							if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
-							{
-								if ((i = string_index(tempbuf2,
-										pgtctx->statics.order_names_io)) == -1)
-								{
-									new_message(MT_standout,
-												" %s: unrecognized sorting order",
-												tempbuf2);
-									no_command = Yes;
-								}
-								else
-								{
-									pgtctx->io_order_index = i;
-								}
-							}
-							else
-							{
-								clear_message();
-							}
-							break;
-						case MODE_PROCESSES:
-						default:
-							if (pgtctx->statics.order_names == NULL)
-							{
-								new_message(MT_standout, " Ordering not supported.");
-								putchar('\r');
-								no_command = Yes;
-							}
-							else
-							{
-								new_message(MT_standout,
-									  "Order to sort: ");
-								if (readline(tempbuf2,
-										sizeof(tempbuf2), No) > 0)
-								{
-									if ((i = string_index(tempbuf2,
-											pgtctx->statics.order_names)) == -1)
-									{
-										new_message(MT_standout,
-													" %s: unrecognized sorting order", tempbuf2);
-										no_command = Yes;
-									}
-									else
-									{
-										pgtctx->order_index = i;
-									}
-									putchar('\r');
-								}
-								else
-								{
-									clear_message();
-								}
-							}
-						}
-						break;
-					case CMD_order_pid:
-						if ((i = string_index("pid",
-								pgtctx->statics.order_names)) == -1)
-						{
-							new_message(MT_standout,
-							  " Unrecognized sorting order");
-							putchar('\r');
-							no_command = Yes;
-						}
-						else
-						{
-							pgtctx->order_index = i;
-						}
-						break;
-					case CMD_order_cpu:
-						if ((i = string_index("cpu",
-								pgtctx->statics.order_names)) == -1)
-						{
-							new_message(MT_standout,
-							  " Unrecognized sorting order");
-							putchar('\r');
-							no_command = Yes;
-						}
-						else
-						{
-							pgtctx->order_index = i;
-						}
-						break;
-					case CMD_order_mem:
-						if ((i = string_index("size",
-								pgtctx->statics.order_names)) == -1)
-						{
-							new_message(MT_standout,
-							  " Unrecognized sorting order");
-							putchar('\r');
-							no_command = Yes;
-						}
-						else
-						{
-							pgtctx->order_index = i;
-						}
-						break;
-					case CMD_order_time:
-						if ((i = string_index("time",
-								pgtctx->statics.order_names)) == -1)
-						{
-							new_message(MT_standout,
-							  " Unrecognized sorting order");
-							putchar('\r');
-							no_command = Yes;
-						}
-						else
-						{
-							pgtctx->order_index = i;
-						}
-						break;
+ 					case CMD_order_pid:
+						cmd_order_pid(pgtctx);
+ 						break;
 
-#ifdef ENABLE_COLOR
-					case CMD_color:
-						reset_display();
-						if (pgtctx->color_on)
-						{
-							pgtctx->color_on = 0;
-							display_resize(); /* To realloc screenbuf */
-							new_message(MT_standout | MT_delayed,
-										" Color off");
-						}
-						else
-						{
-							if (!smart_terminal)
-							{
-								new_message(MT_standout | MT_delayed,
-											" Sorry, cannot do colors on this terminal type");
-							}
-							else
-							{
-								pgtctx->color_on = 1;
-								new_message(MT_standout | MT_delayed,
-											" Color on");
-							}
-						}
+ 					case CMD_order_cpu:
+						cmd_order_cpu(pgtctx);
+ 						break;
 
-						break;
-#endif
-					case CMD_current_query:
-						new_message(MT_standout,
-							   "Current query of process: ");
-						newval = readline(tempbuf1, 8, Yes);
-						reset_display();
-						display_pagerstart();
-						show_current_query(pgtctx->conninfo, newval);
-						display_pagerend();
-						break;
+ 					case CMD_order_mem:
+						cmd_order_mem(pgtctx);
+ 						break;
 
-					case CMD_locks:
-						new_message(MT_standout,
-							 "Show locks held by process: ");
-						newval = readline(tempbuf1, 8, Yes);
-						reset_display();
-						display_pagerstart();
-						show_locks(pgtctx->conninfo, newval);
-						display_pagerend();
-						break;
+ 					case CMD_order_time:
+						cmd_order_time(pgtctx);
+ 						break;
 
-					case CMD_explain:
-						new_message(MT_standout,
-								 "Re-determine execution plan: ");
-						newval = readline(tempbuf1, 8, Yes);
-						reset_display();
-						display_pagerstart();
-						show_explain(pgtctx->conninfo, newval, EXPLAIN);
-						display_pagerend();
-						break;
+ #ifdef ENABLE_COLOR
+ 					case CMD_color:
+						cmd_color(pgtctx);
+ 						break;
+ #endif
+ 					case CMD_current_query:
+						cmd_current_query(pgtctx);
+ 						break;
 
-					case CMD_tables:
-						if (pgtctx->mode == MODE_TABLE_STATS)
-						{
-							pgtctx->mode = MODE_PROCESSES;
-							pgtctx->header_text =
-									pgtctx->header_processes;
-						}
-						else
-						{
-							pgtctx->mode = MODE_TABLE_STATS;
-							pgtctx->header_text = header_table_stats;
-						}
-						reset_display();
-						break;
+ 					case CMD_locks:
+						cmd_locks(pgtctx);
+ 						break;
 
-					case CMD_indexes:
-						if (pgtctx->mode == MODE_INDEX_STATS)
-						{
-							pgtctx->mode = MODE_PROCESSES;
-							pgtctx->header_text =
-									pgtctx->header_processes;
-						}
-						else
-						{
-							pgtctx->mode = MODE_INDEX_STATS;
-							pgtctx->header_text = header_index_stats;
-						}
+ 					case CMD_explain:
+						cmd_explain(pgtctx);
+ 						break;
 
-						/*
-						 * Reset display to show changed
-						 * header text.
-						 */
-						reset_display();
-						break;
+ 					case CMD_tables:
+						cmd_tables(pgtctx);
+ 						break;
 
-					case CMD_explain_analyze:
-						new_message(MT_standout,
-								 "Re-run SQL for analysis: ");
-						newval = readline(tempbuf1, 8, Yes);
-						reset_display();
-						display_pagerstart();
-						show_explain(pgtctx->conninfo, newval,
-								EXPLAIN_ANALYZE);
-						display_pagerend();
-						break;
+ 					case CMD_indexes:
+						cmd_indexes(pgtctx);
+ 						break;
 
-					case CMD_toggle:
-						if (mode_stats == STATS_DIFF)
-						{
-							mode_stats = STATS_CUMULATIVE;
-							new_message(MT_standout | MT_delayed,
-										" Displaying cumulative statistics.");
-							putchar('\r');
-						}
-						else
-						{
-							mode_stats = STATS_DIFF;
-							new_message(MT_standout | MT_delayed,
-										" Displaying differential statistics.");
-							putchar('\r');
-						}
-						break;
+ 					case CMD_explain_analyze:
+						cmd_explain_analyze(pgtctx);
+ 						break;
 
-					case CMD_io:
-						if (pgtctx->mode == MODE_IO_STATS)
-						{
-							pgtctx->mode = MODE_PROCESSES;
-							pgtctx->header_text =
-									pgtctx->header_processes;
-						}
-						else
-						{
-							pgtctx->mode = MODE_IO_STATS;
-							pgtctx->header_text = header_io_stats;
-						}
-						reset_display();
-						break;
+ 					case CMD_toggle:
+						cmd_toggle(pgtctx);
+ 						break;
 
-					case CMD_statements:
-						if (pgtctx->mode == MODE_STATEMENTS)
-						{
-							pgtctx->mode = MODE_PROCESSES;
-							pgtctx->header_text =
-									pgtctx->header_processes;
-						}
-						else
-						{
-							pgtctx->mode = MODE_STATEMENTS;
-							pgtctx->header_text = header_statements;
-						}
-						reset_display();
+ 					case CMD_io:
+						cmd_io(pgtctx);
+ 						break;
+
+ 					case CMD_statements:
+						cmd_statements(pgtctx);
+ 						break;
 						break;
 
 					default:
@@ -1181,8 +751,7 @@ process_commands(struct pg_top_context *pgtctx)
  */
 
 void
-reset_display()
-
+reset_display(struct pg_top_context *pgtctx)
 {
 	d_loadave = i_loadave;
 	d_minibar = i_minibar;
@@ -1195,7 +764,7 @@ reset_display()
 	d_io = i_io;
 	d_disk = i_disk;
 	d_message = i_message;
-	d_header = i_header;
+	pgtctx->d_header = i_header;
 	d_process = i_process;
 }
 
@@ -1334,6 +903,7 @@ main(int argc, char *argv[])
 #ifdef ENABLE_COLOR
 	pgtctx.color_on = 1;
 #endif
+	pgtctx.d_header = i_header;
 	pgtctx.dbport = 5432;
 	pgtctx.delay = Default_DELAY;
 	pgtctx.displays = 0; /* indicates unspecified */
@@ -1344,6 +914,7 @@ main(int argc, char *argv[])
 	pgtctx.interactive = Maybe;
 	pgtctx.io_order_index = 0;
 	pgtctx.mode = MODE_PROCESSES;
+	pgtctx.mode_remote = No;
 	pgtctx.order_index = 0;
 	pgtctx.ps.idle = Yes;
 	pgtctx.ps.fullcmd = Yes;
@@ -1488,7 +1059,7 @@ main(int argc, char *argv[])
 #endif
 
 	/* call the platform-specific init */
-	if (mode_remote == 0)
+	if (pgtctx.mode_remote == 0)
 		i = machine_init(&pgtctx.statics);
 	else
 		i = machine_init_r(&pgtctx.statics, pgtctx.conninfo);
@@ -1531,7 +1102,7 @@ main(int argc, char *argv[])
 	init_termcap(pgtctx.interactive);
 
 	/* get the string to use for the process area header */
-	if (mode_remote == 0)
+	if (pgtctx.mode_remote == 0)
 		pgtctx.header_text = pgtctx.header_processes = format_header(uname_field);
 	else
 		pgtctx.header_text = pgtctx.header_processes = format_header_r(uname_field);
@@ -1634,7 +1205,7 @@ main(int argc, char *argv[])
 	if (setjmp(jmp_int) != 0)
 	{
 		/* control ends up here after an interrupt */
-		reset_display();
+		reset_display(&pgtctx);
 	}
 
 	/*
@@ -1661,7 +1232,7 @@ main(int argc, char *argv[])
 	/* some systems require a warmup */
 	if (pgtctx.statics.flags.warmup)
 	{
-		if (mode_remote == 0)
+		if (pgtctx.mode_remote == 0)
 		{
 			get_system_info(&pgtctx.system_info);
 #ifdef __linux__
