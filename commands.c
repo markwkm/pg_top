@@ -91,8 +91,48 @@ char header_table_stats[78] =
 #define BEGIN "BEGIN;"
 #define ROLLBACK "ROLLBACK;"
 
+struct cmd cmd_map[] = {
+    {'\014', cmd_redraw},
+	{'#', cmd_number},
+    {' ', cmd_update},
+    {'?', cmd_help},
+	{'A', cmd_explain_analyze},
+	{'c', cmd_cmdline},
 #ifdef ENABLE_COLOR
-void
+	{'C', cmd_color},
+#endif /* ENABLE_COLOR */
+	{'d', cmd_displays},
+	{'e', cmd_errors},
+	{'E', cmd_explain},
+    {'h', cmd_help},
+	{'i', cmd_idletog},
+	{'I', cmd_io},
+#ifdef ENABLE_KILL
+	{'k', cmd_kill},
+#endif /* ENABLE_KILL */
+	{'L', cmd_locks},
+	{'n', cmd_number},
+	{'M', cmd_order_mem},
+	{'N', cmd_order_pid},
+	{'o', cmd_order},
+	{'P', cmd_order_cpu},
+	{'q', cmd_quit},
+	{'Q', cmd_current_query},
+#ifdef ENABLE_KILL
+	{'r', cmd_renice},
+#endif /* ENABLE_KILL */
+	{'R', cmd_tables},
+	{'s', cmd_delay},
+	{'S', cmd_statements},
+	{'t', cmd_toggle},
+	{'T', cmd_order_time},
+	{'u', cmd_user},
+	{'X', cmd_indexes},
+    {'\0', NULL},
+};
+
+#ifdef ENABLE_COLOR
+int
 cmd_color(struct pg_top_context *pgtctx)
 {
 	reset_display(pgtctx);
@@ -115,10 +155,11 @@ cmd_color(struct pg_top_context *pgtctx)
 			new_message(MT_standout | MT_delayed, " Color on");
 		}
 	}
+	return No;
 }
 #endif /* ENABLE_COLOR */
 
-void
+int
 cmd_cmdline(struct pg_top_context *pgtctx)
 {
 	if (pgtctx->statics.flags.fullcmds)
@@ -144,9 +185,10 @@ cmd_cmdline(struct pg_top_context *pgtctx)
 		/* no_command = Yes; */
 	}
 	putchar('\r');
+	return No;
 }
 
-void
+int
 cmd_current_query(struct pg_top_context *pgtctx)
 {
 	int newval;
@@ -158,9 +200,10 @@ cmd_current_query(struct pg_top_context *pgtctx)
 	display_pagerstart();
 	show_current_query(pgtctx->conninfo, newval);
 	display_pagerend();
+	return No;
 }
 
-void
+int
 cmd_delay(struct pg_top_context *pgtctx)
 {
 	int i;
@@ -175,9 +218,10 @@ cmd_delay(struct pg_top_context *pgtctx)
 		}
 	}
 	clear_message();
+	return No;
 }
 
-void
+int
 cmd_displays(struct pg_top_context *pgtctx)
 {
 	int i;
@@ -194,9 +238,10 @@ cmd_displays(struct pg_top_context *pgtctx)
 		quit(0);
 	}
 	clear_message();
+	return No;
 }
 
-void
+int
 cmd_errors(struct pg_top_context *pgtctx)
 {
 	char ch;
@@ -205,7 +250,7 @@ cmd_errors(struct pg_top_context *pgtctx)
 	{
 		new_message(MT_standout, " Currently no errors to report.");
 		putchar('\r');
-		/* no_command = Yes; */
+		return Yes;
 	}
 	else
 	{
@@ -216,9 +261,10 @@ cmd_errors(struct pg_top_context *pgtctx)
 		fflush(stdout);
 		(void) read(0, &ch, 1);
 	}
+	return No;
 }
 
-void
+int
 cmd_explain(struct pg_top_context *pgtctx)
 {
 	int newval;
@@ -230,9 +276,10 @@ cmd_explain(struct pg_top_context *pgtctx)
 	display_pagerstart();
 	show_explain(pgtctx->conninfo, newval, EXPLAIN);
 	display_pagerend();
+	return No;
 }
 
-void
+int
 cmd_explain_analyze(struct pg_top_context *pgtctx)
 {
 	int newval;
@@ -244,27 +291,30 @@ cmd_explain_analyze(struct pg_top_context *pgtctx)
 	display_pagerstart();
 	show_explain(pgtctx->conninfo, newval, EXPLAIN_ANALYZE);
 	display_pagerend();
+	return No;
 }
 
-void
+int
 cmd_help(struct pg_top_context *pgtctx)
 {
 	reset_display(pgtctx);
 	display_pagerstart();
 	show_help(&pgtctx->statics);
 	display_pagerend();
+	return No;
 }
 
-void
+int
 cmd_idletog(struct pg_top_context *pgtctx)
 {
 	pgtctx->ps.idle = !pgtctx->ps.idle;
 	new_message(MT_standout | MT_delayed, " %sisplaying idle processes.",
 			pgtctx->ps.idle ? "D" : "Not d");
 	putchar('\r');
+	return No;
 }
 
-void
+int
 cmd_indexes(struct pg_top_context *pgtctx)
 {
 	if (pgtctx->mode == MODE_INDEX_STATS)
@@ -283,7 +333,7 @@ cmd_indexes(struct pg_top_context *pgtctx)
 	return No;
 }
 
-void
+int
 cmd_io(struct pg_top_context *pgtctx)
 {
 	if (pgtctx->mode == MODE_IO_STATS)
@@ -302,7 +352,7 @@ cmd_io(struct pg_top_context *pgtctx)
 }
 
 #ifdef ENABLE_KILL
-void
+int
 cmd_kill(struct pg_top_context *pgtctx)
 {
 	char *errmsg;
@@ -312,8 +362,7 @@ cmd_kill(struct pg_top_context *pgtctx)
 	{
 		new_message(MT_standout, "Cannot kill when accessing a remote database.");
 		putchar('\r');
-		/* no_command = Yes; */
-		return;
+		return Yes;
 	}
 	new_message(0, "kill ");
 	if (readline(tempbuf, sizeof(tempbuf), No) > 0)
@@ -322,17 +371,18 @@ cmd_kill(struct pg_top_context *pgtctx)
 		{
 			new_message(MT_standout, "%s", errmsg);
 			putchar('\r');
-			/* no_command = Yes; */
+			return Yes;
 		}
 	}
 	else
 	{
 		clear_message();
 	}
+	return No;
 }
 #endif /* ENABLE_KILL */
 
-void
+int
 cmd_locks(struct pg_top_context *pgtctx)
 {
 	int newval;
@@ -344,9 +394,10 @@ cmd_locks(struct pg_top_context *pgtctx)
 	display_pagerstart();
 	show_locks(pgtctx->conninfo, newval);
 	display_pagerend();
+	return No;
 }
 
-void
+int
 cmd_number(struct pg_top_context *pgtctx)
 {
 	int newval;
@@ -377,18 +428,22 @@ cmd_number(struct pg_top_context *pgtctx)
 		}
 		pgtctx->topn = newval;
 	}
+	return No;
 }
 
-void
+int
 cmd_quit(struct pg_top_context *pgtctx)
 {
 	quit(0);
+	/* NOT REACHED */
+	return No;
 }
 
-void
+int
 cmd_order(struct pg_top_context *pgtctx)
 {
 	int i;
+	int no_command = No;
 	char tempbuf[50];
 
 	switch (pgtctx->mode)
@@ -401,7 +456,7 @@ cmd_order(struct pg_top_context *pgtctx)
 			{
 				new_message(MT_standout, " %s: unrecognized sorting order",
 						tempbuf);
-				/* no_command = Yes; */
+				no_command = Yes;
 			}
 			else
 			{
@@ -422,7 +477,7 @@ cmd_order(struct pg_top_context *pgtctx)
 			{
 				new_message(MT_standout, " %s: unrecognized sorting order",
 						tempbuf);
-				/* no_command = Yes; */
+				no_command = Yes;
 			}
 			else
 			{
@@ -443,7 +498,7 @@ cmd_order(struct pg_top_context *pgtctx)
 			{
 				new_message(MT_standout, " %s: unrecognized sorting order",
 							tempbuf);
-				/* no_command = Yes; */
+				no_command = Yes;
 			}
 			else
 			{
@@ -461,7 +516,7 @@ cmd_order(struct pg_top_context *pgtctx)
 		{
 			new_message(MT_standout, " Ordering not supported.");
 			putchar('\r');
-			/* no_command = Yes; */
+			no_command = Yes;
 		}
 		else
 		{
@@ -473,7 +528,7 @@ cmd_order(struct pg_top_context *pgtctx)
 				{
 					new_message(MT_standout, " %s: unrecognized sorting order",
 							tempbuf);
-					/* no_command = Yes; */
+					no_command = Yes;
 				}
 				else
 				{
@@ -487,9 +542,10 @@ cmd_order(struct pg_top_context *pgtctx)
 			}
 		}
 	}
+	return no_command;
 }
 
-void
+int
 cmd_order_cpu(struct pg_top_context *pgtctx)
 {
 	int i;
@@ -504,9 +560,10 @@ cmd_order_cpu(struct pg_top_context *pgtctx)
 	{
 		pgtctx->order_index = i;
 	}
+	return No;
 }
 
-void
+int
 cmd_order_mem(struct pg_top_context *pgtctx)
 {
 	int i;
@@ -515,15 +572,16 @@ cmd_order_mem(struct pg_top_context *pgtctx)
 	{
 		new_message(MT_standout, " Unrecognized sorting order");
 		putchar('\r');
-		/* no_command = Yes; */
+		return Yes;
 	}
 	else
 	{
 		pgtctx->order_index = i;
 	}
+	return No;
 }
 
-void
+int
 cmd_order_pid(struct pg_top_context *pgtctx)
 {
 	int i;
@@ -532,15 +590,16 @@ cmd_order_pid(struct pg_top_context *pgtctx)
 	{
 		new_message(MT_standout, " Unrecognized sorting order");
 		putchar('\r');
-		/* no_command = Yes; */
+		return Yes;
 	}
 	else
 	{
 		pgtctx->order_index = i;
 	}
+	return No;
 }
 
-void
+int
 cmd_order_time(struct pg_top_context *pgtctx)
 {
 	int i;
@@ -549,22 +608,24 @@ cmd_order_time(struct pg_top_context *pgtctx)
 	{
 		new_message(MT_standout, " Unrecognized sorting order");
 		putchar('\r');
-		/* no_command = Yes; */
+		return Yes;
 	}
 	else
 	{
 		pgtctx->order_index = i;
 	}
+	return No;
 }
 
-void
+int
 cmd_redraw(struct pg_top_context *pgtctx)
 {
 	reset_display(pgtctx);
+	return No;
 }
 
 #ifdef ENABLE_KILL
-void
+int
 cmd_renice(struct pg_top_context *pgtctx)
 {
 	char *errmsg;
@@ -575,8 +636,7 @@ cmd_renice(struct pg_top_context *pgtctx)
 		new_message(MT_standout,
 				"Cannot renice when accessing a remote database.");
 		putchar('\r');
-		/* no_command = Yes; */
-		return;
+		return Yes;
 	}
 	new_message(0, "renice ");
 	if (readline(tempbuf, sizeof(tempbuf), No) > 0)
@@ -592,10 +652,11 @@ cmd_renice(struct pg_top_context *pgtctx)
 	{
 		clear_message();
 	}
+	return No;
 }
 #endif /* ENABLE_KILL */
 
-void
+int
 cmd_statements(struct pg_top_context *pgtctx)
 {
 	if (pgtctx->mode == MODE_STATEMENTS)
@@ -613,7 +674,7 @@ cmd_statements(struct pg_top_context *pgtctx)
 	return No;
 }
 
-void
+int
 cmd_tables(struct pg_top_context *pgtctx)
 {
 	if (pgtctx->mode == MODE_TABLE_STATS)
@@ -630,7 +691,7 @@ cmd_tables(struct pg_top_context *pgtctx)
 	return No;
 }
 
-void
+int
 cmd_toggle(struct pg_top_context *pgtctx)
 {
 	if (mode_stats == STATS_DIFF)
@@ -647,20 +708,23 @@ cmd_toggle(struct pg_top_context *pgtctx)
 					" Displaying differential statistics.");
 		putchar('\r');
 	}
+	return No;
 }
 
-void
+int
 cmd_update(struct pg_top_context *pgtctx)
 {
 	/* go home for visual feedback */
 	go_home();
 	fflush(stdout);
+	return No;
 }
 
-void
+int
 cmd_user(struct pg_top_context *pgtctx)
 {
 	int i;
+	int no_command = No;
 	char tempbuf[50];
 
 	new_message(MT_standout, "Username to show: ");
@@ -673,7 +737,7 @@ cmd_user(struct pg_top_context *pgtctx)
 		else if ((i = userid(tempbuf)) == -1)
 		{
 			new_message(MT_standout, " %s: unknown user", tempbuf);
-			/* no_command = Yes; */
+			no_command = Yes;
 		}
 		else
 		{
@@ -685,6 +749,7 @@ cmd_user(struct pg_top_context *pgtctx)
 	{
 		clear_message();
 	}
+	return no_command;
 }
 
 /*
@@ -705,6 +770,23 @@ err_compar(const void *p1, const void *p2)
 					   ((struct errs *) p2)->arg));
 	}
 	return (result);
+}
+
+int
+execute_command(struct pg_top_context *pgtctx, char ch)
+{
+	struct cmd *cmap;
+	cmap = cmd_map;
+
+	while (cmap->func != NULL)
+	{
+		if (cmap->ch == ch)
+		{
+			return (cmap->func)(pgtctx);
+		}
+		++cmap;
+	}
+	return No;
 }
 
 /*

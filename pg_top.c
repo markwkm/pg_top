@@ -555,18 +555,12 @@ process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 void
 process_commands(struct pg_top_context *pgtctx)
 {
-	register int change;
-
-	char no_command = Yes;
-	static char command_chars[] = "\f qh?en#sdkriIucoCNPMTQLERXAtS";
-
+	int no_command;
 	fd_set readfds;
 	char ch;
-	char *iptr;
 
-	while (no_command)
+	do
 	{
-		/* assume valid command unless told otherwise */
 		no_command = No;
 
 		/* set up arguments for select with timeout */
@@ -592,157 +586,13 @@ process_commands(struct pg_top_context *pgtctx)
 				quit(1);
 				/* NOTREACHED */
 			}
-			if ((iptr = strchr(command_chars, ch)) == NULL)
-			{
-				/* illegal command */
-				new_message(MT_standout, " Command not understood");
-				putchar('\r');
-				no_command = Yes;
-			}
-			else
-			{
-				change = iptr - command_chars;
-				if (overstrike && change > CMD_OSLIMIT)
-				{
-					/* error */
-					new_message(MT_standout,
-								" Command cannot be handled by this terminal");
-					putchar('\r');
-					no_command = Yes;
-				}
-				else
-					switch (change)
-					{
- 					case CMD_redraw:	/* redraw screen */
-						cmd_redraw(pgtctx);
- 						break;
 
- 					case CMD_update:	/* merely update display */
-						cmd_update(pgtctx);
- 						break;
-
- 					case CMD_quit:		/* quit */
-						cmd_quit(pgtctx);
- 						/* NOTREACHED */
- 						break;
-
- 					case CMD_help1:		/* help */
- 					case CMD_help2:
-						cmd_help(pgtctx);
- 						break;
-
- 					case CMD_errors:	/* show errors */
-						cmd_errors(pgtctx);
- 						break;
-
- 					case CMD_number1:	/* new number */
- 					case CMD_number2:
-						cmd_number(pgtctx);
- 						break;
-
- 					case CMD_delay:		/* new seconds delay */
-						cmd_delay(pgtctx);
- 						break;
-
- 					case CMD_displays:	/* change display count */
-						cmd_displays(pgtctx);
- 						break;
-
- #ifdef ENABLE_KILL
- 					case CMD_kill:		/* kill program */
-						cmd_kill(pgtctx);
- 						break;
-
- 					case CMD_renice:	/* renice program */
-						cmd_renice(pgtctx);
- 						break;
- #endif
-
- 					case CMD_idletog:
-						cmd_idletog(pgtctx);
- 						break;
-
- 					case CMD_cmdline:
-						cmd_cmdline(pgtctx);
- 						break;
-
- 					case CMD_user:
-						cmd_user(pgtctx);
- 						break;
-
- 					case CMD_order:
-						cmd_order(pgtctx);
- 						break;
-
- 					case CMD_order_pid:
-						cmd_order_pid(pgtctx);
- 						break;
-
- 					case CMD_order_cpu:
-						cmd_order_cpu(pgtctx);
- 						break;
-
- 					case CMD_order_mem:
-						cmd_order_mem(pgtctx);
- 						break;
-
- 					case CMD_order_time:
-						cmd_order_time(pgtctx);
- 						break;
-
- #ifdef ENABLE_COLOR
- 					case CMD_color:
-						cmd_color(pgtctx);
- 						break;
- #endif
- 					case CMD_current_query:
-						cmd_current_query(pgtctx);
- 						break;
-
- 					case CMD_locks:
-						cmd_locks(pgtctx);
- 						break;
-
- 					case CMD_explain:
-						cmd_explain(pgtctx);
- 						break;
-
- 					case CMD_tables:
-						cmd_tables(pgtctx);
- 						break;
-
- 					case CMD_indexes:
-						cmd_indexes(pgtctx);
- 						break;
-
- 					case CMD_explain_analyze:
-						cmd_explain_analyze(pgtctx);
- 						break;
-
- 					case CMD_toggle:
-						cmd_toggle(pgtctx);
- 						break;
-
- 					case CMD_io:
-						cmd_io(pgtctx);
- 						break;
-
- 					case CMD_statements:
-						cmd_statements(pgtctx);
- 						break;
-						break;
-
-					default:
-						new_message(MT_standout, " Unsupported command");
-						putchar('\r');
-						no_command = Yes;
-					}
-			}
+			no_command = execute_command(pgtctx, ch);
 
 			/* flush out stuff that may have been written */
 			fflush(stdout);
 		}
-	}
+	} while (no_command);
 }
 
 /*
