@@ -46,9 +46,21 @@ char	   *index_ordernames[] = {
 	"idx_scan", "idx_tup_fetch", "idx_tup_read", NULL
 };
 
+char	   *statement_ordernames[] = {
+	"calls", "calls%", "total_time", "avg_time", NULL
+};
+
 char	   *table_ordernames[] = {
 	"seq_scan", "seq_tup_read", "idx_scan", "idx_tup_fetch", "n_tup_ins",
 	"n_tup_upd", "n_tup_del", NULL
+};
+
+int			(*index_compares[]) () =
+{
+	compare_idx_scan,
+	compare_idx_tup_fetch,
+	compare_idx_tup_read,
+	NULL
 };
 
 int			(*table_compares[]) () =
@@ -60,14 +72,6 @@ int			(*table_compares[]) () =
 	compare_n_tup_ins,
 	compare_n_tup_upd,
 	compare_n_tup_del,
-	NULL
-};
-
-int			(*index_compares[]) () =
-{
-	compare_idx_scan,
-	compare_idx_tup_fetch,
-	compare_idx_tup_read,
 	NULL
 };
 
@@ -703,7 +707,7 @@ pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
 }
 
 int
-pg_display_statements(char *conninfo, int max_topn)
+pg_display_statements(char *conninfo, int compare_index, int max_topn)
 {
 	int			i;
 	int			rows;
@@ -720,7 +724,8 @@ pg_display_statements(char *conninfo, int max_topn)
 		if (PQntuples(pgresult) == 0)
 			return 1;
 
-		pgresult = PQexec(pgconn, SELECT_STATEMENTS);
+		snprintf(line, sizeof(line), SELECT_STATEMENTS, compare_index + 1);
+		pgresult = PQexec(pgconn, line);
 		rows = PQntuples(pgresult);
 	}
 	else
@@ -736,11 +741,11 @@ pg_display_statements(char *conninfo, int max_topn)
 	for (i = rows - 1; i > rows - max_lines - 1; i--)
 	{
 		snprintf(line, sizeof(line), "%5s %6.1f %10s %8s %s",
-				 PQgetvalue(pgresult, i, 1),
-				 atof(PQgetvalue(pgresult, i, 3)),
+				 PQgetvalue(pgresult, i, 0),
+				 atof(PQgetvalue(pgresult, i, 1)),
 				 PQgetvalue(pgresult, i, 2),
-				 PQgetvalue(pgresult, i, 4),
-				 PQgetvalue(pgresult, i, 0));
+				 PQgetvalue(pgresult, i, 3),
+				 PQgetvalue(pgresult, i, 4));
 		u_process(rows - i - 1, line);
 	}
 

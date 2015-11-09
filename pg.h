@@ -27,15 +27,15 @@
 		"    SELECT sum(calls) AS calls_total\n" \
 		"    FROM pg_stat_statements\n" \
 		")\n" \
-		"SELECT regexp_replace(query, E'[\\n\\r]+', ' ', 'g' ),\n" \
-		"       calls,\n" \
+		"SELECT calls,\n" \
+		"       calls / calls_total AS calls_percentage,\n" \
 		"       to_char(INTERVAL '1 milliseconds' * total_time,\n" \
 		"               'HH24:MI:SS.MS'),\n" \
-		"       calls / calls_total AS calls_percentage,\n" \
 		"       to_char(INTERVAL '1 milliseconds' * (total_time / calls),\n" \
-		"               'HH24:MI:SS.MS') AS average_time\n" \
+		"               'HH24:MI:SS.MS') AS average_time,\n" \
+		"       regexp_replace(query, E'[\\n\\r]+', ' ', 'g' ) AS query\n" \
 		"FROM pg_stat_statements, aggs\n" \
-		"ORDER BY calls ASC"
+		"ORDER BY %d ASC"
 
 /* Table statistics comparison functions for qsort. */
 int			compare_idx_scan_t(const void *, const void *);
@@ -55,13 +55,14 @@ PGconn	   *connect_to_db(char *);
 
 void		pg_display_index_stats(char *, int, int);
 void		pg_display_table_stats(char *, int, int);
-int			pg_display_statements(char *, int);
+int			pg_display_statements(char *, int, int);
 
 PGresult   *pg_locks(PGconn *, int);
 PGresult   *pg_processes(PGconn *);
 PGresult   *pg_query(PGconn *, int);
 
 extern char *index_ordernames[];
+extern char *statement_ordernames[];
 extern char *table_ordernames[];
 
 #endif   /* _PG_H_ */

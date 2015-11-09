@@ -494,7 +494,8 @@ cmd_order(struct pg_top_context *pgtctx)
 		new_message(MT_standout, "Order to sort: ");
 		if (readline(tempbuf, sizeof(tempbuf), No) > 0)
 		{
-			if ((i = string_index(tempbuf, pgtctx->statics.order_names_io)) == -1)
+			if ((i = string_index(tempbuf,
+					pgtctx->statics.order_names_io)) == -1)
 			{
 				new_message(MT_standout, " %s: unrecognized sorting order",
 							tempbuf);
@@ -503,6 +504,26 @@ cmd_order(struct pg_top_context *pgtctx)
 			else
 			{
 				pgtctx->io_order_index = i;
+			}
+		}
+		else
+		{
+			clear_message();
+		}
+		break;
+	case MODE_STATEMENTS:
+		new_message(MT_standout, "Order to sort: ");
+		if (readline(tempbuf, sizeof(tempbuf), No) > 0)
+		{
+			if ((i = string_index(tempbuf, statement_ordernames)) == -1)
+			{
+				new_message(MT_standout, " %s: unrecognized sorting order",
+							tempbuf);
+				no_command = Yes;
+			}
+			else
+			{
+				pgtctx->statement_order_index = i;
 			}
 		}
 		else

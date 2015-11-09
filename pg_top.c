@@ -312,7 +312,8 @@ do_display(struct pg_top_context *pgtctx)
 		switch (pgtctx->mode)
 		{
 		case MODE_STATEMENTS:
-			if (pg_display_statements(pgtctx->conninfo, max_topn) != 0)
+			if (pg_display_statements(pgtctx->conninfo,
+					pgtctx->statement_order_index, max_topn) != 0)
 				new_message(MT_standout | MT_delayed,
 						" Extension pg_stat_statments not found");
 			break;
@@ -771,6 +772,7 @@ main(int argc, char *argv[])
 	pgtctx.ps.uid = -1;
 	pgtctx.ps.command = NULL;
 	pgtctx.show_tags = No;
+	pgtctx.statement_order_index = 0;
 	pgtctx.table_order_index = 0;
 	pgtctx.topn = 0;
 
