@@ -1,6 +1,6 @@
 # configure.ac
 AC_PREREQ(2.59)
-AC_INIT(pg_top, 3.7.1alpha1, ptop-hackers@pgfoundry.org)
+AC_INIT(pg_top, 4.0.0devel, ptop-hackers@pgfoundry.org)
 
 echo "Configuring $PACKAGE_STRING"
 
@@ -8,7 +8,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE([1.7 -Wall])
+AM_INIT_AUTOMAKE([1.7 -Wall subdir-objects])
 
 # options processing
 AC_ARG_WITH(module, AC_HELP_STRING([--with-module=NAME],
@@ -110,6 +110,8 @@ AC_SEARCH_LIBS(dlerror, dl)
 
 AC_SEARCH_LIBS(inet_aton, resolv, AC_DEFINE(HAVE_INET_ATON, 1,
         [inet_aton is already defined]))
+
+AC_SEARCH_LIBS(PQexec, pq)
 
 # check for libraries required by extension
 extlibs=""
@@ -213,11 +215,9 @@ echo "uname -a | mail -s $target_os ptop-hackers@pgfoundry.org"
 fi
 AC_MSG_RESULT($MODULE)
 SRC="$SRC machine/m_$MODULE.c"
-OBJ="$OBJ m_$MODULE.o"
+OBJ="$OBJ machine/m_$MODULE.o"
 AC_SUBST(SRC)
 AC_SUBST(OBJ)
-
-CFLAGS="-Wall -g"
 
 AC_MSG_CHECKING(for installation settings)
 # calculate appropriate settings
