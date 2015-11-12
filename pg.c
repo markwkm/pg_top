@@ -780,6 +780,8 @@ PGresult *
 pg_processes(PGconn *pgconn)
 {
 	PGresult *pgresult;
+	PQexec(pgconn, "BEGIN;");
+	PQexec(pgconn, "SET statement_timeout = '2s';");
 	if (pg_version(pgconn) >= 9.2)
 	{
 		pgresult = PQexec(pgconn, QUERY_PROCESSES);
@@ -788,6 +790,7 @@ pg_processes(PGconn *pgconn)
 	{
 		pgresult = PQexec(pgconn, QUERY_PROCESSES_9_1);
 	}
+	PQexec(pgconn, "ROLLBACK;;");
 	return pgresult;
 }
 
