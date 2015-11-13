@@ -740,7 +740,7 @@ pg_display_statements(char *conninfo, int compare_index, int max_topn)
 	/* Display stats. */
 	for (i = rows - 1; i > rows - max_lines - 1; i--)
 	{
-		snprintf(line, sizeof(line), "%5s %6.1f %10s %8s %s",
+		snprintf(line, sizeof(line), "%7s %6.1f %10s %8s %s",
 				 PQgetvalue(pgresult, i, 0),
 				 atof(PQgetvalue(pgresult, i, 1)),
 				 PQgetvalue(pgresult, i, 2),

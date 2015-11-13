@@ -72,7 +72,7 @@ static char *err_listem =
 char header_index_stats[43] = "  I_SCANS   I_READS I_FETCHES INDEXRELNAME";
 char header_io_stats[64] =
 		"  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
-char header_statements[44] = "CALLS CALLS%   TOTAL_TIME     AVG_TIME QUERY";
+char header_statements[46] = "  CALLS CALLS%   TOTAL_TIME     AVG_TIME QUERY";
 char header_table_stats[78] =
 	"SEQ_SCANS SEQ_READS   I_SCANS I_FETCHES   INSERTS   UPDATES   DELETES RELNAME";
 
