@@ -105,6 +105,7 @@ AC_SEARCH_LIBS(elf32_getphdr, elf)
 AC_SEARCH_LIBS(vm_statistics, mach)
 AC_SEARCH_LIBS(tgetent, termcap curses ncurses)
 AC_SEARCH_LIBS(exp, m)
+AC_SEARCH_LIBS(libintl_gettext, intl)
 
 AC_SEARCH_LIBS(dlerror, dl)
 

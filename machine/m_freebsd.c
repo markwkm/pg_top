@@ -49,6 +49,7 @@
 
 #include <osreldate.h>			/* for changes in kernel structures */
 
+#include "pg_top.h"
 #include "machine.h"
 #include "utils.h"
 
