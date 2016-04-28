@@ -1021,12 +1021,12 @@ getsysctl(const char *name, void *ptr, size_t len)
 	size_t nlen = len;
 
 	if (sysctlbyname(name, ptr, &nlen, NULL, 0) == -1) {
-		fprintf(stderr, "top: sysctl(%s...) failed: %s\n", name,
+		fprintf(stderr, "pg_top: sysctl(%s...) failed: %s\n", name,
 				strerror(errno));
 		quit(23);
 	}
 	if (nlen != len) {
-		fprintf(stderr, "top: sysctl(%s...) expected %lu, got %lu\n",
+		fprintf(stderr, "pg_top: sysctl(%s...) expected %lu, got %lu\n",
 				name, (unsigned long)len, (unsigned long)nlen);
 		quit(23);
 	}
