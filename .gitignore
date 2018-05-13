@@ -5,17 +5,15 @@
 *.tar.bz2
 .deps
 Makefile
-aclocal.m4
-autom4te.cache
 config.h
-config.log
-config.status
-configure
 depcomp
-install-sh
-missing
 pg_top
 pg_top.1
 sigdesc.h
-stamp-h1
 tags
+
+# cmake
+
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
