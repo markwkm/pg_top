@@ -1,5 +1,9 @@
 Release Notes
 
+Release 4.0.0
+
+     * Replace autoconf with cmake
+
 Release 3.7.0
 
      * Added support for monitoring databases on remote systems.
