@@ -285,3 +285,65 @@ install(
     pg_top.1
     DESTINATION "${INSTALLDEST}/share/man/man1"
 )
+
+# CPack rules for creating distribution files.
+
+INCLUDE(InstallRequiredSystemLibraries)
+
+SET(CPACK_CMAKE_GENERATOR "Unix Makefiles")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "pg_top is 'top' for PostgreSQL")
+set(CPACK_PACKAGE_VENDOR "pg_top")
+set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+set(CPACK_INSTALL_CMAKE_PROJECTS "")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}")
+set(CPACK_SOURCE_IGNORE_FILES "/\\\\.git/;\\\\.swp\\$;\\\\.#;/#")
+set(
+    CPACK_SOURCE_IGNORE_FILES
+    "${CPACK_SOURCE_IGNORE_FILES};\\\\.bz2\\$"
+)
+set(
+    CPACK_SOURCE_IGNORE_FILES
+    "${CPACK_SOURCE_IGNORE_FILES};\\\\.gz\\$"
+)
+set(
+    CPACK_SOURCE_IGNORE_FILES
+    "${CPACK_SOURCE_IGNORE_FILES};/CMakeFiles/"
+)
+set(
+    CPACK_SOURCE_IGNORE_FILES
+    "${CPACK_SOURCE_IGNORE_FILES};/CMakeCache\\\\.txt\\$"
+)
+set(
+    CPACK_SOURCE_IGNORE_FILES
+    "${CPACK_SOURCE_IGNORE_FILES};/cmake_install\\\\.cmake\\$"
+)
+set(
+    CPACK_SOURCE_IGNORE_FILES
+    "${CPACK_SOURCE_IGNORE_FILES};/config\\\\.h\\$"
+)
+set(
+    CPACK_SOURCE_IGNORE_FILES
+    "${CPACK_SOURCE_IGNORE_FILES};/CPackConfig\\\\.cmake\\$"
+)
+set(
+    CPACK_SOURCE_IGNORE_FILES
+    "${CPACK_SOURCE_IGNORE_FILES};/\\\\_CPack\\\\_Packages/"
+)
+set(
+    CPACK_SOURCE_IGNORE_FILES
+    "${CPACK_SOURCE_IGNORE_FILES};/CPackSourceConfig\\\\.cmake\\$"
+)
+set(
+    CPACK_SOURCE_IGNORE_FILES
+    "${CPACK_SOURCE_IGNORE_FILES};/pg_top\\\\.1\\$"
+)
+set(
+    CPACK_SOURCE_IGNORE_FILES
+    "${CPACK_SOURCE_IGNORE_FILES};/sigdesc\\\\.h\\$"
+)
+
+include(CPack)

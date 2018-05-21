@@ -1,8 +1,6 @@
 *.sw?
 *.o
 *.in
-*.tar.gz
-*.tar.bz2
 .deps
 Makefile
 config.h
@@ -19,3 +17,11 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 install_manifest.txt
+
+CPackConfig.cmake
+CPackSourceConfig.cmake
+_CPack_Packages/
+*.tar.bz2
+*.tar.gz
+*.tar.xz
+*.tar.Z
