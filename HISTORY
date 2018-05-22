@@ -3,6 +3,7 @@ Release Notes
 Release 4.0.0
 
      * Replace autoconf with cmake
+     * Add monitoring of pg_stat_statements
 
 Release 3.7.0
 
