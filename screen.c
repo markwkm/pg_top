@@ -59,7 +59,7 @@ char	   *tgetstr();
 char	   *tgoto();
 char		termcap_buf[1024];
 char		string_buffer[1024];
-char		home[15];
+char		home[16];
 char		lower_left[15];
 char	   *clear_line;
 char	   *clear_screen;
