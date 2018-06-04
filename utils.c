@@ -271,7 +271,7 @@ string_list(char **strings)
 	int			cnt = 0;
 	char	  **pp;
 	char	   *p;
-	char	   *result;
+	char	   *result = NULL;
 	char	   *resp = NULL;
 
 	pp = strings;

@@ -525,7 +525,7 @@ get_process_info(struct system_info * si,
 	/* these are copied out of sel for speed */
 	int			show_idle;
 	int			show_self;
-	int			show_system;
+	int			show_system = 0;
 	int			show_uid;
 
 	PGconn	   *pgconn;

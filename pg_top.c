@@ -188,7 +188,7 @@ onalrm(int i)					/* SIGALRM handler */
 void
 do_display(struct pg_top_context *pgtctx)
 {
-	register int i;
+	register int i = 0;
 	register int active_procs;
 
 	int tmp_index = 0;
@@ -320,7 +320,7 @@ do_display(struct pg_top_context *pgtctx)
 		case MODE_INDEX_STATS:
 			pg_display_index_stats(pgtctx->conninfo, pgtctx->index_order_index,
 					max_topn);
-			break;
+		break;
 		case MODE_TABLE_STATS:
 			pg_display_table_stats(pgtctx->conninfo, pgtctx->table_order_index,
 					max_topn);
