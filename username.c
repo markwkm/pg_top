@@ -150,7 +150,7 @@ username(uid_t uid)
 {
 	register int hashindex;
 
-	hashindex = hashit(uid);
+	hashindex = uid % Table_size;
 	if (is_empty_hash(hashindex) || (hash_table[hashindex].uid != uid))
 	{
 		/* not here or not right -- get it out of passwd */
