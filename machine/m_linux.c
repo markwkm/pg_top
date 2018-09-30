@@ -397,7 +397,7 @@ machine_init(struct statics * statics)
 		int			fd;
 		char		buff[128];
 		char	   *p;
-		int			cnt;
+		int			cnt = 0;
 		unsigned long uptime;
 		struct timeval tv;
 
