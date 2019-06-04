@@ -1,4 +1,4 @@
-/*	Copyright (c) 2007-2015, Mark Wong */
+/*	Copyright (c) 2007-2019, Mark Wong */
 
 #ifndef _PG_H_
 #define _PG_H_
@@ -51,11 +51,11 @@ int			compare_idx_scan(const void *, const void *);
 int			compare_idx_tup_fetch(const void *, const void *);
 int			compare_idx_tup_read(const void *, const void *);
 
-PGconn	   *connect_to_db(char *);
+PGconn	   *connect_to_db(const char **);
 
-void		pg_display_index_stats(char *, int, int);
-void		pg_display_table_stats(char *, int, int);
-int			pg_display_statements(char *, int, int);
+void		pg_display_index_stats(const char **, int, int);
+void		pg_display_table_stats(const char **, int, int);
+int			pg_display_statements(const char **, int, int);
 
 PGresult   *pg_locks(PGconn *, int);
 PGresult   *pg_processes(PGconn *);

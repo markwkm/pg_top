@@ -1,4 +1,4 @@
-/*	Copyright (c) 2007-2015, Mark Wong */
+/*	Copyright (c) 2007-2019, Mark Wong */
 
 #include <stdlib.h>
 #include <string.h>
@@ -495,11 +495,13 @@ compare_seq_tup_read(const void *vp1, const void *vp2)
 }
 
 PGconn *
-connect_to_db(char *conninfo)
+connect_to_db(const char *values[])
 {
 	PGconn	   *pgconn = NULL;
+	const char *keywords[6] = {"host", "port", "user", "password", "dbname",
+			NULL};
 
-	pgconn = PQconnectdb(conninfo);
+	pgconn = PQconnectdbParams(keywords, values, 1);
 	if (PQstatus(pgconn) != CONNECTION_OK)
 	{
 		new_message(MT_standout | MT_delayed, " %s", PQerrorMessage(pgconn));
@@ -544,7 +546,7 @@ get_table_stats(struct table_node * head, long long relid)
 }
 
 void
-pg_display_index_stats(char *conninfo, int compare_index, int max_topn)
+pg_display_index_stats(const char *values[6], int compare_index, int max_topn)
 {
 	int			i;
 	int			rows;
@@ -557,7 +559,7 @@ pg_display_index_stats(char *conninfo, int compare_index, int max_topn)
 
 	int			max_lines;
 
-	pgconn = connect_to_db(conninfo);
+	pgconn = connect_to_db(values);
 	if (pgconn != NULL)
 	{
 		pgresult = PQexec(pgconn, SELECT_INDEX_STATS);
@@ -619,7 +621,7 @@ pg_display_index_stats(char *conninfo, int compare_index, int max_topn)
 }
 
 void
-pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
+pg_display_table_stats(const char *values[], int compare_index, int max_topn)
 {
 	int			i;
 	int			rows;
@@ -632,7 +634,7 @@ pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
 
 	int			max_lines;
 
-	pgconn = connect_to_db(conninfo);
+	pgconn = connect_to_db(values);
 	if (pgconn != NULL)
 	{
 		pgresult = PQexec(pgconn, SELECT_TABLE_STATS);
@@ -707,7 +709,7 @@ pg_display_table_stats(char *conninfo, int compare_index, int max_topn)
 }
 
 int
-pg_display_statements(char *conninfo, int compare_index, int max_topn)
+pg_display_statements(const char *values[], int compare_index, int max_topn)
 {
 	int			i;
 	int			rows;
@@ -717,7 +719,7 @@ pg_display_statements(char *conninfo, int compare_index, int max_topn)
 
 	int			max_lines;
 
-	pgconn = connect_to_db(conninfo);
+	pgconn = connect_to_db(values);
 	if (pgconn != NULL)
 	{
 		pgresult = PQexec(pgconn, CHECK_FOR_STATEMENTS_X);

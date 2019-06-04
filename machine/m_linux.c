@@ -817,7 +817,7 @@ read_one_proc_stat(pid_t pid, struct top_proc * proc, struct process_select * se
 caddr_t
 get_process_info(struct system_info * si,
 				 struct process_select * sel,
-				 int compare_index, char *conninfo, int mode)
+				 int compare_index, const char *values[], int mode)
 {
 	struct timeval thistime;
 	double		timediff,
@@ -885,7 +885,7 @@ get_process_info(struct system_info * si,
 
 		memset(process_states, 0, sizeof(process_states));
 
-		pgconn = connect_to_db(conninfo);
+		pgconn = connect_to_db(values);
 		if (pgconn != NULL)
 		{
 			pgresult = pg_processes(pgconn);

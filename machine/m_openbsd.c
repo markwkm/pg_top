@@ -305,7 +305,7 @@ static struct handle handle;
 
 caddr_t
 get_process_info(struct system_info *si, struct process_select *sel,
-    int compare_index, char *conninfo)
+    int compare_index, const char *values[])
 {
 	int show_idle, show_system, show_threads, show_uid, show_cmd;
 	int total_procs, active_procs;
@@ -325,7 +325,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	mib[5] = 1;
 
 	nproc = 0;
-	pgconn = connect_to_db(conninfo);
+	pgconn = connect_to_db(values);
 	if (pgconn != NULL)
 	{
 		pgresult = pg_processes(pgconn);

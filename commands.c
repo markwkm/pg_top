@@ -7,6 +7,7 @@
  *
  *	Copyright (c) 1984, 1989, William LeFebvre, Rice University
  *	Copyright (c) 1989, 1990, 1992, William LeFebvre, Northwestern University
+ *	Copyright (c) 2007-2019, Mark Wong
  */
 
 /*
@@ -198,7 +199,7 @@ cmd_current_query(struct pg_top_context *pgtctx)
 	newval = readline(tempbuf1, 8, Yes);
 	reset_display(pgtctx);
 	display_pagerstart();
-	show_current_query(pgtctx->conninfo, newval);
+	show_current_query(pgtctx->values, newval);
 	display_pagerend();
 	return No;
 }
@@ -274,7 +275,7 @@ cmd_explain(struct pg_top_context *pgtctx)
 	newval = readline(tempbuf1, 8, Yes);
 	reset_display(pgtctx);
 	display_pagerstart();
-	show_explain(pgtctx->conninfo, newval, EXPLAIN);
+	show_explain(pgtctx->values, newval, EXPLAIN);
 	display_pagerend();
 	return No;
 }
@@ -289,7 +290,7 @@ cmd_explain_analyze(struct pg_top_context *pgtctx)
 	newval = readline(tempbuf1, 8, Yes);
 	reset_display(pgtctx);
 	display_pagerstart();
-	show_explain(pgtctx->conninfo, newval, EXPLAIN_ANALYZE);
+	show_explain(pgtctx->values, newval, EXPLAIN_ANALYZE);
 	display_pagerend();
 	return No;
 }
@@ -392,7 +393,7 @@ cmd_locks(struct pg_top_context *pgtctx)
 	newval = readline(tempbuf1, 8, Yes);
 	reset_display(pgtctx);
 	display_pagerstart();
-	show_locks(pgtctx->conninfo, newval);
+	show_locks(pgtctx->values, newval);
 	display_pagerend();
 	return No;
 }
@@ -1222,7 +1223,7 @@ renice_procs(char *str)
 }
 
 void
-show_current_query(char *conninfo, int procpid)
+show_current_query(const char *values[], int procpid)
 {
 	int			i;
 	int			rows;
@@ -1234,7 +1235,7 @@ show_current_query(char *conninfo, int procpid)
 	display_pager(info);
 
 	/* Get the currently running query. */
-	pgconn = connect_to_db(conninfo);
+	pgconn = connect_to_db(values);
 	if (pgconn != NULL)
 	{
 		pgresult = pg_query(pgconn, procpid);
@@ -1256,7 +1257,7 @@ show_current_query(char *conninfo, int procpid)
 }
 
 void
-show_explain(char *conninfo, int procpid, int analyze)
+show_explain(const char *values[], int procpid, int analyze)
 {
 	int			i,
 				j;
@@ -1274,7 +1275,7 @@ show_explain(char *conninfo, int procpid, int analyze)
 	display_pager(info);
 
 	/* Get the currently running query. */
-	pgconn = connect_to_db(conninfo);
+	pgconn = connect_to_db(values);
 	if (pgconn != NULL)
 	{
 		pgresult_query = pg_query(pgconn, procpid);
@@ -1322,7 +1323,7 @@ show_explain(char *conninfo, int procpid, int analyze)
 }
 
 void
-show_locks(char *conninfo, int procpid)
+show_locks(const char *values[], int procpid)
 {
 	int			i,
 				j,
@@ -1341,7 +1342,7 @@ show_locks(char *conninfo, int procpid)
 	display_pager(info);
 
 	/* Get the locks helf by the process. */
-	pgconn = connect_to_db(conninfo);
+	pgconn = connect_to_db(values);
 	if (pgconn == NULL)
 	{
 		PQfinish(pgconn);

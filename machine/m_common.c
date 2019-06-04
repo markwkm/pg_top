@@ -31,7 +31,7 @@ static char *data_directory = NULL;
  * values with previous values.
  */
 void
-get_database_info(struct db_info *db_info, char *conninfo)
+get_database_info(struct db_info *db_info, const char *values[])
 {
 	struct timeval thistime;
 	double		timediff;
@@ -54,7 +54,7 @@ get_database_info(struct db_info *db_info, char *conninfo)
 	lasttime = thistime;
 
 	rows = 0;
-	pgconn = connect_to_db(conninfo);
+	pgconn = connect_to_db(values);
 	if (pgconn != NULL)
 	{
 		pgresult = PQexec(pgconn, QUERY_STAT_DB);
@@ -110,7 +110,7 @@ get_database_info(struct db_info *db_info, char *conninfo)
  * queried to server, return existing value.
  */
 char *
-get_data_directory(char *conninfo)
+get_data_directory(const char *values[])
 {
 	PGconn	   *pgconn;
 	PGresult   *pgresult = NULL;
@@ -122,7 +122,7 @@ get_data_directory(char *conninfo)
 
 	/* No existing value, so query server */
 	rows = 0;
-	pgconn = connect_to_db(conninfo);
+	pgconn = connect_to_db(values);
 	if (pgconn != NULL)
 	{
 		pgresult = PQexec(pgconn, QUERY_DATA_DIRECTORY);

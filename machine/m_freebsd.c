@@ -513,7 +513,7 @@ caddr_t
 get_process_info(struct system_info * si,
 				 struct process_select * sel,
 				 int compare_index,
-				 char *conninfo)
+				 const char *values[])
 
 {
 	register int i;
@@ -532,7 +532,7 @@ get_process_info(struct system_info * si,
 	PGresult   *pgresult = NULL;
 
 	nproc = 0;
-	pgconn = connect_to_db(conninfo);
+	pgconn = connect_to_db(values);
 	if (pgconn != NULL)
 	{
 		pgresult = pg_processes(pgconn);

@@ -1,4 +1,8 @@
-/* call specifications for commands.c */
+/*
+ * call specifications for commands.c
+ *
+ *	Copyright (c) 2007-2019, Mark Wong
+ */
 
 #ifndef _COMMANDS_H_
 #define _COMMANDS_H_
@@ -56,8 +60,8 @@ int error_count();
 void show_errors();
 char *kill_procs(char *str);
 char *renice_procs(char *str);
-void show_current_query(char *, int);
-void show_explain(char *, int, int);
-void show_locks(char *, int);
+void show_current_query(const char **, int);
+void show_explain(const char **, int, int);
+void show_locks(const char **, int);
 
 #endif   /* _COMMANDS_H_ */

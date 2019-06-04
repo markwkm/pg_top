@@ -3,6 +3,7 @@
  *	module.  It is NOT machine dependent and should not need to be changed
  *	for any specific machine.
  *
+ *	Copyright (c) 2007-2019, Mark Wong
  *	Portions Copyright (c) 2013 VMware, Inc. All Rights Reserved.
  */
 
@@ -149,15 +150,15 @@ int			machine_init(struct statics *);
 void		get_system_info(struct system_info *);
 #ifdef __linux__
 caddr_t get_process_info(struct system_info *, struct process_select *, int,
-				 char *, int);
+				 const char **, int);
 #else
 caddr_t get_process_info(struct system_info *, struct process_select *, int,
 				 char *);
 #endif /* __linux__ */
 void		get_disk_info(struct disk_info *, char *);
 void		get_io_info(struct io_info *);
-void		get_database_info(struct db_info *, char *);
-char	   *get_data_directory(char *);
+void		get_database_info(struct db_info *, const char **);
+char	   *get_data_directory(const char **);
 char	   *format_header(char *);
 char	   *format_next_io(caddr_t, char *(*) (uid_t));
 char	   *format_next_process(caddr_t, char *(*) (uid_t));

@@ -11,7 +11,7 @@ char	   *copyright =
  *	Copyright (c) 1989 - 1994, William LeFebvre, Northwestern University
  *	Copyright (c) 1994, 1995, William LeFebvre, Argonne National Laboratory
  *	Copyright (c) 1996, William LeFebvre, Group sys Consulting
- *	Copyright (c) 2007-2015, Mark Wong
+ *	Copyright (c) 2007-2019, Mark Wong
  *	Portions Copyright (c) 2013 VMware, Inc. All Rights Reserved.
  */
 
@@ -210,27 +210,27 @@ do_display(struct pg_top_context *pgtctx)
 		get_system_info(&pgtctx->system_info);
 #ifdef __linux__
 		processes = get_process_info(&pgtctx->system_info, &pgtctx->ps, tmp_index,
-				pgtctx->conninfo, pgtctx->mode);
+				pgtctx->values, pgtctx->mode);
 #else
 		processes = get_process_info(&pgtctx->system_info, &pgtctx->ps, tmp_index,
-				pgtctx->conninfo);
+				pgtctx->values);
 #endif /* __linux__ */
 	}
 	else
 	{
-		get_system_info_r(&pgtctx->system_info, pgtctx->conninfo);
+		get_system_info_r(&pgtctx->system_info, pgtctx->values);
 		processes = get_process_info_r(&pgtctx->system_info, &pgtctx->ps,
-				pgtctx->order_index, pgtctx->conninfo);
+				pgtctx->order_index, pgtctx->values);
 	}
 
 	/* Get database activity information */
-	get_database_info(&pgtctx->db_info, pgtctx->conninfo);
+	get_database_info(&pgtctx->db_info, pgtctx->values);
 
 	/* Get database I/O information */
 	get_io_info(&pgtctx->io_info);
 
 	/* display database disk info */
-	get_disk_info(&pgtctx->disk_info, get_data_directory(pgtctx->conninfo));
+	get_disk_info(&pgtctx->disk_info, get_data_directory(pgtctx->values));
 
 	/* display the load averages */
 	(*d_loadave) (pgtctx->system_info.last_pid, pgtctx->system_info.load_avg);
@@ -312,17 +312,17 @@ do_display(struct pg_top_context *pgtctx)
 		switch (pgtctx->mode)
 		{
 		case MODE_STATEMENTS:
-			if (pg_display_statements(pgtctx->conninfo,
+			if (pg_display_statements(pgtctx->values,
 					pgtctx->statement_order_index, max_topn) != 0)
 				new_message(MT_standout | MT_delayed,
 						" Extension pg_stat_statments not found");
 			break;
 		case MODE_INDEX_STATS:
-			pg_display_index_stats(pgtctx->conninfo, pgtctx->index_order_index,
+			pg_display_index_stats(pgtctx->values, pgtctx->index_order_index,
 					max_topn);
 		break;
 		case MODE_TABLE_STATS:
-			pg_display_table_stats(pgtctx->conninfo, pgtctx->table_order_index,
+			pg_display_table_stats(pgtctx->values, pgtctx->table_order_index,
 					max_topn);
 			break;
 #ifdef __linux__
@@ -413,7 +413,6 @@ process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 {
 	int i;
 	int option_index;
-	char *password_tmp;
 
 	while ((i = getopt_long(ac, av, "CDITbcinqruVh:s:d:U:o:Wp:x:z:",
 			long_options, &option_index)) != EOF)
@@ -516,29 +515,24 @@ process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 			}
 			else
 			{
-				pgtctx->dbport = i;
+				pgtctx->values[PG_PORT] = strdup(optarg);
 			}
 			break;
 
 		case 'W':		/* prompt for database password */
-			password_tmp = simple_prompt("Password: ", 1000, 0);
-
-			/*
-			 * get the password in the format we want for the connect string
-			 */
-			sprintf(pgtctx->password, "password=%s", password_tmp);
+			pgtctx->values[PG_PASSWORD] = simple_prompt("Password: ", 1000, 0);
 			break;
 
 		case 'U':		/* database user name */
-			sprintf(pgtctx->dbusername, "user=%s", optarg);
+			pgtctx->values[PG_USER] = strdup(optarg);
 			break;
 
 		case 'd':		/* database name */
-			sprintf(pgtctx->dbname, "dbname=%s", optarg);
+			pgtctx->values[PG_DBNAME] = strdup(optarg);
 			break;
 
 		case 'h':		/* socket location */
-			sprintf(pgtctx->socket, "host=%s", optarg);
+			pgtctx->values[PG_HOST] = strdup(optarg);
 			break;
 
 		case 'r':		/* remote mode */
@@ -755,7 +749,6 @@ main(int argc, char *argv[])
 	pgtctx.color_on = 1;
 #endif
 	pgtctx.d_header = i_header;
-	pgtctx.dbport = 5432;
 	pgtctx.delay = Default_DELAY;
 	pgtctx.displays = 0; /* indicates unspecified */
 	pgtctx.dostates = No;
@@ -800,23 +793,6 @@ main(int argc, char *argv[])
 #endif /* HAVE_SETBUFFER */
 #endif /* HAVE_SETVBUF */
 
-	/* Get default values from the environment. */
-	env_top = getenv("PGDATABASE");
-	if (env_top != NULL)
-		sprintf(pgtctx.dbname, "dbname=%s", getenv("PGDATABASE"));
-
-	env_top = getenv("PGHOST");
-	if (env_top != NULL)
-		sprintf(pgtctx.socket, "host=%s", getenv("PGHOST"));
-
-	env_top = getenv("PGPORT");
-	if (env_top != NULL)
-		pgtctx.dbport = atoi(getenv("PGPORT"));
-
-	env_top = getenv("PGUSER");
-	if (env_top != NULL)
-		sprintf(pgtctx.dbusername, "user=%s", getenv("PGUSER"));
-
 	/* get our name */
 	if (argc > 0)
 	{
@@ -856,11 +832,6 @@ main(int argc, char *argv[])
 			optind = 1;
 		}
 		process_arguments(&pgtctx, ac, av);
-
-		/* connect to the database */
-		sprintf(pgtctx.conninfo, "port=%d %s %s %s %s",
-				pgtctx.dbport, pgtctx.dbname, pgtctx.socket, pgtctx.dbusername,
-				pgtctx.password);
 
 		/* get count of top processes to display (if any) */
 		if (optind < ac && *av[optind])
@@ -914,7 +885,7 @@ main(int argc, char *argv[])
 	if (pgtctx.mode_remote == 0)
 		i = machine_init(&pgtctx.statics);
 	else
-		i = machine_init_r(&pgtctx.statics, pgtctx.conninfo);
+		i = machine_init_r(&pgtctx.statics, pgtctx.values);
 
 	if (i == -1)
 		exit(1);
@@ -1089,27 +1060,27 @@ main(int argc, char *argv[])
 			get_system_info(&pgtctx.system_info);
 #ifdef __linux__
 			(void) get_process_info(&pgtctx.system_info, &pgtctx.ps, 0,
-					pgtctx.conninfo, pgtctx.mode);
+					pgtctx.values, pgtctx.mode);
 #else
 			(void) get_process_info(&pgtctx.system_info, &pgtctx.ps, 0,
-					pgtctx.conninfo);
+					pgtctx.values);
 #endif /* __linux__ */
 		}
 		else
 		{
-			get_system_info_r(&pgtctx.system_info, pgtctx.conninfo);
+			get_system_info_r(&pgtctx.system_info, pgtctx.values);
 			(void) get_process_info_r(&pgtctx.system_info, &pgtctx.ps, 0,
-					pgtctx.conninfo);
+					pgtctx.values);
 		}
 
 		/* Get database activity information */
-		get_database_info(&pgtctx.db_info, pgtctx.conninfo);
+		get_database_info(&pgtctx.db_info, pgtctx.values);
 
 		/* Get database I/O information */
 		get_io_info(&pgtctx.io_info);
 
 		/* Get database disk information */
-		get_disk_info(&pgtctx.disk_info, get_data_directory(pgtctx.conninfo));
+		get_disk_info(&pgtctx.disk_info, get_data_directory(pgtctx.values));
 
 		pgtctx.timeout.tv_sec = 1;
 		pgtctx.timeout.tv_usec = 0;

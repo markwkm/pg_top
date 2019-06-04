@@ -1152,7 +1152,7 @@ get_process_info(
 				 struct system_info * si,
 				 struct process_select * sel,
 				 int compare_index,
-				 char *conninfo,
+				 const char *values[],
 				 int mode)
 {
 	register int i;
@@ -1171,7 +1171,7 @@ get_process_info(
 
 	/* allocate enough space for twice our current needs */
 	nproc = 20;
-	pgconn = connect_to_db(conninfo);
+	pgconn = connect_to_db(values);
 	if (pgconn != NULL)
 	{
 		pgresult = pg_processes(pgconn);

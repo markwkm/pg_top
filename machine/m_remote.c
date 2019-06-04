@@ -438,13 +438,13 @@ free_proc(struct top_proc *proc)
 }
 
 void
-get_system_info_r(struct system_info *info, char *conninfo)
+get_system_info_r(struct system_info *info, const char *values[])
 {
 	PGconn   *pgconn;
 	PGresult *pgresult = NULL;
 	int rows = 0;
 
-	pgconn = connect_to_db(conninfo);
+	pgconn = connect_to_db(values);
 	if (pgconn != NULL)
 	{
 		pgresult = PQexec(pgconn, QUERY_LOADAVG);
@@ -533,7 +533,7 @@ get_system_info_r(struct system_info *info, char *conninfo)
 
 caddr_t
 get_process_info_r(struct system_info *si, struct process_select *sel,
-		int compare_index, char *conninfo)
+		int compare_index, const char *values[])
 {
 	int i;
 	struct top_proc *pp;
@@ -594,7 +594,7 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 		for (proc = ptable[i]; proc; proc = proc->next)
 			proc->state = 0;
 
-	pgconn = connect_to_db(conninfo);
+	pgconn = connect_to_db(values);
 	if (pgconn != NULL)
 	{
 		if (sel->fullcmd == 2)
@@ -792,12 +792,12 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 }
 
 int
-machine_init_r(struct statics *statics, char *conninfo)
+machine_init_r(struct statics *statics, const char *values[])
 {
 	PGconn   *pgconn;
 
 	/* Make sure the remote system has the stored function installed. */
-	pgconn = connect_to_db(conninfo);
+	pgconn = connect_to_db(values);
 	if (pgconn == NULL)
 	{
 		fprintf(stderr, "Cannot connect to database.\n");

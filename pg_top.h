@@ -2,6 +2,8 @@
  *	Top - a top users display for Berkeley Unix
  *
  *	General (global) definitions
+ *
+ *	Copyright (c) 2007-2019, Mark Wong
  */
 
 #ifndef _PG_TOPP_H_
@@ -71,16 +73,21 @@ struct ext_decl
 #undef RANDOM_PW
 #endif
 
+enum pgparams
+{
+	PG_HOST,
+	PG_PORT,
+	PG_USER,
+	PG_PASSWORD,
+	PG_DBNAME
+};
+
 struct pg_top_context
 {
 #ifdef ENABLE_COLOR
 	int color_on;
 #endif
-	char conninfo[4096];
 	struct db_info db_info;
-	char dbname[1024];
-	int dbport;
-	char dbusername[1024];
 	int delay;
 	struct disk_info disk_info;
 	int displays;
@@ -98,16 +105,15 @@ struct pg_top_context
 	int mode_remote; /* Mode for monitoring a remote database system. */
 	int order_index;
 	char *order_name;
-	char password[1001];
 	struct process_select ps;
 	char show_tags;
-	char socket[1024];
 	int statement_order_index;
 	struct statics statics;
 	struct system_info system_info;
 	struct timeval timeout;
 	int table_order_index;
 	int topn;
+	const char *values[6];
 };
 
 void		quit(int);
