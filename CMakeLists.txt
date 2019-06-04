@@ -288,9 +288,9 @@ install(
 
 # CPack rules for creating distribution files.
 
-INCLUDE(InstallRequiredSystemLibraries)
+include(InstallRequiredSystemLibraries)
 
-SET(CPACK_CMAKE_GENERATOR "Unix Makefiles")
+set(CPACK_CMAKE_GENERATOR "Unix Makefiles")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "pg_top is 'top' for PostgreSQL")
 set(CPACK_PACKAGE_VENDOR "pg_top")
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
@@ -298,16 +298,14 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
-set(CPACK_INSTALL_CMAKE_PROJECTS "")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}")
-set(CPACK_SOURCE_IGNORE_FILES "/\\\\.git/;\\\\.swp\\$;\\\\.#;/#")
 set(
     CPACK_SOURCE_IGNORE_FILES
-    "${CPACK_SOURCE_IGNORE_FILES};\\\\.bz2\\$"
+    "\\\\.bz2\\$;\\\\.gz\\$;\\\\.xz\\$;\\\\.Z\\$;\\\\.zip\\$"
 )
 set(
     CPACK_SOURCE_IGNORE_FILES
-    "${CPACK_SOURCE_IGNORE_FILES};\\\\.gz\\$"
+    "${CPACK_SOURCE_IGNORE_FILES};/CMakeCache\\\\.txt\\$"
 )
 set(
     CPACK_SOURCE_IGNORE_FILES
@@ -344,6 +342,10 @@ set(
 set(
     CPACK_SOURCE_IGNORE_FILES
     "${CPACK_SOURCE_IGNORE_FILES};/sigdesc\\\\.h\\$"
+)
+set(
+    CPACK_SOURCE_IGNORE_FILES
+    "${CPACK_SOURCE_IGNORE_FILES};/README\\\\.git\\$"
 )
 
 include(CPack)

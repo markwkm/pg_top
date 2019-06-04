@@ -1,0 +1,11 @@
+(This file does not appear in release tarballs.)
+
+If you are using a git checkout, here are the packaging instructions.
+
+Creating Source Packages
+------------------------
+
+git checkout-index --prefix=/tmp/pg_top/ -a
+cd /tmp/pg_top
+cmake CMakeLists.txt
+make package_source
