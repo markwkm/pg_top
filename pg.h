@@ -16,12 +16,6 @@
 		"FROM pg_stat_user_indexes\n" \
 		"ORDER BY indexrelname"
 
-#define SELECT_TABLE_STATS \
-		"SELECT relid, relname, seq_scan, seq_tup_read, idx_scan,\n" \
-		"       idx_tup_fetch, n_tup_ins, n_tup_upd, n_tup_del\n" \
-		"FROM pg_stat_user_tables\n" \
-		"ORDER BY relname"
-
 #define SELECT_STATEMENTS \
 		"WITH aggs AS (\n" \
 		"    SELECT sum(calls) AS calls_total\n" \
@@ -37,15 +31,6 @@
 		"FROM pg_stat_statements, aggs\n" \
 		"ORDER BY %d ASC"
 
-/* Table statistics comparison functions for qsort. */
-int			compare_idx_scan_t(const void *, const void *);
-int			compare_idx_tup_fetch_t(const void *, const void *);
-int			compare_n_tup_del(const void *, const void *);
-int			compare_n_tup_ins(const void *, const void *);
-int			compare_n_tup_upd(const void *, const void *);
-int			compare_seq_scan(const void *, const void *);
-int			compare_seq_tup_read(const void *, const void *);
-
 /* Index statistics comparison functions for qsort. */
 int			compare_idx_scan(const void *, const void *);
 int			compare_idx_tup_fetch(const void *, const void *);
@@ -54,7 +39,6 @@ int			compare_idx_tup_read(const void *, const void *);
 PGconn	   *connect_to_db(const char **);
 
 void		pg_display_index_stats(const char **, int, int);
-void		pg_display_table_stats(const char **, int, int);
 int			pg_display_statements(const char **, int, int);
 
 PGresult   *pg_locks(PGconn *, int);
@@ -63,6 +47,5 @@ PGresult   *pg_query(PGconn *, int);
 
 extern char *index_ordernames[];
 extern char *statement_ordernames[];
-extern char *table_ordernames[];
 
 #endif   /* _PG_H_ */

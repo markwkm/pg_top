@@ -111,7 +111,6 @@ struct pg_top_context
 	struct statics statics;
 	struct system_info system_info;
 	struct timeval timeout;
-	int table_order_index;
 	int topn;
 	const char *values[6];
 };

@@ -18,7 +18,6 @@ L       - show locks held by a process\n\
 M       - sort by memory usage\n\
 N       - sort by pid\n\
 P       - sort by CPU usage\n\
-R       - show user table statistics\n\
 S       - show pg_stat_statements statistics\n\
 Q       - show current query of a process\n\
 T       - sort by time\n\
@@ -33,8 +32,6 @@ k       - kill processes; send a signal to a list of processes\n\
 n or #  - change number of processes to display\n\
 o       - specify sort order (%s)\n\
           index stats (idx_scan, idx_tup_fetch, idx_tup_read)\n\
-          table stats (seq_scan, seq_tup_read, idx_scan, idx_tup_fetch,\n\
-                       n_tup_ins, n_tup_upd, n_tup_del)\n\
           i/o stats (%s)\n\
 q       - quit\n\
 r       - renice a process\n\

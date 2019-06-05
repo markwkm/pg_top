@@ -321,10 +321,6 @@ do_display(struct pg_top_context *pgtctx)
 			pg_display_index_stats(pgtctx->values, pgtctx->index_order_index,
 					max_topn);
 		break;
-		case MODE_TABLE_STATS:
-			pg_display_table_stats(pgtctx->values, pgtctx->table_order_index,
-					max_topn);
-			break;
 #ifdef __linux__
 		case MODE_IO_STATS:
 			for (i = 0; i < active_procs; i++)
@@ -766,7 +762,6 @@ main(int argc, char *argv[])
 	pgtctx.ps.command = NULL;
 	pgtctx.show_tags = No;
 	pgtctx.statement_order_index = 0;
-	pgtctx.table_order_index = 0;
 	pgtctx.topn = 0;
 
 	/* Show help or version number if necessary */

@@ -272,10 +272,7 @@ Change the number of processes to display (prompt for new number).
 Change the order in which the display is sorted.  This command is not
 available on all systems.  The sort key names when viewing processes vary
 fron system to system but usually include:  \*(lqcpu\*(rq, \*(lqres\*(rq,
-\*(lqsize\*(rq, \*(lqtime\*(rq.  The default is cpu.  When viewing user
-table statistics: \*(lqseq_scan\*(rq, \*(lqseq_tup_read\*(rq,
-\*(lqidx_scan\*(rq, \*(lqidx_tup_fetch\*(rq, \*(lqn_tup_ins\*(rq,
-\*(lqn_tup_upd\*(rq, \*(lqn_tup_del\*(rq.  The default is seq_scan.
+\*(lqsize\*(rq, \*(lqtime\*(rq.  The default is cpu.
 When viewing user index statistics:  \*(lqidx_scan\*(rq,
 \*(lqidx_tup_fetch\*(rq, \*(lqidx_tup_read\*(rq.  The default is idx_scan.
 .TP
@@ -289,9 +286,6 @@ id.)
 .B q
 Quit
 .IR pg_top.
-.TP
-.B R
-Display user table statistics.
 .TP
 .B r
 Change the priority (the \*(lqnice\*(rq) of a list of processes.

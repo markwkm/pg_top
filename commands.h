@@ -47,7 +47,6 @@ int cmd_redraw(struct pg_top_context *);
 int cmd_renice(struct pg_top_context *);
 #endif /* ENABLE_KILL */
 int cmd_statements(struct pg_top_context *);
-int cmd_tables(struct pg_top_context *);
 int cmd_toggle(struct pg_top_context *);
 int cmd_update(struct pg_top_context *);
 int cmd_user(struct pg_top_context *);
