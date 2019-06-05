@@ -42,7 +42,7 @@
 		"WHERE procpid = %d\n" \
 		"  AND procpid = pid;"
 
-float pg_version(PGconn *);
+int pg_version(PGconn *);
 
 PGconn *
 connect_to_db(const char *values[])
@@ -68,7 +68,7 @@ pg_locks(PGconn *pgconn, int procpid)
 	char *sql;
 	PGresult *pgresult;
 
-	if (pg_version(pgconn) >= 9.2)
+	if (pg_version(pgconn) >= 902)
 	{
 		sql = (char *) malloc(strlen(GET_LOCKS) + 7);
 		sprintf(sql, GET_LOCKS, procpid);
@@ -89,7 +89,7 @@ pg_processes(PGconn *pgconn)
 	PGresult *pgresult;
 	PQexec(pgconn, "BEGIN;");
 	PQexec(pgconn, "SET statement_timeout = '2s';");
-	if (pg_version(pgconn) >= 9.2)
+	if (pg_version(pgconn) >= 902)
 	{
 		pgresult = PQexec(pgconn, QUERY_PROCESSES);
 	}
@@ -107,7 +107,7 @@ pg_query(PGconn *pgconn, int procpid)
 	char *sql;
 	PGresult *pgresult;
 
-	if (pg_version(pgconn) >= 9.2)
+	if (pg_version(pgconn) >= 902)
 	{
 		sql = (char *) malloc(strlen(CURRENT_QUERY) + 7);
 		sprintf(sql, CURRENT_QUERY, procpid);
@@ -123,21 +123,8 @@ pg_query(PGconn *pgconn, int procpid)
 	return pgresult;
 }
 
-/* Query the version string and just return the major.minor as a float. */
-float
+int
 pg_version(PGconn *pgconn)
 {
-	PGresult *pgresult = NULL;
-
-	char *version_string;
-	float version;
-
-	pgresult = PQexec(pgconn, "SHOW server_version;");
-	version_string = PQgetvalue(pgresult, 0, 0);
-	sscanf(version_string, "%f%*s", &version);
-	/* Deal with rounding problems by adding 0.01. */
-	version += 0.01;
-	PQclear(pgresult);
-
-	return version;
+	return PQserverVersion(pgconn) / 100;
 }
