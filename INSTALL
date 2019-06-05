@@ -29,12 +29,6 @@ options:
     display.  Use -DENABLE_COLOR=0 if you do not want this feature compiled in
     to the code.  The configure script also recognizes the spelling "colour".
 
-    -DENABLE_KILL=0
-
-    Default on.  Include code that allows for renicing and sending signals to
-    processes from within pg_top (the 'kill' and 'renice' commands). Use
-    -DENABLE_KILL=0 if you do not want this feature compiled in to the code.
-
 Installing
 ----------
 

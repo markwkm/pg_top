@@ -48,42 +48,8 @@ extern int	overstrike;
 
 extern int max_topn;
 
-/*
- *	Some of the commands make system calls that could generate errors.
- *	These errors are collected up in an array of structures for later
- *	contemplation and display.	Such routines return a string containing an
- *	error message, or NULL if no errors occurred.  We need an upper limit on
- *	the number of errors, so we arbitrarily choose 20.
- */
-
-#define ERRMAX 20
-
-struct errs						/* structure for a system-call error */
-{
-	int			errnum;			/* value of errno (that is, the actual error) */
-	char	   *arg;			/* argument that caused the error */
-};
-
-static struct errs errs[ERRMAX];
-static int	errcnt;
-static char *err_toomany = " too many errors occurred";
-static char *err_listem =
-" Many errors occurred.  Press `e' to display the list of errors.";
-
 char header_io_stats[64] =
 		"  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
-
-/* These macros get used to reset and log the errors */
-#define ERR_RESET	errcnt = 0
-#define ERROR(p, e) if (errcnt >= ERRMAX) \
-			{ \
-			return(err_toomany); \
-			} \
-			else \
-			{ \
-			errs[errcnt].arg = (p); \
-			errs[errcnt++].errnum = (e); \
-			}
 
 #define BEGIN "BEGIN;"
 #define ROLLBACK "ROLLBACK;"
@@ -99,14 +65,10 @@ struct cmd cmd_map[] = {
 	{'C', cmd_color},
 #endif /* ENABLE_COLOR */
 	{'d', cmd_displays},
-	{'e', cmd_errors},
 	{'E', cmd_explain},
     {'h', cmd_help},
 	{'i', cmd_idletog},
 	{'I', cmd_io},
-#ifdef ENABLE_KILL
-	{'k', cmd_kill},
-#endif /* ENABLE_KILL */
 	{'L', cmd_locks},
 	{'n', cmd_number},
 	{'M', cmd_order_mem},
@@ -115,9 +77,6 @@ struct cmd cmd_map[] = {
 	{'P', cmd_order_cpu},
 	{'q', cmd_quit},
 	{'Q', cmd_current_query},
-#ifdef ENABLE_KILL
-	{'r', cmd_renice},
-#endif /* ENABLE_KILL */
 	{'s', cmd_delay},
 	{'t', cmd_toggle},
 	{'T', cmd_order_time},
@@ -236,29 +195,6 @@ cmd_displays(struct pg_top_context *pgtctx)
 }
 
 int
-cmd_errors(struct pg_top_context *pgtctx)
-{
-	char ch;
-
-	if (error_count() == 0)
-	{
-		new_message(MT_standout, " Currently no errors to report.");
-		putchar('\r');
-		return Yes;
-	}
-	else
-	{
-		reset_display(pgtctx);
-		clear();
-		show_errors();
-		standout("Hit any key to continue: ");
-		fflush(stdout);
-		(void) read(0, &ch, 1);
-	}
-	return No;
-}
-
-int
 cmd_explain(struct pg_top_context *pgtctx)
 {
 	int newval;
@@ -325,37 +261,6 @@ cmd_io(struct pg_top_context *pgtctx)
 	reset_display(pgtctx);
 	return No;
 }
-
-#ifdef ENABLE_KILL
-int
-cmd_kill(struct pg_top_context *pgtctx)
-{
-	char *errmsg;
-	char tempbuf[50];
-
-	if (pgtctx->mode_remote == Yes)
-	{
-		new_message(MT_standout, "Cannot kill when accessing a remote database.");
-		putchar('\r');
-		return Yes;
-	}
-	new_message(0, "kill ");
-	if (readline(tempbuf, sizeof(tempbuf), No) > 0)
-	{
-		if ((errmsg = kill_procs(tempbuf)) != NULL)
-		{
-			new_message(MT_standout, "%s", errmsg);
-			putchar('\r');
-			return Yes;
-		}
-	}
-	else
-	{
-		clear_message();
-	}
-	return No;
-}
-#endif /* ENABLE_KILL */
 
 int
 cmd_locks(struct pg_top_context *pgtctx)
@@ -558,38 +463,6 @@ cmd_redraw(struct pg_top_context *pgtctx)
 	return No;
 }
 
-#ifdef ENABLE_KILL
-int
-cmd_renice(struct pg_top_context *pgtctx)
-{
-	char *errmsg;
-	char tempbuf[50];
-
-	if (pgtctx->mode_remote == Yes)
-	{
-		new_message(MT_standout,
-				"Cannot renice when accessing a remote database.");
-		putchar('\r');
-		return Yes;
-	}
-	new_message(0, "renice ");
-	if (readline(tempbuf, sizeof(tempbuf), No) > 0)
-	{
-		if ((errmsg = renice_procs(tempbuf)) != NULL)
-		{
-			new_message(MT_standout, "%s", errmsg);
-			putchar('\r');
-			/* no_command = Yes; */
-		}
-	}
-	else
-	{
-		clear_message();
-	}
-	return No;
-}
-#endif /* ENABLE_KILL */
-
 int
 cmd_toggle(struct pg_top_context *pgtctx)
 {
@@ -649,26 +522,6 @@ cmd_user(struct pg_top_context *pgtctx)
 		clear_message();
 	}
 	return no_command;
-}
-
-/*
- *	err_compar(p1, p2) - comparison routine used by "qsort"
- *	for sorting errors.
- */
-
-int
-err_compar(const void *p1, const void *p2)
-
-{
-	register int result;
-
-	if ((result = ((struct errs *) p1)->errnum -
-		 ((struct errs *) p2)->errnum) == 0)
-	{
-		return (strcmp(((struct errs *) p1)->arg,
-					   ((struct errs *) p2)->arg));
-	}
-	return (result);
 }
 
 int
@@ -738,71 +591,6 @@ str_addarg(char *str, int len, char *arg, int first)
 	}
 	(void) strcat(str, arg);
 	return (len - arglen);
-}
-
-/*
- *	err_string() - return an appropriate error string.	This is what the
- *	command will return for displaying.  If no errors were logged, then
- *	return NULL.  The maximum length of the error string is defined by
- *	"STRMAX".
- */
-
-#define STRMAX 80
-
-char *
-err_string()
-
-{
-	register struct errs *errp;
-	register int cnt = 0;
-	register int first = Yes;
-	register int currerr = -1;
-	int			stringlen;		/* characters still available in "string" */
-	static char string[STRMAX];
-
-	/* if there are no errors, return NULL */
-	if (errcnt == 0)
-	{
-		return (NULL);
-	}
-
-	/* sort the errors */
-	qsort((char *) errs, errcnt, sizeof(struct errs), err_compar);
-
-	/* need a space at the front of the error string */
-	string[0] = ' ';
-	string[1] = '\0';
-	stringlen = STRMAX - 2;
-
-	/* loop thru the sorted list, building an error string */
-	while (cnt < errcnt)
-	{
-		errp = &(errs[cnt++]);
-		if (errp->errnum != currerr)
-		{
-			if (currerr != -1)
-			{
-				if ((stringlen = str_adderr(string, stringlen, currerr)) < 2)
-				{
-					return (err_listem);
-				}
-				(void) strcat(string, "; ");	/* we know there's more */
-			}
-			currerr = errp->errnum;
-			first = Yes;
-		}
-		if ((stringlen = str_addarg(string, stringlen, errp->arg, first)) == 0)
-		{
-			return (err_listem);
-		}
-		first = No;
-	}
-
-	/* add final message */
-	stringlen = str_adderr(string, stringlen, currerr);
-
-	/* return the error string */
-	return (stringlen == 0 ? err_listem : string);
 }
 
 /*
@@ -902,201 +690,6 @@ scanint(char *str, int *intp)
 	}
 	*intp = val;
 	return (0);
-}
-
-/*
- *	error_count() - return the number of errors currently logged.
- */
-
-int
-error_count()
-
-{
-	return (errcnt);
-}
-
-/*
- *	show_errors() - display on stdout the current log of errors.
- */
-
-void
-show_errors()
-
-{
-	register int cnt = 0;
-	register struct errs *errp = errs;
-
-	printf("%d error%s:\n\n", errcnt, errcnt == 1 ? "" : "s");
-	while (cnt++ < errcnt)
-	{
-		printf("%5s: %s\n", errp->arg,
-			   errp->errnum == 0 ? "Not a number" : errmsg(errp->errnum));
-		errp++;
-	}
-}
-
-/*
- *	kill_procs(str) - send signals to processes, much like the "kill"
- *		command does; invoked in response to 'k'.
- */
-
-char *
-kill_procs(char *str)
-
-{
-	register char *nptr;
-	int			signum = SIGTERM;		/* default */
-	int			procnum;
-	struct sigdesc *sigp;
-	int			uid;
-
-	/* reset error array */
-	ERR_RESET;
-
-	/* remember our uid */
-	uid = getuid();
-
-	/* skip over leading white space */
-	while (isspace(*str))
-		str++;
-
-	if (str[0] == '-')
-	{
-		/* explicit signal specified */
-		if ((nptr = next_field(str)) == NULL)
-		{
-			return (" kill: no processes specified");
-		}
-
-		if (isdigit(str[1]))
-		{
-			(void) scanint(str + 1, &signum);
-			if (signum <= 0 || signum >= NSIG)
-			{
-				return (" invalid signal number");
-			}
-		}
-		else
-		{
-			/* translate the name into a number */
-			for (sigp = sigdesc; sigp->name != NULL; sigp++)
-			{
-				if (strcmp(sigp->name, str + 1) == 0)
-				{
-					signum = sigp->number;
-					break;
-				}
-			}
-
-			/* was it ever found */
-			if (sigp->name == NULL)
-			{
-				return (" bad signal name");
-			}
-		}
-		/* put the new pointer in place */
-		str = nptr;
-	}
-
-	/* loop thru the string, killing processes */
-	do
-	{
-		if (scanint(str, &procnum) == -1)
-		{
-			ERROR(str, 0);
-		}
-		else
-		{
-			/* check process owner if we're not root */
-			if (uid && (uid != proc_owner(procnum)))
-			{
-				ERROR(str, EACCES);
-			}
-			/* go in for the kill */
-			else if (kill(procnum, signum) == -1)
-			{
-				/* chalk up an error */
-				ERROR(str, errno);
-			}
-		}
-	} while ((str = next_field(str)) != NULL);
-
-	/* return appropriate error string */
-	return (err_string());
-}
-
-/*
- *	renice_procs(str) - change the "nice" of processes, much like the
- *		"renice" command does; invoked in response to 'r'.
- */
-
-char *
-renice_procs(char *str)
-
-{
-	register char negate;
-	int			prio;
-	int			procnum;
-	int			uid;
-
-	ERR_RESET;
-	uid = getuid();
-
-	/* allow for negative priority values */
-	if ((negate = (*str == '-')) != 0)
-	{
-		/* move past the minus sign */
-		str++;
-	}
-
-	/* use procnum as a temporary holding place and get the number */
-	procnum = scanint(str, &prio);
-
-	/* negate if necessary */
-	if (negate)
-	{
-		prio = -prio;
-	}
-
-#if defined(PRIO_MIN) && defined(PRIO_MAX)
-	/* check for validity */
-	if (procnum == -1 || prio < PRIO_MIN || prio > PRIO_MAX)
-	{
-		return (" bad priority value");
-	}
-#endif
-
-	/* move to the first process number */
-	if ((str = next_field(str)) == NULL)
-	{
-		return (" no processes specified");
-	}
-
-#ifdef HAVE_SETPRIORITY
-	/* loop thru the process numbers, renicing each one */
-	do
-	{
-		if (scanint(str, &procnum) == -1)
-		{
-			ERROR(str, 0);
-		}
-
-		/* check process owner if we're not root */
-		else if (uid && (uid != proc_owner(procnum)))
-		{
-			ERROR(str, EACCES);
-		}
-		else if (setpriority(PRIO_PROCESS, procnum, prio) == -1)
-		{
-			ERROR(str, errno);
-		}
-	} while ((str = next_field(str)) != NULL);
-
-	/* return appropriate error string */
-	return (err_string());
-#else
-	return (" operation not supported");
-#endif
 }
 
 void

@@ -1,5 +1,4 @@
 #cmakedefine ENABLE_COLOR 1
-#cmakedefine ENABLE_KILL 1
 #cmakedefine HAVE_GETOPT 1
 #cmakedefine HAVE_MEMCPY 1
 #cmakedefine HAVE_SETPRIORITY 1

@@ -5,6 +5,7 @@ Release 4.0.0
      * Replace autoconf with cmake
      * Remove table stats monitoring, use pgstat instead
      * Remove index stats monitoring, use pgstat instead
+     * Remove kill and renice command, and stop displaying nice priority
 
 Release 3.7.0
 

@@ -12,14 +12,6 @@ pg_top allows you to monitor PostgreSQL processes. It also allows you to:
     * View query plan of a currently running SELECT statement.
     * View locks held by a process.
 
-CAVEAT: version 3 of pg_top has internal commands that kill and renice
-processes.  Although I have taken steps to insure that pg_top makes
-appropriate checks with these commands, I cannot guarantee that these
-internal commands are totally secure.  IF YOU INSTALL pg_top SET-USER-ID
-TO ROOT, YOU DO SO AT YOUR OWN RISK!  I realize that some operating
-systems will require pg_top to run setuid root, and I will do everything
-I can to make sure that pg_top is a secure setuid program.
-
 To compile and install "pg_top", read the file "INSTALL" and follow the
 directions and advice contained therein.
 

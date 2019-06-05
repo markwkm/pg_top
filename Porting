@@ -145,30 +145,6 @@ get_process_info is called immediately after get_system_info.  In
 fact, the two functions could be rolled in to one.  The reason they
 are not is mostly historical.
 
-Top relies on the existence of a function called "setpriority" to
-change a process's priority.  This exists as a kernel call on most 4.3
-BSD derived Unixes.  If neither your operating system nor your C
-library supplies such a function, then you will need to add one to the
-module.  It is defined as follows:
-
-	int setpriority (int dummy, int who, int niceval)
-
-	For the purposes of pg_top, the first argument is meaningless.
-	The second is the pid and the third is the new nice value.
-	This function should behave just like a kernel call, setting
-	errno and returning -1 in case of an error.  This function MUST
-	check to make sure that a non-root user does not specify a nice
-	value less than the process's current value.  If it detects such
-	a condition, it should set errno to EACCES and return -1.
-	Other possible ERRNO values:  ESRCH when pid "who" does not exist,
-	EPERM when the invoker is not root and not the same as the
-	process owner.
-
-Note that pg_top checks process ownership and should never call setpriority
-when the invoker's uid is not root and not the same as the process's owner
-uid.
-
-
 The file "machine.h" contains definitions which are useful to modules
 and to pg_top.c (such as the structure definitions).  You SHOULD NOT need
 to change it when porting to a new platform.

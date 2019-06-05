@@ -102,7 +102,6 @@ static struct option long_options[] = {
 	{"hide-idle", no_argument, NULL, 'I'},
 	{"non-interactive", no_argument, NULL, 'n'},
 	{"order-field", required_argument, NULL, 'o'},
-	{"quick-mode", no_argument, NULL, 'q'},
 	{"remote-mode", no_argument, NULL, 'r'},
 	{"set-delay", required_argument, NULL, 's'},
 	{"show-tags", no_argument, NULL, 'T'},
@@ -157,8 +156,6 @@ usage(const char *progname)
 	printf("  -I, --hide-idle           hide idle processes\n");
 	printf("  -n, --non-interactive     use non-interactive mode\n");
 	printf("  -o, --order-field=FIELD   select sort order\n");
-	printf("  -q, --quick-mode          modify schedule priority\n");
-	printf("                            usable only by root\n");
 	printf("  -r, --remote-mode         activate remote mode\n");
 	printf("  -s, --set-delay=SECOND    set delay between screen updates\n");
 	printf("  -T, --show-tags           show color tags\n");
@@ -400,7 +397,7 @@ process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 	int i;
 	int option_index;
 
-	while ((i = getopt_long(ac, av, "CDITbcinqruVh:s:d:U:o:Wp:x:z:",
+	while ((i = getopt_long(ac, av, "CDITbcinruVh:s:d:U:o:Wp:x:z:",
 			long_options, &option_index)) != EOF)
 	{
 		switch (i)
@@ -472,20 +469,6 @@ process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 				new_message(MT_standout | MT_delayed,
 							" Bad seconds delay (ignored)");
 				pgtctx->delay = Default_DELAY;
-			}
-			break;
-
-		case 'q':		/* be quick about it */
-			/* only allow this if user is really root */
-			if (getuid() == 0)
-			{
-				/* be very un-nice! */
-				(void) nice(-20);
-			}
-			else
-			{
-				new_message(MT_standout | MT_delayed,
-							" Option -q can only be used by root");
 			}
 			break;
 

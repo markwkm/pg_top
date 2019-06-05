@@ -29,14 +29,6 @@ else()
     set(ENABLE_COLOR "${ENABLE_COLOR}")
 endif (NOT DEFINED ENABLE_COLOR)
 
-if (NOT DEFINED ENABLE_KILL)
-    set(ENABLE_KILL 1)
-elseif(ENABLE_KILL EQUAL 0)
-    unset(ENABLE_KILL)
-else()
-    set(ENABLE_KILL "${ENABLE_KILL}")
-endif (NOT DEFINED ENABLE_KILL)
-
 # Determine which machine module to build
 
 execute_process(
