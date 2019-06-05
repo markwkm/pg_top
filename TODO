@@ -26,26 +26,5 @@
 * Display summary statistics for locks such as total number of granted locks,
   total number of ungranted locks, etc.
 
-* Display summary statistics for listener information such as total number of
-  entries in pg_listener, distinct number of entries in pg_listener, etc.
-
-* Display screen database statistics:
-
-  SELECT datname,
-         SUM(numbackends) AS numbackends,
-         SUM(blks_read) AS reads,
-         SUM(tup_fetched) AS fetches,
-         SUM(tup_inserte + tup_update + tup_deleted) AS alterations
-  FROM pg_stat_database
-  GROUP BY datname HAVING SUM(numbackends) > 0
-  ORDER BY (SUM(blks_read) + SUM(tup_fetched) +
-            SUM(tup_inserted + tup_updated + tup_deleted)) DESC LIMIT 5;
-
-     datname   | numbackends | reads | fetches | alterations 
-  -------------+-------------+-------+---------+-------------
-   pgbenchtest |           1 |  3085 |  321558 |      485894
-
-* Display the size of each database.
-
 * Make new TPS and i/o activity and disk space usage work on remote
   connections.
