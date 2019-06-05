@@ -97,7 +97,6 @@ struct pg_top_context
 	char *(*get_userid)(uid_t);
 	char *header_text;
 	char *header_processes;
-	int index_order_index;
 	char interactive;
 	struct io_info io_info;
 	int io_order_index;

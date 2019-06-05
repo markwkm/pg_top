@@ -70,7 +70,6 @@ static char *err_toomany = " too many errors occurred";
 static char *err_listem =
 " Many errors occurred.  Press `e' to display the list of errors.";
 
-char header_index_stats[43] = "  I_SCANS   I_READS I_FETCHES INDEXRELNAME";
 char header_io_stats[64] =
 		"  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
 char header_statements[46] = "  CALLS CALLS%   TOTAL_TIME     AVG_TIME QUERY";
@@ -125,7 +124,6 @@ struct cmd cmd_map[] = {
 	{'t', cmd_toggle},
 	{'T', cmd_order_time},
 	{'u', cmd_user},
-	{'X', cmd_indexes},
     {'\0', NULL},
 };
 
@@ -313,25 +311,6 @@ cmd_idletog(struct pg_top_context *pgtctx)
 }
 
 int
-cmd_indexes(struct pg_top_context *pgtctx)
-{
-	if (pgtctx->mode == MODE_INDEX_STATS)
-	{
-		pgtctx->mode = MODE_PROCESSES;
-		pgtctx->header_text = pgtctx->header_processes;
-	}
-	else
-	{
-		pgtctx->mode = MODE_INDEX_STATS;
-		pgtctx->header_text = header_index_stats;
-	}
-
-	/* Reset display to show changed header text. */
-	reset_display(pgtctx);
-	return No;
-}
-
-int
 cmd_io(struct pg_top_context *pgtctx)
 {
 	if (pgtctx->mode == MODE_IO_STATS)
@@ -446,27 +425,6 @@ cmd_order(struct pg_top_context *pgtctx)
 
 	switch (pgtctx->mode)
 	{
-	case MODE_INDEX_STATS:
-		new_message(MT_standout, "Order to sort: ");
-		if (readline(tempbuf, sizeof(tempbuf), No) > 0)
-		{
-			if ((i = string_index(tempbuf, index_ordernames)) == -1)
-			{
-				new_message(MT_standout, " %s: unrecognized sorting order",
-						tempbuf);
-				no_command = Yes;
-			}
-			else
-			{
-				pgtctx->index_order_index = i;
-			}
-			putchar('\r');
-		}
-		else
-		{
-			clear_message();
-		}
-		break;
 	case MODE_IO_STATS:
 		new_message(MT_standout, "Order to sort: ");
 		if (readline(tempbuf, sizeof(tempbuf), No) > 0)

@@ -29,7 +29,6 @@
 
 /* Display modes. */
 #define MODE_PROCESSES 0
-#define MODE_INDEX_STATS 2
 #define MODE_IO_STATS 3
 #define MODE_STATEMENTS 4
 

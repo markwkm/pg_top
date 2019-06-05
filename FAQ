@@ -16,7 +16,6 @@
     * View currently running SQL statement of a process.
     * View query plan of a currently running SELECT statement.
     * View locks held by a process.
-    * View user index statistics.
 
  2.  Where do I get the latest version of pg_top? 
 

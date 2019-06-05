@@ -273,8 +273,6 @@ Change the order in which the display is sorted.  This command is not
 available on all systems.  The sort key names when viewing processes vary
 fron system to system but usually include:  \*(lqcpu\*(rq, \*(lqres\*(rq,
 \*(lqsize\*(rq, \*(lqtime\*(rq.  The default is cpu.
-When viewing user index statistics:  \*(lqidx_scan\*(rq,
-\*(lqidx_tup_fetch\*(rq, \*(lqidx_tup_read\*(rq.  The default is idx_scan.
 .TP
 .B P
 Sort by processor utilization.
@@ -299,17 +297,10 @@ Change the number of seconds to delay between displays
 .B T
 Order by time.
 .TP
-.B t
-Toggle between cumulative or differential statistics when viewing user table
-or user index statistics.
-.TP
 .B u
 Display only processes owned by a specific username (prompt for username).
 If the username specified is simply \*(lq+\*(rq, then processes belonging
 to all users will be displayed.
-.TP
-.B X
-Display user index statistics.
 .SH "THE DISPLAY"
 The actual display varies depending on the specific variant of Unix
 that the machine is running.  This description may not exactly match

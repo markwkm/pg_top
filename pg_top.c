@@ -317,10 +317,6 @@ do_display(struct pg_top_context *pgtctx)
 				new_message(MT_standout | MT_delayed,
 						" Extension pg_stat_statments not found");
 			break;
-		case MODE_INDEX_STATS:
-			pg_display_index_stats(pgtctx->values, pgtctx->index_order_index,
-					max_topn);
-		break;
 #ifdef __linux__
 		case MODE_IO_STATS:
 			for (i = 0; i < active_procs; i++)
@@ -750,7 +746,6 @@ main(int argc, char *argv[])
 	pgtctx.dostates = No;
 	pgtctx.do_unames = Yes;
 	pgtctx.get_userid = username;
-	pgtctx.index_order_index = 0;
 	pgtctx.interactive = Maybe;
 	pgtctx.io_order_index = 0;
 	pgtctx.mode = MODE_PROCESSES;

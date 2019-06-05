@@ -10,12 +10,6 @@
 		"FROM pg_extension\n" \
 		"WHERE extname = 'pg_stat_statements'"
 
-#define SELECT_INDEX_STATS \
-		"SELECT indexrelid, indexrelname, idx_scan, idx_tup_read,\n" \
-		"       idx_tup_fetch\n" \
-		"FROM pg_stat_user_indexes\n" \
-		"ORDER BY indexrelname"
-
 #define SELECT_STATEMENTS \
 		"WITH aggs AS (\n" \
 		"    SELECT sum(calls) AS calls_total\n" \
@@ -31,21 +25,14 @@
 		"FROM pg_stat_statements, aggs\n" \
 		"ORDER BY %d ASC"
 
-/* Index statistics comparison functions for qsort. */
-int			compare_idx_scan(const void *, const void *);
-int			compare_idx_tup_fetch(const void *, const void *);
-int			compare_idx_tup_read(const void *, const void *);
-
 PGconn	   *connect_to_db(const char **);
 
-void		pg_display_index_stats(const char **, int, int);
 int			pg_display_statements(const char **, int, int);
 
 PGresult   *pg_locks(PGconn *, int);
 PGresult   *pg_processes(PGconn *);
 PGresult   *pg_query(PGconn *, int);
 
-extern char *index_ordernames[];
 extern char *statement_ordernames[];
 
 #endif   /* _PG_H_ */
