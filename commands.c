@@ -72,7 +72,6 @@ static char *err_listem =
 
 char header_io_stats[64] =
 		"  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
-char header_statements[46] = "  CALLS CALLS%   TOTAL_TIME     AVG_TIME QUERY";
 
 /* These macros get used to reset and log the errors */
 #define ERR_RESET	errcnt = 0
@@ -120,7 +119,6 @@ struct cmd cmd_map[] = {
 	{'r', cmd_renice},
 #endif /* ENABLE_KILL */
 	{'s', cmd_delay},
-	{'S', cmd_statements},
 	{'t', cmd_toggle},
 	{'T', cmd_order_time},
 	{'u', cmd_user},
@@ -446,26 +444,6 @@ cmd_order(struct pg_top_context *pgtctx)
 			clear_message();
 		}
 		break;
-	case MODE_STATEMENTS:
-		new_message(MT_standout, "Order to sort: ");
-		if (readline(tempbuf, sizeof(tempbuf), No) > 0)
-		{
-			if ((i = string_index(tempbuf, statement_ordernames)) == -1)
-			{
-				new_message(MT_standout, " %s: unrecognized sorting order",
-							tempbuf);
-				no_command = Yes;
-			}
-			else
-			{
-				pgtctx->statement_order_index = i;
-			}
-		}
-		else
-		{
-			clear_message();
-		}
-		break;
 	case MODE_PROCESSES:
 	default:
 		if (pgtctx->statics.order_names == NULL)
@@ -611,24 +589,6 @@ cmd_renice(struct pg_top_context *pgtctx)
 	return No;
 }
 #endif /* ENABLE_KILL */
-
-int
-cmd_statements(struct pg_top_context *pgtctx)
-{
-	if (pgtctx->mode == MODE_STATEMENTS)
-	{
-		pgtctx->mode = MODE_PROCESSES;
-		pgtctx->header_text =
-				pgtctx->header_processes;
-	}
-	else
-	{
-		pgtctx->mode = MODE_STATEMENTS;
-		pgtctx->header_text = header_statements;
-	}
-	reset_display(pgtctx);
-	return No;
-}
 
 int
 cmd_toggle(struct pg_top_context *pgtctx)

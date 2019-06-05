@@ -311,12 +311,6 @@ do_display(struct pg_top_context *pgtctx)
 		/* Now show the top "n" processes or other statistics. */
 		switch (pgtctx->mode)
 		{
-		case MODE_STATEMENTS:
-			if (pg_display_statements(pgtctx->values,
-					pgtctx->statement_order_index, max_topn) != 0)
-				new_message(MT_standout | MT_delayed,
-						" Extension pg_stat_statments not found");
-			break;
 #ifdef __linux__
 		case MODE_IO_STATS:
 			for (i = 0; i < active_procs; i++)
@@ -756,7 +750,6 @@ main(int argc, char *argv[])
 	pgtctx.ps.uid = -1;
 	pgtctx.ps.command = NULL;
 	pgtctx.show_tags = No;
-	pgtctx.statement_order_index = 0;
 	pgtctx.topn = 0;
 
 	/* Show help or version number if necessary */

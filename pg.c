@@ -42,10 +42,6 @@
 		"WHERE procpid = %d\n" \
 		"  AND procpid = pid;"
 
-char	   *statement_ordernames[] = {
-	"calls", "calls%", "total_time", "avg_time", NULL
-};
-
 float pg_version(PGconn *);
 
 PGconn *
@@ -64,55 +60,6 @@ connect_to_db(const char *values[])
 		return NULL;
 	}
 	return pgconn;
-}
-
-int
-pg_display_statements(const char *values[], int compare_index, int max_topn)
-{
-	int			i;
-	int			rows;
-	PGconn	   *pgconn;
-	PGresult   *pgresult = NULL;
-	static char line[512];
-
-	int			max_lines;
-
-	pgconn = connect_to_db(values);
-	if (pgconn != NULL)
-	{
-		pgresult = PQexec(pgconn, CHECK_FOR_STATEMENTS_X);
-		if (PQntuples(pgresult) == 0)
-			return 1;
-
-		snprintf(line, sizeof(line), SELECT_STATEMENTS, compare_index + 1);
-		pgresult = PQexec(pgconn, line);
-		rows = PQntuples(pgresult);
-	}
-	else
-	{
-		PQfinish(pgconn);
-		return 0;
-	}
-	PQfinish(pgconn);
-
-	max_lines = rows < max_topn ? rows : max_topn;
-
-	/* Display stats. */
-	for (i = rows - 1; i > rows - max_lines - 1; i--)
-	{
-		snprintf(line, sizeof(line), "%7s %6.1f %10s %8s %s",
-				 PQgetvalue(pgresult, i, 0),
-				 atof(PQgetvalue(pgresult, i, 1)),
-				 PQgetvalue(pgresult, i, 2),
-				 PQgetvalue(pgresult, i, 3),
-				 PQgetvalue(pgresult, i, 4));
-		u_process(rows - i - 1, line);
-	}
-
-	if (pgresult != NULL)
-		PQclear(pgresult);
-
-	return 0;
 }
 
 PGresult *

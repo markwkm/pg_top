@@ -3,7 +3,6 @@ Release Notes
 Release 4.0.0
 
      * Replace autoconf with cmake
-     * Add monitoring of pg_stat_statements
      * Remove table stats monitoring, use pgstat instead
      * Remove index stats monitoring, use pgstat instead
 

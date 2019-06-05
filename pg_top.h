@@ -106,7 +106,6 @@ struct pg_top_context
 	char *order_name;
 	struct process_select ps;
 	char show_tags;
-	int statement_order_index;
 	struct statics statics;
 	struct system_info system_info;
 	struct timeval timeout;

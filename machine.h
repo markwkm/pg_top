@@ -30,7 +30,6 @@
 /* Display modes. */
 #define MODE_PROCESSES 0
 #define MODE_IO_STATS 3
-#define MODE_STATEMENTS 4
 
 /* Display modes for table and index statistics. */
 #define STATS_DIFF 0
