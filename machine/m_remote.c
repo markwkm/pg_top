@@ -27,15 +27,16 @@
 		"FROM pg_memusage()"
 
 #define QUERY_PROCTAB \
-		"SELECT pid, comm, fullcomm, state, utime, stime, priority, nice,\n" \
+		"SELECT a.pid, comm, fullcomm, a.state, utime, stime, priority, nice,\n" \
 		"       starttime, vsize, rss, uid, username, rchar, wchar,\n" \
-		"       syscr, syscw, reads, writes, cwrites\n" \
-		"FROM pg_proctab()"
+		"       syscr, syscw, reads, writes, cwrites, b.state\n" \
+		"FROM pg_proctab() a LEFT OUTER JOIN pg_stat_activity b\n" \
+		"                    ON a.pid = b.pid"
 
 #define QUERY_PROCTAB_QUERY \
 		"SELECT a.pid, comm, query, a.state, utime, stime, priority, nice,\n" \
 		"       starttime, vsize, rss, uid, username, rchar, wchar,\n" \
-		"       syscr, syscw, reads, writes, cwrites\n" \
+		"       syscr, syscw, reads, writes, cwrites, b.state\n" \
 		"FROM pg_proctab() a LEFT OUTER JOIN pg_stat_activity b\n" \
 		"                    ON a.pid = b.pid"
 
@@ -51,7 +52,8 @@ enum column_memusage { c_memused, c_memfree, c_memshared, c_membuffers,
 		c_memcached, c_swapused, c_swapfree, c_swapcached};
 enum column_proctab { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
 		c_priority, c_nice, c_starttime, c_vsize, c_rss, c_uid, c_username,
-		c_rchar, c_wchar, c_syscr, c_syscw, c_reads, c_writes, c_cwrites };
+		c_rchar, c_wchar, c_syscr, c_syscw, c_reads, c_writes, c_cwrites,
+		c_pgstate};
 
 #define HASH_SIZE (1003)
 #define HASH(x) (((x) * 1686629713U) % HASH_SIZE)
@@ -88,6 +90,7 @@ struct top_proc
 	unsigned long size;
 	unsigned long rss; /* in k */
 	int state;
+	int pgstate;
 	unsigned long time;
 	unsigned long start_time;
 	double pcpu;
@@ -142,11 +145,6 @@ static char *procstatenames[NPROCSTATES + 1] =
 	" stopped, ", " swapping, ", NULL
 };
 
-static char *state_abbrev[NPROCSTATES + 1] =
-{
-	"", "run", "sleep", "disk", "zomb", "stop", "swap", NULL
-};
-
 static char *swapnames[NSWAPSTATS + 1] =
 {
 	"K used, ", "K free, ", "K cached", NULL
@@ -182,8 +180,7 @@ static int64_t cp_diff[NCPUSTATES];
 #define ORDERKEY_PCTCPU  if (dresult = p2->pcpu - p1->pcpu,\
 			 (result = dresult > 0.0 ? 1 : dresult < 0.0 ? -1 : 0) == 0)
 #define ORDERKEY_CPTICKS if ((result = (long)p2->time - (long)p1->time) == 0)
-#define ORDERKEY_STATE   if ((result = (sort_state_r[p2->state] - \
-			 sort_state_r[p1->state])) == 0)
+#define ORDERKEY_STATE	 if ((result = p1->pgstate < p2->pgstate))
 #define ORDERKEY_PRIO	if ((result = p2->pri - p1->pri) == 0)
 #define ORDERKEY_RSSIZE  if ((result = p2->rss - p1->rss) == 0)
 #define ORDERKEY_MEM	 if ((result = p2->size - p1->size) == 0)
@@ -421,7 +418,7 @@ format_next_process_r(caddr_t handler)
 			p->nice,
 			format_k(p->size),
 			format_k(p->rss),
-			state_abbrev[p->state],
+			backendstatenames[p->pgstate],
 			format_time(p->time),
 			p->wcpu * 100.0,
 			p->pcpu * 100.0,
@@ -669,6 +666,7 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 		case '\0':
 			continue;
 		}
+		update_state(&proc->pgstate, PQgetvalue(pgresult, i, c_pgstate));
 
 		proc->time = (unsigned long) atol(PQgetvalue(pgresult, i, c_utime));
 		proc->time += (unsigned long) atol(PQgetvalue(pgresult, i, c_stime));

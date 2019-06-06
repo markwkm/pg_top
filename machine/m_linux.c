@@ -80,6 +80,7 @@ struct top_proc
 	unsigned long size,
 				rss;			/* in k */
 	int			state;
+	int	    	pgstate;
 	unsigned long time;
 	unsigned long start_time;
 	double		pcpu,
@@ -125,11 +126,6 @@ struct io_node
 /*=STATE IDENT STRINGS==================================================*/
 
 #define NPROCSTATES 7
-static char *state_abbrev[NPROCSTATES + 1] =
-{
-	"", "run", "sleep", "disk", "zomb", "stop", "swap",
-	NULL
-};
 
 static char *procstatenames[NPROCSTATES + 1] =
 {
@@ -169,7 +165,7 @@ static char *swapnames[NSWAPSTATS + 1] =
 };
 
 static char fmt_header[] =
-"  PID X        PRI NICE  SIZE   RES STATE   TIME   WCPU    CPU COMMAND";
+"  PID X        PRI NICE  SIZE   RES STATE    TIME   WCPU    CPU COMMAND";
 
 /* these are names given to allowed sorting orders -- first is default */
 static char *ordernames[] = {"cpu", "size", "res", "time", "command", NULL};
@@ -371,7 +367,6 @@ free_proc(struct top_proc * proc)
 	proc->next = freelist;
 	freelist = proc;
 }
-
 
 int
 machine_init(struct statics * statics)
@@ -926,9 +921,7 @@ get_process_info(struct system_info * si,
 			read_one_proc_stat(pid, proc, sel);
 			if (sel->fullcmd == 2)
 				update_procname(proc, PQgetvalue(pgresult, i, 1));
-
-			if (proc->state == 0)
-				continue;
+			update_state(&proc->pgstate, PQgetvalue(pgresult, i, 2));
 
 			total_procs++;
 			process_states[proc->state]++;
@@ -1102,14 +1095,14 @@ format_next_process(caddr_t handle, char *(*get_userid) (uid_t))
 	struct top_proc *p = *nextactive++;
 
 	snprintf(fmt, sizeof(fmt),
-			 "%5d %-8.8s %3d %4d %5s %5s %-5s %6s %5.2f%% %5.2f%% %s",
+			 "%5d %-8.8s %3d %4d %5s %5s %-6s %5s %5.2f%% %5.2f%% %s",
 			 p->pid,
 			 (*get_userid) (p->uid),
 			 p->pri < -99 ? -99 : p->pri,
 			 p->nice,
 			 format_k(p->size),
 			 format_k(p->rss),
-			 state_abbrev[p->state],
+			 backendstatenames[p->pgstate],
 			 format_time(p->time / HZ),
 			 p->wcpu * 100.0,
 			 p->pcpu * 100.0,
@@ -1141,8 +1134,7 @@ format_next_process(caddr_t handle, char *(*get_userid) (uid_t))
 #define ORDERKEY_PCTCPU  if (dresult = p2->pcpu - p1->pcpu,\
 			 (result = dresult > 0.0 ? 1 : dresult < 0.0 ? -1 : 0) == 0)
 #define ORDERKEY_CPTICKS if ((result = (long)p2->time - (long)p1->time) == 0)
-#define ORDERKEY_STATE	 if ((result = (sort_state[p2->state] - \
-			 sort_state[p1->state])) == 0)
+#define ORDERKEY_STATE	 if ((result = p1->pgstate < p2->pgstate))
 #define ORDERKEY_PRIO	 if ((result = p2->pri - p1->pri) == 0)
 #define ORDERKEY_RSSIZE  if ((result = p2->rss - p1->rss) == 0)
 #define ORDERKEY_MEM	 if ((result = p2->size - p1->size) == 0)
@@ -1155,19 +1147,6 @@ format_next_process(caddr_t handle, char *(*get_userid) (uid_t))
 #define ORDERKEY_READS	 if ((result = p1->read_bytes - p2->read_bytes) == 0)
 #define ORDERKEY_WRITES	 if ((result = p1->write_bytes - p2->write_bytes) == 0)
 #define ORDERKEY_CWRITES if ((result = p1->cancelled_write_bytes - p2->cancelled_write_bytes) == 0)
-
-/* Now the array that maps process state to a weight */
-
-unsigned char sort_state[] =
-{
-	0,							/* empty */
-	6,							/* run */
-	3,							/* sleep */
-	5,							/* disk wait */
-	1,							/* zombie */
-	2,							/* stop */
-	4							/* swap */
-};
 
 
 /* compare_cpu - the comparison function for sorting by cpu percentage */

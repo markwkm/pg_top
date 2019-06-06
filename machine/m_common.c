@@ -22,6 +22,12 @@
 
 #define QUERY_DATA_DIRECTORY "SHOW data_directory;"
 
+char *backendstatenames[] =
+{
+	"", "idle", "active", "idltxn", "fast", "abort", "disabl", NULL
+};
+
+
 /* Store data directory to avoid unnecessary requests to server */
 static char *data_directory = NULL;
 
@@ -144,4 +150,23 @@ get_data_directory(const char *values[])
 	PQfinish(pgconn);
 
 	return data_directory;
+}
+
+void
+update_state(int *pgstate, char *state)
+{
+	if (strcmp(state, "idle") == 0)
+		*pgstate = STATE_IDLE;
+	else if (strcmp(state, "active") == 0)
+		*pgstate = STATE_RUNNING;
+	else if (strcmp(state, "idle in transaction") == 0)
+		*pgstate = STATE_IDLEINTRANSACTION;
+	else if (strcmp(state, "fastpath function call") == 0)
+		*pgstate = STATE_FASTPATH;
+	else if (strcmp(state, "idle in transaction (aborted)") == 0)
+		*pgstate = STATE_IDLEINTRANSACTION_ABORTED;
+	else if (strcmp(state, "disabled") == 0)
+		*pgstate = STATE_DISABLED;
+	else
+		*pgstate = STATE_UNDEFINED;
 }

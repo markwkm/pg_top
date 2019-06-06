@@ -160,7 +160,10 @@ char	   *format_header(char *);
 char	   *format_next_io(caddr_t, char *(*) (uid_t));
 char	   *format_next_process(caddr_t, char *(*) (uid_t));
 uid_t			proc_owner(pid_t);
+void		update_state(int *pgstate, char *state);
 
 extern int	mode_stats;
+
+extern char *backendstatenames[];
 
 #endif   /* _MACHINE_H_ */

@@ -321,8 +321,9 @@ Resident memory: current amount of process memory that resides in physical
 memory, given in kilobytes.
 .TP
 .B STATE
-Current state (typically one of \*(lqsleep\*(rq,
-\*(lqrun\*(rq, \*(lqidl\*(rq, \*(lqzomb\*(rq, or \*(lqstop\*(rq).
+Current backend state (typically one of \*(lqidle\*(rq,
+\*(lqactive\*(rq, \*(lqidltxn\*(rq, \*(lqfast\*(rq, \*(lqdisabl\*(eq, or
+\*(lqstop\*(rq).
 .TP
 .B TIME
 Number of system and user cpu seconds that the process has used.
