@@ -432,16 +432,15 @@ free_proc(struct top_proc *proc)
 }
 
 void
-get_system_info_r(struct system_info *info, const char *values[])
+get_system_info_r(struct system_info *info, struct pg_conninfo_ctx *conninfo)
 {
-	PGconn   *pgconn;
 	PGresult *pgresult = NULL;
 	int rows = 0;
 
-	pgconn = connect_to_db(values);
-	if (pgconn != NULL)
+	connect_to_db(conninfo);
+	if (conninfo->connection != NULL)
 	{
-		pgresult = PQexec(pgconn, QUERY_LOADAVG);
+		pgresult = PQexec(conninfo->connection, QUERY_LOADAVG);
 		rows = PQntuples(pgresult);
 	}
 
@@ -462,9 +461,9 @@ get_system_info_r(struct system_info *info, const char *values[])
 	}
 
 	/* Get processor time info. */
-	if (pgconn != NULL)
+	if (conninfo->connection != NULL)
 	{
-		pgresult = PQexec(pgconn, QUERY_CPUTIME);
+		pgresult = PQexec(conninfo->connection, QUERY_CPUTIME);
 		rows = PQntuples(pgresult);
 	}
 	if (rows > 0)
@@ -488,9 +487,9 @@ get_system_info_r(struct system_info *info, const char *values[])
 	}
 
 	/* Get system wide memory usage. */
-	if (pgconn != NULL)
+	if (conninfo->connection != NULL)
 	{
-		pgresult = PQexec(pgconn, QUERY_MEMUSAGE);
+		pgresult = PQexec(conninfo->connection, QUERY_MEMUSAGE);
 		rows = PQntuples(pgresult);
 	}
 	if (rows > 0)
@@ -522,12 +521,12 @@ get_system_info_r(struct system_info *info, const char *values[])
 
 	if (pgresult != NULL)
 		PQclear(pgresult);
-	PQfinish(pgconn);
+	disconnect_from_db(conninfo);
 }
 
 caddr_t
 get_process_info_r(struct system_info *si, struct process_select *sel,
-		int compare_index, const char *values[])
+		int compare_index, struct pg_conninfo_ctx *conninfo)
 {
 	int i;
 	struct top_proc *pp;
@@ -535,7 +534,6 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 	struct top_proc **active;
 	pid_t pid;
 
-	PGconn *pgconn;
 	PGresult *pgresult = NULL;
 	int rows;
 
@@ -587,16 +585,16 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 		for (proc = ptable[i]; proc; proc = proc->next)
 			proc->state = 0;
 
-	pgconn = connect_to_db(values);
-	if (pgconn != NULL)
+	connect_to_db(conninfo);
+	if (conninfo->connection != NULL)
 	{
 		if (sel->fullcmd == 2)
 		{
-			pgresult = PQexec(pgconn, QUERY_PROCTAB_QUERY);
+			pgresult = PQexec(conninfo->connection, QUERY_PROCTAB_QUERY);
 		}
 		else
 		{
-			pgresult = PQexec(pgconn, QUERY_PROCTAB);
+			pgresult = PQexec(conninfo->connection, QUERY_PROCTAB);
 		}
 		rows = PQntuples(pgresult);
 	}
@@ -718,7 +716,7 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 
 	if (pgresult != NULL)
 		PQclear(pgresult);
-	PQfinish(pgconn);
+	disconnect_from_db(conninfo);
 
 	/* Make sure we have enough slots for the active procs. */
 	if (activesize < total_procs)
@@ -782,27 +780,25 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 }
 
 int
-machine_init_r(struct statics *statics, const char *values[])
+machine_init_r(struct statics *statics, struct pg_conninfo_ctx *conninfo)
 {
-	PGconn   *pgconn;
-
 	/* Make sure the remote system has the stored function installed. */
-	pgconn = connect_to_db(values);
-	if (pgconn == NULL)
+	connect_to_db(conninfo);
+	if (conninfo->connection == NULL)
 	{
 		fprintf(stderr, "Cannot connect to database.\n");
 		return -1;
 	}
 
-	if (check_for_function(pgconn, "pg_cputime") != 0)
+	if (check_for_function(conninfo->connection, "pg_cputime") != 0)
 		return -1;
-	if (check_for_function(pgconn, "pg_loadavg") != 0)
+	if (check_for_function(conninfo->connection, "pg_loadavg") != 0)
 		return -1;
-	if (check_for_function(pgconn, "pg_memusage") != 0)
+	if (check_for_function(conninfo->connection, "pg_memusage") != 0)
 		return -1;
-	if (check_for_function(pgconn, "pg_proctab") != 0)
+	if (check_for_function(conninfo->connection, "pg_proctab") != 0)
 		return -1;
-	PQfinish(pgconn);
+	disconnect_from_db(conninfo);
 
 	/* fill in the statics information */
 	statics->procstate_names = procstatenames;

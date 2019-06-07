@@ -5,7 +5,15 @@
 
 #include <libpq-fe.h>
 
-PGconn	   *connect_to_db(const char **);
+struct pg_conninfo_ctx
+{
+	PGconn *connection;
+	int persistent;
+	const char *values[6];
+};
+
+void	    connect_to_db(struct pg_conninfo_ctx *);
+void	    disconnect_from_db(struct pg_conninfo_ctx *);
 
 PGresult   *pg_locks(PGconn *, int);
 PGresult   *pg_processes(PGconn *);

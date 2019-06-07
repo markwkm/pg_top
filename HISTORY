@@ -8,6 +8,8 @@ Release 4.0.0
      * Remove kill and renice command, and stop displaying nice priority
      * Show backend state instead of operating system state
      * Show database username instead of operating system username
+     * Make connections with password persistent and clear connection memory in
+       these scenarios
 
 Release 3.7.0
 

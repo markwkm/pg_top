@@ -150,7 +150,7 @@ cmd_current_query(struct pg_top_context *pgtctx)
 	newval = readline(tempbuf1, 8, Yes);
 	reset_display(pgtctx);
 	display_pagerstart();
-	show_current_query(pgtctx->values, newval);
+	show_current_query(&pgtctx->conninfo, newval);
 	display_pagerend();
 	return No;
 }
@@ -203,7 +203,7 @@ cmd_explain(struct pg_top_context *pgtctx)
 	newval = readline(tempbuf1, 8, Yes);
 	reset_display(pgtctx);
 	display_pagerstart();
-	show_explain(pgtctx->values, newval, EXPLAIN);
+	show_explain(&pgtctx->conninfo, newval, EXPLAIN);
 	display_pagerend();
 	return No;
 }
@@ -218,7 +218,7 @@ cmd_explain_analyze(struct pg_top_context *pgtctx)
 	newval = readline(tempbuf1, 8, Yes);
 	reset_display(pgtctx);
 	display_pagerstart();
-	show_explain(pgtctx->values, newval, EXPLAIN_ANALYZE);
+	show_explain(&pgtctx->conninfo, newval, EXPLAIN_ANALYZE);
 	display_pagerend();
 	return No;
 }
@@ -271,7 +271,7 @@ cmd_locks(struct pg_top_context *pgtctx)
 	newval = readline(tempbuf1, 8, Yes);
 	reset_display(pgtctx);
 	display_pagerstart();
-	show_locks(pgtctx->values, newval);
+	show_locks(&pgtctx->conninfo, newval);
 	display_pagerend();
 	return No;
 }
@@ -675,22 +675,21 @@ scanint(char *str, int *intp)
 }
 
 void
-show_current_query(const char *values[], int procpid)
+show_current_query(struct pg_conninfo_ctx *conninfo, int procpid)
 {
 	int			i;
 	int			rows;
 	char		info[64];
-	PGconn	   *pgconn;
 	PGresult   *pgresult = NULL;
 
 	sprintf(info, "Current query for procpid %d:\n\n", procpid);
 	display_pager(info);
 
 	/* Get the currently running query. */
-	pgconn = connect_to_db(values);
-	if (pgconn != NULL)
+	connect_to_db(conninfo);
+	if (conninfo->connection != NULL)
 	{
-		pgresult = pg_query(pgconn, procpid);
+		pgresult = pg_query(conninfo->connection, procpid);
 		rows = PQntuples(pgresult);
 	}
 	else
@@ -705,11 +704,11 @@ show_current_query(const char *values[], int procpid)
 
 	if (pgresult != NULL)
 		PQclear(pgresult);
-	PQfinish(pgconn);
+	disconnect_from_db(conninfo);
 }
 
 void
-show_explain(const char *values[], int procpid, int analyze)
+show_explain(struct pg_conninfo_ctx *conninfo, int procpid, int analyze)
 {
 	int			i,
 				j;
@@ -717,7 +716,6 @@ show_explain(const char *values[], int procpid, int analyze)
 				r;
 	char		sql[4096];
 	char		info[1024];
-	PGconn	   *pgconn;
 	PGresult   *pgresult_query = NULL;
 	PGresult   *pgresult_explain = NULL;
 
@@ -727,10 +725,10 @@ show_explain(const char *values[], int procpid, int analyze)
 	display_pager(info);
 
 	/* Get the currently running query. */
-	pgconn = connect_to_db(values);
-	if (pgconn != NULL)
+	connect_to_db(conninfo);
+	if (conninfo->connection != NULL)
 	{
-		pgresult_query = pg_query(pgconn, procpid);
+		pgresult_query = pg_query(conninfo->connection, procpid);
 		rows = PQntuples(pgresult_query);
 	}
 	else
@@ -752,9 +750,9 @@ show_explain(const char *values[], int procpid, int analyze)
 		{
 			sprintf(sql, "EXPLAIN\n%s", PQgetvalue(pgresult_query, i, 0));
 		}
-		PQexec(pgconn, BEGIN);
-		pgresult_explain = PQexec(pgconn, sql);
-		PQexec(pgconn, ROLLBACK);
+		PQexec(conninfo->connection, BEGIN);
+		pgresult_explain = PQexec(conninfo->connection, sql);
+		PQexec(conninfo->connection, ROLLBACK);
 		r = PQntuples(pgresult_explain);
 		/* This will display an error if the EXPLAIN fails. */
 		display_pager("\n\nQuery Plan:\n\n");
@@ -771,11 +769,11 @@ show_explain(const char *values[], int procpid, int analyze)
 
 	if (pgresult_query != NULL)
 		PQclear(pgresult_query);
-	PQfinish(pgconn);
+	disconnect_from_db(conninfo);
 }
 
 void
-show_locks(const char *values[], int procpid)
+show_locks(struct pg_conninfo_ctx *conninfo, int procpid)
 {
 	int			i,
 				j,
@@ -783,7 +781,6 @@ show_locks(const char *values[], int procpid)
 	int			rows;
 	char		info[64];
 	int			width[5] = {1, 8, 5, 4, 7};
-	PGconn	   *pgconn;
 	PGresult   *pgresult = NULL;
 	char		header_format[1024];
 	char		line_format[1024];
@@ -794,14 +791,14 @@ show_locks(const char *values[], int procpid)
 	display_pager(info);
 
 	/* Get the locks helf by the process. */
-	pgconn = connect_to_db(values);
-	if (pgconn == NULL)
+	connect_to_db(conninfo);
+	if (conninfo->connection == NULL)
 	{
-		PQfinish(pgconn);
+		disconnect_from_db(conninfo);
 		return;
 	}
 
-	pgresult = pg_locks(pgconn, procpid);
+	pgresult = pg_locks(conninfo->connection, procpid);
 	rows = PQntuples(pgresult);
 
 	/* Determine column sizes. */
@@ -851,5 +848,5 @@ show_locks(const char *values[], int procpid)
 	display_pager("\n");
 
 	PQclear(pgresult);
-	PQfinish(pgconn);
+	disconnect_from_db(conninfo);
 }

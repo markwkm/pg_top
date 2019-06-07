@@ -37,13 +37,12 @@ static char *data_directory = NULL;
  * values with previous values.
  */
 void
-get_database_info(struct db_info *db_info, const char *values[])
+get_database_info(struct db_info *db_info, struct pg_conninfo_ctx *conninfo)
 {
 	struct timeval thistime;
 	double		timediff;
 	int			i;
 	int			rows;
-	PGconn	   *pgconn;
 	PGresult   *pgresult = NULL;
 	struct db_info cur_info;
 	static struct timeval lasttime;
@@ -60,10 +59,10 @@ get_database_info(struct db_info *db_info, const char *values[])
 	lasttime = thistime;
 
 	rows = 0;
-	pgconn = connect_to_db(values);
-	if (pgconn != NULL)
+	connect_to_db(conninfo);
+	if (conninfo->connection != NULL)
 	{
-		pgresult = PQexec(pgconn, QUERY_STAT_DB);
+		pgresult = PQexec(conninfo->connection, QUERY_STAT_DB);
 		if (PQresultStatus(pgresult) == PGRES_TUPLES_OK)
 			rows = PQntuples(pgresult);
 
@@ -91,7 +90,7 @@ get_database_info(struct db_info *db_info, const char *values[])
 	}
 	if (pgresult != NULL)
 		PQclear(pgresult);
-	PQfinish(pgconn);
+	disconnect_from_db(conninfo);
 	if (timediff <= 0)
 	{
 		last_db_info = cur_info;
@@ -116,9 +115,8 @@ get_database_info(struct db_info *db_info, const char *values[])
  * queried to server, return existing value.
  */
 char *
-get_data_directory(const char *values[])
+get_data_directory(struct pg_conninfo_ctx *conninfo)
 {
-	PGconn	   *pgconn;
 	PGresult   *pgresult = NULL;
 	int			rows;
 
@@ -128,10 +126,10 @@ get_data_directory(const char *values[])
 
 	/* No existing value, so query server */
 	rows = 0;
-	pgconn = connect_to_db(values);
-	if (pgconn != NULL)
+	connect_to_db(conninfo);
+	if (conninfo->connection != NULL)
 	{
-		pgresult = PQexec(pgconn, QUERY_DATA_DIRECTORY);
+		pgresult = PQexec(conninfo->connection, QUERY_DATA_DIRECTORY);
 		if (PQresultStatus(pgresult) == PGRES_TUPLES_OK)
 			rows = PQntuples(pgresult);
 	}
@@ -147,7 +145,7 @@ get_data_directory(const char *values[])
 	/* Clean up */
 	if (pgresult != NULL)
 		PQclear(pgresult);
-	PQfinish(pgconn);
+	disconnect_from_db(conninfo);
 
 	return data_directory;
 }

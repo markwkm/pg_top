@@ -148,15 +148,15 @@ int			machine_init(struct statics *);
 void		get_system_info(struct system_info *);
 #ifdef __linux__
 caddr_t get_process_info(struct system_info *, struct process_select *, int,
-				 const char **, int);
+				 struct pg_conninfo_ctx *, int);
 #else
 caddr_t get_process_info(struct system_info *, struct process_select *, int,
 				 char *);
 #endif /* __linux__ */
 void		get_disk_info(struct disk_info *, char *);
 void		get_io_info(struct io_info *);
-void		get_database_info(struct db_info *, const char **);
-char	   *get_data_directory(const char **);
+void		get_database_info(struct db_info *, struct pg_conninfo_ctx *);
+char	   *get_data_directory(struct pg_conninfo_ctx *);
 char	   *format_header(char *);
 char	   *format_next_io(caddr_t);
 char	   *format_next_process(caddr_t);

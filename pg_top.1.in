@@ -58,7 +58,9 @@ List all available color tags and the current set of tests used for
 color highlighting, then exit.
 .TP
 .B \-W, \-\-password
-Forces pg_top to prompt for a password before connecting to a database.
+Forces pg_top to prompt for a password before connecting to a database.  pg_top
+will also keep the database connection open while running, and will clear the
+database connection from memory for security.
 .TP
 .B \-b, \-\-batch
 Use \*(lqbatch\*(rq mode.  In this mode, all input from the terminal is
@@ -134,9 +136,6 @@ variable, if set.
 .TP
 \fB\-U \fR\fB\fIUSERNAME\fR\fR, \fB\-\-username=\fR\fB\fIUSERNAME\fR\fR
 User name to connect as.
-.TP
-.B \-W, \-\-password
-Force pg_top to prompt for a password before connecting to a database.
 .PP
 Both
 .I COUNT

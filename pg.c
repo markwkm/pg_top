@@ -44,22 +44,39 @@
 
 int pg_version(PGconn *);
 
-PGconn *
-connect_to_db(const char *values[])
+void
+connect_to_db(struct pg_conninfo_ctx *conninfo)
 {
-	PGconn	   *pgconn = NULL;
+	int i;
 	const char *keywords[6] = {"host", "port", "user", "password", "dbname",
 			NULL};
 
-	pgconn = PQconnectdbParams(keywords, values, 1);
-	if (PQstatus(pgconn) != CONNECTION_OK)
-	{
-		new_message(MT_standout | MT_delayed, " %s", PQerrorMessage(pgconn));
+	if (conninfo->persistent && PQsocket(conninfo->connection) >= 0)
+		return;
 
-		PQfinish(pgconn);
-		return NULL;
+	conninfo->connection = PQconnectdbParams(keywords, conninfo->values, 1);
+	if (PQstatus(conninfo->connection) != CONNECTION_OK)
+	{
+		new_message(MT_standout | MT_delayed, " %s",
+				PQerrorMessage(conninfo->connection));
+
+		PQfinish(conninfo->connection);
+		conninfo->connection = NULL;
+		return;
 	}
-	return pgconn;
+
+	if (conninfo->persistent)
+		for (i = 0; i <5; i++)
+			if (conninfo->values[i] != NULL)
+				free((void *) conninfo->values[i]);
+}
+
+void
+disconnect_from_db(struct pg_conninfo_ctx *conninfo)
+{
+	if (conninfo->persistent)
+		return;
+	PQfinish(conninfo->connection);
 }
 
 PGresult *

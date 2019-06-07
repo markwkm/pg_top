@@ -823,7 +823,7 @@ read_one_proc_stat(pid_t pid, struct top_proc * proc, struct process_select * se
 caddr_t
 get_process_info(struct system_info * si,
 				 struct process_select * sel,
-				 int compare_index, const char *values[], int mode)
+				 int compare_index, struct pg_conninfo_ctx *conninfo, int mode)
 {
 	struct timeval thistime;
 	double		timediff,
@@ -885,15 +885,14 @@ get_process_info(struct system_info * si,
 
 		int			i;
 		int			rows;
-		PGconn	   *pgconn;
 		PGresult   *pgresult = NULL;
 
 		memset(process_states, 0, sizeof(process_states));
 
-		pgconn = connect_to_db(values);
-		if (pgconn != NULL)
+		connect_to_db(conninfo);
+		if (conninfo->connection != NULL)
 		{
-			pgresult = pg_processes(pgconn);
+			pgresult = pg_processes(conninfo->connection);
 			rows = PQntuples(pgresult);
 		}
 		else
@@ -964,7 +963,7 @@ get_process_info(struct system_info * si,
 		}
 		if (pgresult != NULL)
 			PQclear(pgresult);
-		PQfinish(pgconn);
+		disconnect_from_db(conninfo);
 
 		/* make sure we have enough slots for the active procs */
 		if (activesize < total_procs)

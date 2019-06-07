@@ -109,7 +109,7 @@ struct pg_top_context
 	struct system_info system_info;
 	struct timeval timeout;
 	int topn;
-	const char *values[6];
+	struct pg_conninfo_ctx conninfo;
 };
 
 void		quit(int);

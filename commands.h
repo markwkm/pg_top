@@ -48,8 +48,8 @@ int execute_command(struct pg_top_context *, char);
 
 void show_help(struct statics *);
 int scanint(char *str, int *intp);
-void show_current_query(const char **, int);
-void show_explain(const char **, int, int);
-void show_locks(const char **, int);
+void show_current_query(struct pg_conninfo_ctx *, int);
+void show_explain(struct pg_conninfo_ctx *, int, int);
+void show_locks(struct pg_conninfo_ctx *, int);
 
 #endif   /* _COMMANDS_H_ */

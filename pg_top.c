@@ -168,7 +168,7 @@ usage(const char *progname)
 	printf("  -h, --host=HOSTNAME       database server host or socket directory\n");
 	printf("  -p, --port=PORT           database server port\n");
 	printf("  -U, --username=USERNAME   user name to connect as\n");
-	printf("  -W, --password            force password prompt\n");
+	printf("  -W, --password            force password prompt, and persistent connection\n");
 }
 
 RETSIGTYPE
@@ -204,27 +204,27 @@ do_display(struct pg_top_context *pgtctx)
 		get_system_info(&pgtctx->system_info);
 #ifdef __linux__
 		processes = get_process_info(&pgtctx->system_info, &pgtctx->ps, tmp_index,
-				pgtctx->values, pgtctx->mode);
+				&pgtctx->conninfo, pgtctx->mode);
 #else
 		processes = get_process_info(&pgtctx->system_info, &pgtctx->ps, tmp_index,
-				pgtctx->values);
+				&pgtctx->conninfo);
 #endif /* __linux__ */
 	}
 	else
 	{
-		get_system_info_r(&pgtctx->system_info, pgtctx->values);
+		get_system_info_r(&pgtctx->system_info, &pgtctx->conninfo);
 		processes = get_process_info_r(&pgtctx->system_info, &pgtctx->ps,
-				pgtctx->order_index, pgtctx->values);
+				pgtctx->order_index, &pgtctx->conninfo);
 	}
 
 	/* Get database activity information */
-	get_database_info(&pgtctx->db_info, pgtctx->values);
+	get_database_info(&pgtctx->db_info, &pgtctx->conninfo);
 
 	/* Get database I/O information */
 	get_io_info(&pgtctx->io_info);
 
 	/* display database disk info */
-	get_disk_info(&pgtctx->disk_info, get_data_directory(pgtctx->values));
+	get_disk_info(&pgtctx->disk_info, get_data_directory(&pgtctx->conninfo));
 
 	/* display the load averages */
 	(*d_loadave) (pgtctx->system_info.last_pid, pgtctx->system_info.load_avg);
@@ -471,24 +471,26 @@ process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 			}
 			else
 			{
-				pgtctx->values[PG_PORT] = strdup(optarg);
+				pgtctx->conninfo.values[PG_PORT] = strdup(optarg);
 			}
 			break;
 
 		case 'W':		/* prompt for database password */
-			pgtctx->values[PG_PASSWORD] = simple_prompt("Password: ", 1000, 0);
+			pgtctx->conninfo.persistent = 1;
+			pgtctx->conninfo.values[PG_PASSWORD] =
+					simple_prompt("Password: ", 1000, 0);
 			break;
 
 		case 'U':		/* database user name */
-			pgtctx->values[PG_USER] = strdup(optarg);
+			pgtctx->conninfo.values[PG_USER] = strdup(optarg);
 			break;
 
 		case 'd':		/* database name */
-			pgtctx->values[PG_DBNAME] = strdup(optarg);
+			pgtctx->conninfo.values[PG_DBNAME] = strdup(optarg);
 			break;
 
 		case 'h':		/* socket location */
-			pgtctx->values[PG_HOST] = strdup(optarg);
+			pgtctx->conninfo.values[PG_HOST] = strdup(optarg);
 			break;
 
 		case 'r':		/* remote mode */
@@ -720,6 +722,8 @@ main(int argc, char *argv[])
 	pgtctx.ps.usename[0] = '\0';
 	pgtctx.show_tags = No;
 	pgtctx.topn = 0;
+	pgtctx.conninfo.connection = NULL;
+	pgtctx.conninfo.persistent = 0;
 
 	/* Show help or version number if necessary */
     if (argc > 1)
@@ -836,7 +840,7 @@ main(int argc, char *argv[])
 	if (pgtctx.mode_remote == 0)
 		i = machine_init(&pgtctx.statics);
 	else
-		i = machine_init_r(&pgtctx.statics, pgtctx.values);
+		i = machine_init_r(&pgtctx.statics, &pgtctx.conninfo);
 
 	if (i == -1)
 		exit(1);
@@ -1011,27 +1015,27 @@ main(int argc, char *argv[])
 			get_system_info(&pgtctx.system_info);
 #ifdef __linux__
 			(void) get_process_info(&pgtctx.system_info, &pgtctx.ps, 0,
-					pgtctx.values, pgtctx.mode);
+					&pgtctx.conninfo, pgtctx.mode);
 #else
 			(void) get_process_info(&pgtctx.system_info, &pgtctx.ps, 0,
-					pgtctx.values);
+					&pgtctx.conninfo);
 #endif /* __linux__ */
 		}
 		else
 		{
-			get_system_info_r(&pgtctx.system_info, pgtctx.values);
+			get_system_info_r(&pgtctx.system_info, &pgtctx.conninfo);
 			(void) get_process_info_r(&pgtctx.system_info, &pgtctx.ps, 0,
-					pgtctx.values);
+					&pgtctx.conninfo);
 		}
 
 		/* Get database activity information */
-		get_database_info(&pgtctx.db_info, pgtctx.values);
+		get_database_info(&pgtctx.db_info, &pgtctx.conninfo);
 
 		/* Get database I/O information */
 		get_io_info(&pgtctx.io_info);
 
 		/* Get database disk information */
-		get_disk_info(&pgtctx.disk_info, get_data_directory(pgtctx.values));
+		get_disk_info(&pgtctx.disk_info, get_data_directory(&pgtctx.conninfo));
 
 		pgtctx.timeout.tv_sec = 1;
 		pgtctx.timeout.tv_usec = 0;
