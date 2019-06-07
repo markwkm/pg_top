@@ -37,7 +37,6 @@
 #include "pg.h"
 #include "commands.h"
 #include "screen.h"
-#include "username.h"
 
 extern int	errno;
 
@@ -495,33 +494,16 @@ cmd_update(struct pg_top_context *pgtctx)
 int
 cmd_user(struct pg_top_context *pgtctx)
 {
-	int i;
-	int no_command = No;
-	char tempbuf[50];
-
 	new_message(MT_standout, "Username to show: ");
-	if (readline(tempbuf, sizeof(tempbuf), No) > 0)
+	if (readline(pgtctx->ps.usename, sizeof(pgtctx->ps.usename), No) > 0)
 	{
-		if (tempbuf[0] == '+' && tempbuf[1] == '\0')
-		{
-			pgtctx->ps.uid = -1;
-		}
-		else if ((i = userid(tempbuf)) == -1)
-		{
-			new_message(MT_standout, " %s: unknown user", tempbuf);
-			no_command = Yes;
-		}
-		else
-		{
-			pgtctx->ps.uid = i;
-		}
 		putchar('\r');
 	}
 	else
 	{
 		clear_message();
 	}
-	return no_command;
+	return No;
 }
 
 int

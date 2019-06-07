@@ -28,15 +28,15 @@
 
 #define QUERY_PROCTAB \
 		"SELECT a.pid, comm, fullcomm, a.state, utime, stime, priority, nice,\n" \
-		"       starttime, vsize, rss, uid, username, rchar, wchar,\n" \
+		"       starttime, vsize, rss, usename, rchar, wchar,\n" \
 		"       syscr, syscw, reads, writes, cwrites, b.state\n" \
 		"FROM pg_proctab() a LEFT OUTER JOIN pg_stat_activity b\n" \
 		"                    ON a.pid = b.pid"
 
 #define QUERY_PROCTAB_QUERY \
 		"SELECT a.pid, comm, query, a.state, utime, stime, priority, nice,\n" \
-		"       starttime, vsize, rss, uid, username, rchar, wchar,\n" \
-		"       syscr, syscw, reads, writes, cwrites, b.state\n" \
+		"       starttime, vsize, rss, usename, rchar, wchar,\n" \
+		"       syscr, syscw, reads, writes, cwrites\n" \
 		"FROM pg_proctab() a LEFT OUTER JOIN pg_stat_activity b\n" \
 		"                    ON a.pid = b.pid"
 
@@ -51,7 +51,7 @@ enum column_loadavg { c_load1, c_load5, c_load15, c_last_pid };
 enum column_memusage { c_memused, c_memfree, c_memshared, c_membuffers,
 		c_memcached, c_swapused, c_swapfree, c_swapcached};
 enum column_proctab { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
-		c_priority, c_nice, c_starttime, c_vsize, c_rss, c_uid, c_username,
+		c_priority, c_nice, c_starttime, c_vsize, c_rss, c_username,
 		c_rchar, c_wchar, c_syscr, c_syscw, c_reads, c_writes, c_cwrites,
 		c_pgstate};
 
@@ -82,9 +82,8 @@ enum column_proctab { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
 struct top_proc
 {
 	pid_t pid;
-	uid_t uid;
 	char *name;
-	char *username;
+	char *usename;
 	int pri;
 	int nice;
 	unsigned long size;
@@ -413,7 +412,7 @@ format_next_process_r(caddr_t handler)
 	snprintf(fmt, sizeof(fmt),
 			"%5d %-8.8s %3d %4d %5s %5s %-5s %6s %5.2f%% %5.2f%% %s",
 			(int) p->pid, /* Some OS's need to cast pid_t to int. */
-			p->username,
+			p->usename,
 			p->pri < -99 ? -99 : p->pri,
 			p->nice,
 			format_k(p->size),
@@ -552,7 +551,6 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 	int total_procs = 0;
 
 	int show_idle = sel->idle;
-	int show_uid = sel->uid != -1;
 
 	memset(process_states, 0, sizeof(process_states));
 
@@ -631,9 +629,6 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 			ptable[HASH(pid)] = proc;
 			proc->time = 0;
 			proc->wcpu = 0;
-
-			/* Never mark as owner because we are remote. */
-			proc->uid = -1;
 		}
 
 		otime = proc->time;
@@ -679,8 +674,7 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 		proc->rss = bytetok((unsigned long)
 				atol(PQgetvalue(pgresult, i, c_rss)));
 
-		proc->uid = atol(PQgetvalue(pgresult, i, c_uid));
-		proc->username = strdup(PQgetvalue(pgresult, i, c_username));
+		proc->usename = strdup(PQgetvalue(pgresult, i, c_username));
 
 		value = atoll(PQgetvalue(pgresult, i, c_rchar));
 		proc->rchar_diff = value - proc->rchar;
@@ -764,7 +758,8 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 			else
 			{
 				if ((show_idle || proc->state == 1 || proc->pcpu) &&
-					(!show_uid || proc->uid == sel->uid))
+						(sel->usename[0] == '\0' ||
+								strcmp(proc->usename, sel->usename) == 0))
 				{
 					*active++ = proc;
 					last = proc;

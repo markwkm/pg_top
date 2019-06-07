@@ -172,7 +172,6 @@ set_source_files_properties(
     pg_top.c
     screen.c
     sprompt.c
-    username.c
     utils.c
     PROPERTIES COMPILE_FLAGS "${PGINCLUDE}"
 )
@@ -198,7 +197,6 @@ add_executable(
     sprompt.c
     pg.c
     pg_top.c
-    username.c
     utils.c
     version.c
     machine/m_remote.c

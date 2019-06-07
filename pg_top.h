@@ -94,7 +94,6 @@ struct pg_top_context
 	void (*d_header)(char *);
 	char do_unames;
 	char dostates;
-	char *(*get_userid)(uid_t);
 	char *header_text;
 	char *header_processes;
 	char interactive;

@@ -54,7 +54,6 @@ char	   *copyright =
 #include "display.h"			/* interface to display package */
 #include "screen.h"				/* interface to screen package */
 #include "boolean.h"
-#include "username.h"
 #include "utils.h"
 #include "version.h"
 #ifdef ENABLE_COLOR
@@ -105,7 +104,6 @@ static struct option long_options[] = {
 	{"remote-mode", no_argument, NULL, 'r'},
 	{"set-delay", required_argument, NULL, 's'},
 	{"show-tags", no_argument, NULL, 'T'},
-	{"show-uid", no_argument, NULL, 'u'},
 	{"version", no_argument, NULL, 'V'},
 	{"set-display", required_argument, NULL, 'x'},
 	{"show-username", required_argument, NULL, 'z'},
@@ -159,7 +157,6 @@ usage(const char *progname)
 	printf("  -r, --remote-mode         activate remote mode\n");
 	printf("  -s, --set-delay=SECOND    set delay between screen updates\n");
 	printf("  -T, --show-tags           show color tags\n");
-	printf("  -u, --show-uid            show UID instead of username\n");
 	printf("  -V, --version             output version information, then exit\n");
 	printf("  -x, --set-display=COUNT   set maximum number of displays\n");
 	printf("                            exit once this number is reached\n");
@@ -313,8 +310,7 @@ do_display(struct pg_top_context *pgtctx)
 			for (i = 0; i < active_procs; i++)
 			{
 				if (pgtctx->mode_remote == 0)
-					(*d_process) (i, format_next_io(processes,
-							pgtctx->get_userid));
+					(*d_process) (i, format_next_io(processes));
 				else
 					(*d_process) (i, format_next_io_r(processes));
 			}
@@ -325,8 +321,7 @@ do_display(struct pg_top_context *pgtctx)
 			for (i = 0; i < active_procs; i++)
 			{
 				if (pgtctx->mode_remote == 0)
-					(*d_process) (i, format_next_process(processes,
-							pgtctx->get_userid));
+					(*d_process) (i, format_next_process(processes));
 				else
 					(*d_process) (i, format_next_process_r(processes));
 			}
@@ -397,7 +392,7 @@ process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 	int i;
 	int option_index;
 
-	while ((i = getopt_long(ac, av, "CDITbcinruVh:s:d:U:o:Wp:x:z:",
+	while ((i = getopt_long(ac, av, "CDITbcinrVh:s:d:U:o:Wp:x:z:",
 			long_options, &option_index)) != EOF)
 	{
 		switch (i)
@@ -417,16 +412,8 @@ process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 			exit(0);
 			break;
 
-		case 'u':		/* toggle uid/username display */
-			pgtctx->do_unames = !pgtctx->do_unames;
-			break;
-
 		case 'z':		/* display only username's processes */
-			if ((pgtctx->ps.uid = userid(optarg)) == -1)
-			{
-				fprintf(stderr, "%s: unknown user\n", optarg);
-				exit(1);
-			}
+			strncpy(pgtctx->ps.usename, optarg, NAMEDATALEN);
 			break;
 
 		case 'I':		/* show idle processes */
@@ -722,7 +709,6 @@ main(int argc, char *argv[])
 	pgtctx.displays = 0; /* indicates unspecified */
 	pgtctx.dostates = No;
 	pgtctx.do_unames = Yes;
-	pgtctx.get_userid = username;
 	pgtctx.interactive = Maybe;
 	pgtctx.io_order_index = 0;
 	pgtctx.mode = MODE_PROCESSES;
@@ -730,8 +716,8 @@ main(int argc, char *argv[])
 	pgtctx.order_index = 0;
 	pgtctx.ps.idle = Yes;
 	pgtctx.ps.fullcmd = Yes;
-	pgtctx.ps.uid = -1;
 	pgtctx.ps.command = NULL;
+	pgtctx.ps.usename[0] = '\0';
 	pgtctx.show_tags = No;
 	pgtctx.topn = 0;
 
@@ -824,7 +810,6 @@ main(int argc, char *argv[])
 	if (!pgtctx.do_unames)
 	{
 		uname_field = "   UID  ";
-		pgtctx.get_userid = itoa7;
 	}
 
 	/*

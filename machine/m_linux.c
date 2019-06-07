@@ -73,8 +73,8 @@ struct top_proc
 	pid_t		pid;
 
 	/* Data from /proc/<pid>/stat. */
-	uid_t		uid;
 	char	   *name;
+	char	   *usename;
 	int			pri,
 				nice;
 	unsigned long size,
@@ -313,6 +313,20 @@ update_procname(struct top_proc * proc, char *cmd)
 	{
 		free(proc->name);
 		proc->name = strdup(cmd);
+	}
+}
+
+static void
+update_usename(struct top_proc * proc, char *usename)
+{
+	if (proc->usename == NULL)
+	{
+		proc->usename = strdup(usename);
+	}
+	else if (strcmp(proc->usename, usename) != 0)
+	{
+		free(proc->usename);
+		proc->usename = strdup(usename);
 	}
 }
 
@@ -680,8 +694,6 @@ read_one_proc_stat(pid_t pid, struct top_proc * proc, struct process_select * se
 
 	buffer[len] = '\0';
 
-	proc->uid = (uid_t) proc_owner((int) pid);
-
 	/* parse out the status, described in 'man proc' */
 
 	/* skip pid and locate command, which is in parentheses */
@@ -871,7 +883,6 @@ get_process_info(struct system_info * si,
 		struct top_proc **active;
 
 		int			show_idle = sel->idle;
-		int			show_uid = sel->uid != -1;
 
 		int			i;
 		int			rows;
@@ -922,6 +933,10 @@ get_process_info(struct system_info * si,
 			if (sel->fullcmd == 2)
 				update_procname(proc, PQgetvalue(pgresult, i, 1));
 			update_state(&proc->pgstate, PQgetvalue(pgresult, i, 2));
+			update_usename(proc, PQgetvalue(pgresult, i, 3));
+
+			if (proc->state == 0)
+				continue;
 
 			total_procs++;
 			process_states[proc->state]++;
@@ -987,7 +1002,8 @@ get_process_info(struct system_info * si,
 				else
 				{
 					if ((show_idle || proc->state == 1 || proc->pcpu) &&
-						(!show_uid || proc->uid == sel->uid))
+							(sel->usename[0] == '\0' ||
+									strcmp(proc->usename, sel->usename) == 0))
 					{
 						*active++ = proc;
 						last = proc;
@@ -1037,7 +1053,7 @@ format_header(char *uname_field)
 
 
 char *
-format_next_io(caddr_t handle, char *(*get_userid) (uid_t))
+format_next_io(caddr_t handle)
 {
 	static char fmt[MAX_COLS];	/* static area where result is built */
 	static struct io_node *head = NULL;
@@ -1089,7 +1105,7 @@ format_next_io(caddr_t handle, char *(*get_userid) (uid_t))
 }
 
 char *
-format_next_process(caddr_t handle, char *(*get_userid) (uid_t))
+format_next_process(caddr_t handle)
 {
 	static char fmt[MAX_COLS];	/* static area where result is built */
 	struct top_proc *p = *nextactive++;
@@ -1097,7 +1113,7 @@ format_next_process(caddr_t handle, char *(*get_userid) (uid_t))
 	snprintf(fmt, sizeof(fmt),
 			 "%5d %-8.8s %3d %4d %5s %5s %-6s %5s %5.2f%% %5.2f%% %s",
 			 p->pid,
-			 (*get_userid) (p->uid),
+			 p->usename,
 			 p->pri < -99 ? -99 : p->pri,
 			 p->nice,
 			 format_k(p->size),
@@ -1484,31 +1500,6 @@ compare_cwrites(struct top_proc ** pp1, struct top_proc ** pp2)
 		;
 
 	return result == 0 ? 0 : result < 0 ? -1 : 1;
-}
-
-/*
- * proc_owner(pid) - returns the uid that owns process "pid", or -1 if
- *				the process does not exist.
- *				It is EXTREMLY IMPORTANT that this function work correctly.
- *				If pg_top runs setuid root (as in SVR4), then this function
- *				is the only thing that stands in the way of a serious
- *				security problem.  It validates requests for the "kill"
- *				and "renice" commands.
- */
-
-uid_t
-proc_owner(pid_t pid)
-
-{
-	struct stat sb;
-	char		buffer[32];
-
-	sprintf(buffer, "%d", pid);
-
-	if (stat(buffer, &sb) < 0)
-		return -1;
-	else
-		return (int) sb.st_uid;
 }
 
 struct io_node *

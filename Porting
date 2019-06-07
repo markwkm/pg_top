@@ -131,12 +131,6 @@ int proc_compare(caddr_t, caddr_t)
 
 	qsort comparison function
 
-uid_t proc_owner(pid_t)
-
-	Returns the uid owner of the process specified by the pid argument.
-	This function is VERY IMPORTANT.  If it fails to do its job, then
-	pg_top may pose a security risk.
-
 void get_io_info(struct io_info *)
 
 void get_disk_info(struct disk_info *)

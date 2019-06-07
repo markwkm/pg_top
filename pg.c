@@ -9,7 +9,7 @@
 #include "pg_top.h"
 
 #define QUERY_PROCESSES \
-		"SELECT pid, query, state\n" \
+		"SELECT pid, query, state, usename\n" \
 		"FROM pg_stat_activity;"
 
 #define QUERY_PROCESSES_9_1 \

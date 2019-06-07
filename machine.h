@@ -14,6 +14,7 @@
 #include <sys/types.h>
 
 #include "pg.h"
+#include "pg_config_manual.h"
 
 /*
 #ifdef CLK_TCK
@@ -138,8 +139,8 @@ struct process_select
 {
 	int			idle;			/* show idle processes */
 	int			fullcmd;		/* show full command */
-	int			uid;			/* only this uid (unless uid == -1) */
 	char	   *command;		/* only this command (unless == NULL) */
+	char		usename[NAMEDATALEN + 1];	/* only this postgres usename */
 };
 
 /* routines defined by the machine dependent module */
@@ -157,8 +158,8 @@ void		get_io_info(struct io_info *);
 void		get_database_info(struct db_info *, const char **);
 char	   *get_data_directory(const char **);
 char	   *format_header(char *);
-char	   *format_next_io(caddr_t, char *(*) (uid_t));
-char	   *format_next_process(caddr_t, char *(*) (uid_t));
+char	   *format_next_io(caddr_t);
+char	   *format_next_process(caddr_t);
 uid_t			proc_owner(pid_t);
 void		update_state(int *pgstate, char *state);
 
