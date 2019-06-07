@@ -51,7 +51,7 @@ enum column_loadavg { c_load1, c_load5, c_load15, c_last_pid };
 enum column_memusage { c_memused, c_memfree, c_memshared, c_membuffers,
 		c_memcached, c_swapused, c_swapfree, c_swapcached};
 enum column_proctab { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
-		c_priority, c_nice, c_starttime, c_vsize, c_rss, c_username,
+		c_priority, c_starttime, c_vsize, c_rss, c_username,
 		c_rchar, c_wchar, c_syscr, c_syscw, c_reads, c_writes, c_cwrites,
 		c_pgstate};
 
@@ -85,7 +85,6 @@ struct top_proc
 	char *name;
 	char *usename;
 	int pri;
-	int nice;
 	unsigned long size;
 	unsigned long rss; /* in k */
 	int state;
@@ -150,7 +149,7 @@ static char *swapnames[NSWAPSTATS + 1] =
 };
 
 static char fmt_header[] =
-		"  PID X        PRI NICE  SIZE   RES STATE   TIME   WCPU    CPU COMMAND";
+		"  PID X        PRI  SIZE   RES STATE   TIME   WCPU    CPU COMMAND";
 
 /* Now the array that maps process state to a weight. */
 
@@ -410,11 +409,10 @@ format_next_process_r(caddr_t handler)
 	struct top_proc *p = *nextactive++;
 
 	snprintf(fmt, sizeof(fmt),
-			"%5d %-8.8s %3d %4d %5s %5s %-5s %6s %5.2f%% %5.2f%% %s",
+			"%5d %-8.8s %3d %5s %5s %-5s %6s %5.2f%% %5.2f%% %s",
 			(int) p->pid, /* Some OS's need to cast pid_t to int. */
 			p->usename,
 			p->pri < -99 ? -99 : p->pri,
-			p->nice,
 			format_k(p->size),
 			format_k(p->rss),
 			backendstatenames[p->pgstate],
@@ -666,7 +664,6 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 		proc->time = (unsigned long) atol(PQgetvalue(pgresult, i, c_utime));
 		proc->time += (unsigned long) atol(PQgetvalue(pgresult, i, c_stime));
 		proc->pri = atol(PQgetvalue(pgresult, i, c_priority));
-		proc->nice = atol(PQgetvalue(pgresult, i, c_nice));
 		proc->start_time = (unsigned long)
 				atol(PQgetvalue(pgresult, i, c_starttime));
 		proc->size = bytetok((unsigned long)

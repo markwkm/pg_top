@@ -75,8 +75,7 @@ struct top_proc
 	/* Data from /proc/<pid>/stat. */
 	char	   *name;
 	char	   *usename;
-	int			pri,
-				nice;
+	int			pri;
 	unsigned long size,
 				rss;			/* in k */
 	int			state;
@@ -165,7 +164,7 @@ static char *swapnames[NSWAPSTATS + 1] =
 };
 
 static char fmt_header[] =
-"  PID X        PRI NICE  SIZE   RES STATE    TIME   WCPU    CPU COMMAND";
+"  PID X        PRI  SIZE   RES STATE    TIME   WCPU    CPU COMMAND";
 
 /* these are names given to allowed sorting orders -- first is default */
 static char *ordernames[] = {"cpu", "size", "res", "time", "command", NULL};
@@ -758,7 +757,7 @@ read_one_proc_stat(pid_t pid, struct top_proc * proc, struct process_select * se
 	p = skip_token(p);			/* skip cstime */
 
 	proc->pri = strtol(p, &p, 10);		/* priority */
-	proc->nice = strtol(p, &p, 10);		/* nice */
+	p = skip_token(p);			/* skip nice */
 	p = skip_token(p);			/* skip num_threads */
 	p = skip_token(p);			/* skip itrealvalue, 0 */
 	proc->start_time = strtoul(p, &p, 10);		/* start_time */
@@ -1111,11 +1110,10 @@ format_next_process(caddr_t handle)
 	struct top_proc *p = *nextactive++;
 
 	snprintf(fmt, sizeof(fmt),
-			 "%5d %-8.8s %3d %4d %5s %5s %-6s %5s %5.2f%% %5.2f%% %s",
+			 "%5d %-8.8s %3d %5s %5s %-6s %5s %5.2f%% %5.2f%% %s",
 			 p->pid,
 			 p->usename,
 			 p->pri < -99 ? -99 : p->pri,
-			 p->nice,
 			 format_k(p->size),
 			 format_k(p->rss),
 			 backendstatenames[p->pgstate],
