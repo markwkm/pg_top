@@ -11,18 +11,6 @@
 * Display summary statistics for average query cpu time, average query elapsed
   time, etc.
 
-* Renamed number of processs to be number of connections since that is more
-  accurate:
-
-  5 processes: 1 running, 4 sleeping
-
-  to
-
-  5 connections: 1 running, 4 sleeping
-
-* Display summary statistics for connections such as total number of idles
-  connections, etc.
-
 * Display summary statistics for locks such as total number of granted locks,
   total number of ungranted locks, etc.
 

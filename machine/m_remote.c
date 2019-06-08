@@ -65,7 +65,6 @@ enum column_proctab { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
 
 #define NCPUSTATES 5
 #define NMEMSTATS 5
-#define NPROCSTATES 7
 #define NSWAPSTATS 3
 
 #define MEMUSED 0
@@ -136,12 +135,6 @@ static char *memorynames[NMEMSTATS + 1] =
 
 /* these are names given to allowed sorting orders -- first is default */
 static char *ordernames[] = {"cpu", "size", "res", "time", "command", NULL};
-
-static char *procstatenames[NPROCSTATES + 1] =
-{
-	"", " running, ", " sleeping, ", " uninterruptable, ", " zombie, ",
-	" stopped, ", " swapping, ", NULL
-};
 
 static char *swapnames[NSWAPSTATS + 1] =
 {
@@ -700,7 +693,7 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 		proc->cancelled_write_bytes = value;
 
 		++total_procs;
-		++process_states[proc->state];
+		++process_states[proc->pgstate];
 
 		if (timediff > 0.0)
 		{

@@ -124,15 +124,6 @@ struct io_node
 
 /*=STATE IDENT STRINGS==================================================*/
 
-#define NPROCSTATES 7
-
-static char *procstatenames[NPROCSTATES + 1] =
-{
-	"", " running, ", " sleeping, ", " uninterruptable, ",
-	" zombie, ", " stopped, ", " swapping, ",
-	NULL
-};
-
 #define NCPUSTATES 5
 static char *cpustatenames[NCPUSTATES + 1] =
 {
@@ -937,7 +928,7 @@ get_process_info(struct system_info * si,
 				continue;
 
 			total_procs++;
-			process_states[proc->state]++;
+			process_states[proc->pgstate]++;
 
 			if (timediff > 0.0)
 			{

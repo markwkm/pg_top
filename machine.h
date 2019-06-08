@@ -45,6 +45,8 @@
 
 #define NUM_AVERAGES	3
 
+#define NPROCSTATES 7
+
 /*
  * The statics struct is filled in by machine_init.  Fields marked as
  * "optional" are not filled in by every module.
@@ -166,5 +168,6 @@ void		update_state(int *pgstate, char *state);
 extern int	mode_stats;
 
 extern char *backendstatenames[];
+extern char *procstatenames[];
 
 #endif   /* _MACHINE_H_ */

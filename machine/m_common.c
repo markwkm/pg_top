@@ -27,6 +27,11 @@ char *backendstatenames[] =
 	"", "idle", "active", "idltxn", "fast", "abort", "disabl", NULL
 };
 
+char *procstatenames[] =
+{
+	"", " idle, ", " active, ", " idle txn, ", " fastpath, ", " aborted, ",
+	" disabled, ", NULL
+};
 
 /* Store data directory to avoid unnecessary requests to server */
 static char *data_directory = NULL;
