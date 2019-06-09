@@ -16,3 +16,8 @@
 
 * Make new TPS and i/o activity and disk space usage work on remote
   connections.
+
+* Add warning when user running pg_top does not have OS privileges to view i/o
+  statistics.  /proc/*/io may only be readable by process owner.
+
+* Add warning when user i/o stats are not avaialble from OS. (Linux)

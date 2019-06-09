@@ -27,6 +27,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <bsd/stdlib.h>
+#include <bsd/sys/tree.h>
 #include <errno.h>
 #include <dirent.h>
 #include <string.h>
@@ -70,6 +72,7 @@ extern char *myname;
 
 struct top_proc
 {
+	RB_ENTRY(top_proc) entry;
 	pid_t		pid;
 
 	/* Data from /proc/<pid>/stat. */
@@ -94,13 +97,6 @@ struct top_proc
 	long long write_bytes;
 	long long cancelled_write_bytes;
 
-	struct top_proc *next;
-};
-
-struct io_node
-{
-	pid_t pid;
-
 	/* The change in the previous values and current values. */
 	long long diff_rchar;
 	long long diff_wchar;
@@ -109,18 +105,13 @@ struct io_node
 	long long diff_read_bytes;
 	long long diff_write_bytes;
 	long long diff_cancelled_write_bytes;
-
-	/* The previous values. */
-	long long old_rchar;
-	long long old_wchar;
-	long long old_syscr;
-	long long old_syscw;
-	long long old_read_bytes;
-	long long old_write_bytes;
-	long long old_cancelled_write_bytes;
-
-	struct io_node *next;
 };
+
+int topproccmp(struct top_proc *, struct top_proc *);
+
+RB_HEAD(pgproc, top_proc) head_proc = RB_INITIALIZER(&head_proc);
+RB_PROTOTYPE(pgproc, top_proc, entry, topproccmp)
+RB_GENERATE(pgproc, top_proc, entry, topproccmp)
 
 /*=STATE IDENT STRINGS==================================================*/
 
@@ -166,19 +157,19 @@ static char *ordernames_io[] = {
 };
 
 /* forward definitions for comparison functions */
-int			compare_cpu();
-int			compare_size();
-int			compare_res();
-int			compare_time();
-int			compare_cmd();
-int			compare_pid();
-int			compare_rchar();
-int			compare_wchar();
-int			compare_syscr();
-int			compare_syscw();
-int			compare_reads();
-int			compare_writes();
-int			compare_cwrites();
+static int	compare_cpu();
+static int	compare_size();
+static int	compare_res();
+static int	compare_time();
+static int	compare_cmd();
+static int	compare_pid();
+static int	compare_rchar();
+static int	compare_wchar();
+static int	compare_syscr();
+static int	compare_syscw();
+static int	compare_reads();
+static int	compare_writes();
+static int	compare_cwrites();
 
 int			(*proc_compares[]) () =
 {
@@ -218,13 +209,10 @@ static struct timeval lasttime;
 
 /* these are for keeping track of processes */
 
-#define HASH_SIZE		 (1003)
 #define INITIAL_ACTIVE_SIZE  (256)
 #define PROCBLOCK_SIZE		 (32)
-static struct top_proc *ptable[HASH_SIZE];
-static struct top_proc **pactive;
-static struct top_proc **nextactive;
-static unsigned int activesize = 0;
+static struct top_proc *pgtable;
+static int proc_index;
 static time_t boottime = -1;
 
 /* these are for passing data back to the machine independant portion */
@@ -237,26 +225,8 @@ static long swap_stats[NSWAPSTATS];
 /* usefull macros */
 #define bytetok(x)	(((x) + 512) >> 10)
 #define pagetok(x)	((x) * sysconf(_SC_PAGESIZE) >> 10)
-#define HASH(x)		(((x) * 1686629713U) % HASH_SIZE)
 
 /*======================================================================*/
-
-struct io_node *
-new_io_node(pid_t);
-
-struct io_node *
-get_io_stats(struct io_node *, pid_t);
-
-struct io_node *
-insert_io_stats(struct io_node *, struct io_node *);
-
-void
-update_io_stats(struct io_node *, pid_t, long long, long long, long long,
-	long long, long long, long long, long long);
-
-struct io_node *
-upsert_io_stats(struct io_node *, pid_t, long long, long long, long long,
-	long long, long long, long long, long long);
 
 static inline char *
 skip_ws(const char *p)
@@ -274,6 +244,12 @@ skip_token(const char *p)
 	while (*p && !isspace(*p))
 		p++;
 	return (char *) p;
+}
+
+int
+topproccmp(struct top_proc *e1, struct top_proc *e2)
+{
+	return (e1->pid < e2->pid ? -1 : e1->pid > e2->pid);
 }
 
 static void
@@ -318,58 +294,6 @@ update_usename(struct top_proc * proc, char *usename)
 		free(proc->usename);
 		proc->usename = strdup(usename);
 	}
-}
-
-/*
- * Process structures are allocated and freed as needed.  Here we
- * keep big pools of them, adding more pool as needed.	When a
- * top_proc structure is freed, it is added to a freelist and reused.
- */
-
-static struct top_proc *freelist = NULL;
-static struct top_proc *procblock = NULL;
-static struct top_proc *procmax = NULL;
-
-static struct top_proc *
-new_proc()
-{
-	struct top_proc *p;
-
-	if (freelist)
-	{
-		p = freelist;
-		freelist = freelist->next;
-	}
-	else if (procblock)
-	{
-		p = procblock;
-		if (++procblock >= procmax)
-		{
-			procblock = NULL;
-		}
-	}
-	else
-	{
-		p = procblock = (struct top_proc *) calloc(PROCBLOCK_SIZE,
-												   sizeof(struct top_proc));
-		procmax = procblock++ + PROCBLOCK_SIZE;
-	}
-
-	/* initialization */
-	if (p->name != NULL)
-	{
-		free(p->name);
-		p->name = NULL;
-	}
-
-	return p;
-}
-
-static void
-free_proc(struct top_proc * proc)
-{
-	proc->next = freelist;
-	freelist = proc;
 }
 
 int
@@ -457,13 +381,6 @@ machine_init(struct statics * statics)
 	statics->boottime = boottime;
 	statics->flags.fullcmds = 1;
 	statics->flags.warmup = 1;
-
-	/* allocate needed space */
-	pactive = (struct top_proc **) malloc(sizeof(struct top_proc *) * INITIAL_ACTIVE_SIZE);
-	activesize = INITIAL_ACTIVE_SIZE;
-
-	/* make sure the hash table is empty */
-	memset(ptable, 0, HASH_SIZE * sizeof(struct top_proc *));
 
 	/* all done! */
 	return 0;
@@ -635,7 +552,7 @@ get_system_info(struct system_info * info)
 
 
 static void
-read_one_proc_stat(pid_t pid, struct top_proc * proc, struct process_select * sel)
+read_one_proc_stat(struct top_proc *proc, struct process_select *sel)
 {
 	char		buffer[4096],
 			   *p,
@@ -645,6 +562,8 @@ read_one_proc_stat(pid_t pid, struct top_proc * proc, struct process_select * se
 	int			fullcmd;
 	char		value[BUFFERLEN + 1];
 
+	long long tmp;
+
 	/* if anything goes wrong, we return with proc->state == 0 */
 	proc->state = 0;
 
@@ -652,7 +571,7 @@ read_one_proc_stat(pid_t pid, struct top_proc * proc, struct process_select * se
 	fullcmd = sel->fullcmd;
 	if (fullcmd == 1)
 	{
-		sprintf(buffer, "%d/cmdline", pid);
+		sprintf(buffer, "%d/cmdline", proc->pid);
 		if ((fd = open(buffer, O_RDONLY)) != -1)
 		{
 			/* read command line data */
@@ -676,7 +595,7 @@ read_one_proc_stat(pid_t pid, struct top_proc * proc, struct process_select * se
 	}
 
 	/* grab the proc stat info in one go */
-	sprintf(buffer, "%d/stat", pid);
+	sprintf(buffer, "%d/stat", proc->pid);
 
 	fd = open(buffer, O_RDONLY);
 	len = read(fd, buffer, sizeof(buffer) - 1);
@@ -778,7 +697,7 @@ read_one_proc_stat(pid_t pid, struct top_proc * proc, struct process_select * se
 #endif
 
 	/* Get the io stats. */
-	sprintf(buffer, "%d/io", pid);
+	sprintf(buffer, "%d/io", proc->pid);
 	fd = open(buffer, O_RDONLY);
 	if (fd == -1)
 	{
@@ -801,13 +720,34 @@ read_one_proc_stat(pid_t pid, struct top_proc * proc, struct process_select * se
 
 	buffer[len] = '\0';
 	p = buffer;
-	GET_VALUE(proc->rchar);
-	GET_VALUE(proc->wchar);
-	GET_VALUE(proc->syscr);
-	GET_VALUE(proc->syscw);
-	GET_VALUE(proc->read_bytes);
-	GET_VALUE(proc->write_bytes);
-	GET_VALUE(proc->cancelled_write_bytes);
+
+	GET_VALUE(tmp);			/* rchar */
+	proc->diff_rchar = tmp - proc->rchar;
+	proc->rchar = tmp;
+
+	GET_VALUE(tmp);			/* wchar */
+	proc->diff_wchar = tmp - proc->wchar;
+	proc->wchar = tmp;
+
+	GET_VALUE(tmp);			/* syscr */
+	proc->diff_syscr = tmp - proc->syscr;
+	proc->syscr = tmp;
+
+	GET_VALUE(tmp);			/* syscw */
+	proc->diff_syscw = tmp - proc->syscw;
+	proc->syscw = tmp;
+
+	GET_VALUE(tmp);			/* read_bytes */
+	proc->diff_read_bytes = tmp - proc->read_bytes;
+	proc->read_bytes = tmp;
+
+	GET_VALUE(tmp); 			/* write_bytes */
+	proc->diff_write_bytes = tmp - proc->write_bytes;
+	proc->write_bytes = tmp;
+
+	GET_VALUE(tmp); 			/* cancelled_write_bytes */
+	proc->diff_cancelled_write_bytes = tmp - proc->cancelled_write_bytes;
+	proc->cancelled_write_bytes = tmp;
 }
 
 
@@ -820,11 +760,8 @@ get_process_info(struct system_info * si,
 	double		timediff,
 				alpha,
 				beta;
-	struct top_proc *proc;
-	pid_t		pid;
 	unsigned long now;
 	unsigned long elapsed;
-	int			i;
 
 	/* calculate the time difference since our last check */
 	gettimeofday(&thistime, 0);
@@ -858,25 +795,18 @@ get_process_info(struct system_info * si,
 	}
 	timediff *= HZ;				/* convert to ticks */
 
-	/* mark all hash table entries as not seen */
-	for (i = 0; i < HASH_SIZE; ++i)
-	{
-		for (proc = ptable[i]; proc; proc = proc->next)
-		{
-			proc->state = 0;
-		}
-	}
-
 	/* read the process information */
 	{
 		int			total_procs = 0;
-		struct top_proc **active;
+		int			active_procs = 0;
 
 		int			show_idle = sel->idle;
 
 		int			i;
 		int			rows;
 		PGresult   *pgresult = NULL;
+
+		struct top_proc *n, *p;
 
 		memset(process_states, 0, sizeof(process_states));
 
@@ -890,119 +820,83 @@ get_process_info(struct system_info * si,
 		{
 			rows = 0;
 		}
+
+		if (rows > 0) {
+			p = reallocarray(pgtable, rows, sizeof(struct top_proc));
+			if (p == NULL) {
+				fprintf(stderr, "reallocarray error\n");
+				if (pgresult != NULL)
+					PQclear(pgresult);
+				disconnect_from_db(conninfo);
+				exit(1);
+			}
+			pgtable = p;
+		}
+
 		for (i = 0; i < rows; i++)
 		{
-			char	   *procpid = PQgetvalue(pgresult, i, 0);
-			struct top_proc *pp;
 			unsigned long otime;
 
-			pid = atoi(procpid);
-
-			/* look up hash table entry */
-			proc = pp = ptable[HASH(pid)];
-			while (proc && proc->pid != pid)
-			{
-				proc = proc->next;
+			n = malloc(sizeof(struct top_proc));
+			if (n == NULL) {
+				fprintf(stderr, "malloc error\n");
+				if (pgresult != NULL)
+					PQclear(pgresult);
+				disconnect_from_db(conninfo);
+				exit(1);
 			}
-
-			/* if we came up empty, create a new entry */
-			if (proc == NULL)
+			memset(n, 0, sizeof(struct top_proc));
+			n->pid = atoi(PQgetvalue(pgresult, i, 0));
+			p = RB_INSERT(pgproc, &head_proc, n);
+			if (p != NULL)
 			{
-				proc = new_proc();
-				proc->pid = pid;
-				proc->next = pp;
-				ptable[HASH(pid)] = proc;
-				proc->time = 0;
-				proc->wcpu = 0;
-			}
-
-			otime = proc->time;
-
-			read_one_proc_stat(pid, proc, sel);
-			if (sel->fullcmd == 2)
-				update_procname(proc, PQgetvalue(pgresult, i, 1));
-			update_state(&proc->pgstate, PQgetvalue(pgresult, i, 2));
-			update_usename(proc, PQgetvalue(pgresult, i, 3));
-
-			if (proc->state == 0)
-				continue;
-
-			total_procs++;
-			process_states[proc->pgstate]++;
-
-			if (timediff > 0.0)
-			{
-				if ((proc->pcpu = (proc->time - otime) / timediff) < 0.0001)
-				{
-					proc->pcpu = 0;
-				}
-				proc->wcpu = proc->pcpu * alpha + proc->wcpu * beta;
-			}
-			else if ((elapsed = (now - boottime) * HZ - proc->start_time) > 0)
-			{
-				/*
-				 * What's with the noop statement? if ((proc->pcpu =
-				 * (double)proc->time / (double)elapsed) < 0.0001) {
-				 * proc->pcpu; }
-				 */
-				proc->wcpu = proc->pcpu;
+				free(n);
+				n = p;
 			}
 			else
 			{
-				proc->wcpu = proc->pcpu = 0.0;
+				n->time = 0;
+				n->wcpu = 0;
 			}
+
+			otime = n->time;
+
+			read_one_proc_stat(n, sel);
+			if (sel->fullcmd == 2)
+				update_procname(n, PQgetvalue(pgresult, i, 1));
+			update_state(&n->pgstate, PQgetvalue(pgresult, i, 2));
+			update_usename(n, PQgetvalue(pgresult, i, 3));
+
+			total_procs++;
+			process_states[n->pgstate]++;
+
+			if (timediff > 0.0)
+			{
+				if ((n->pcpu = (n->time - otime) / timediff) < 0.0001)
+				{
+					n->pcpu = 0;
+				}
+				n->wcpu = n->pcpu * alpha + n->wcpu * beta;
+			}
+			else if ((elapsed = (now - boottime) * HZ - n->start_time) > 0)
+			{
+				n->wcpu = n->pcpu;
+			}
+			else
+			{
+				n->wcpu = n->pcpu = 0.0;
+			}
+
+			if ((show_idle || n->pgstate != STATE_IDLE) &&
+					(sel->usename[0] == '\0' ||
+							strcmp(n->usename, sel->usename) == 0))
+				memcpy(&pgtable[active_procs++], n, sizeof(struct top_proc));
 		}
 		if (pgresult != NULL)
 			PQclear(pgresult);
 		disconnect_from_db(conninfo);
 
-		/* make sure we have enough slots for the active procs */
-		if (activesize < total_procs)
-		{
-			pactive = (struct top_proc **) realloc(pactive,
-									sizeof(struct top_proc *) * total_procs);
-			activesize = total_procs;
-		}
-
-		/* set up the active procs and flush dead entries */
-		active = pactive;
-		for (i = 0; i < HASH_SIZE; i++)
-		{
-			struct top_proc *last;
-			struct top_proc *ptmp;
-
-			last = NULL;
-			proc = ptable[i];
-			while (proc != NULL)
-			{
-				if (proc->state == 0)
-				{
-					ptmp = proc;
-					if (last)
-					{
-						proc = last->next = proc->next;
-					}
-					else
-					{
-						proc = ptable[i] = proc->next;
-					}
-					free_proc(ptmp);
-				}
-				else
-				{
-					if ((show_idle || proc->state == 1 || proc->pcpu) &&
-							(sel->usename[0] == '\0' ||
-									strcmp(proc->usename, sel->usename) == 0))
-					{
-						*active++ = proc;
-						last = proc;
-					}
-					proc = proc->next;
-				}
-			}
-		}
-
-		si->p_active = active - pactive;
+		si->p_active = active_procs;
 		si->p_total = total_procs;
 		si->procstates = process_states;
 	}
@@ -1010,18 +904,18 @@ get_process_info(struct system_info * si,
 	/* if requested, sort the "active" procs */
 	if (si->p_active) {
 		if (mode == MODE_IO_STATS) {
-			qsort(pactive, si->p_active, sizeof(struct top_proc *),
-			  		io_compares[compare_index]);
+			qsort(pgtable, si->p_active, sizeof(struct top_proc *),
+					io_compares[compare_index]);
 		}
 		else
 		{
-			qsort(pactive, si->p_active, sizeof(struct top_proc *),
-			  		proc_compares[compare_index]);
+			qsort(pgtable, si->p_active, sizeof(struct top_proc *),
+					proc_compares[compare_index]);
 		}
 	}
 
 	/* don't even pretend that the return value thing here isn't bogus */
-	nextactive = pactive;
+	proc_index = 0;
 	return (caddr_t) 0;
 }
 
@@ -1045,35 +939,21 @@ char *
 format_next_io(caddr_t handle)
 {
 	static char fmt[MAX_COLS];	/* static area where result is built */
-	static struct io_node *head = NULL;
-	struct top_proc *p = *nextactive++;
-	struct io_node *node = NULL;
-
-	head = upsert_io_stats(head, p->pid, p->rchar, p->wchar, p->syscr,
-			p->syscw, p->read_bytes, p->write_bytes, p->cancelled_write_bytes);
+	struct top_proc *p = &pgtable[proc_index++];
 
 	if (mode_stats == STATS_DIFF)
 	{
-		node = get_io_stats(head, p->pid);
-		if (node == NULL)
-		{
-			snprintf(fmt, sizeof(fmt), "%5d %5d %5d %7d %7d %5d %6d %7d %s",
-					p->pid, 0, 0, 0, 0, 0, 0, 0, p->name);
-		}
-		else
-		{
-			snprintf(fmt, sizeof(fmt),
-					"%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
-					p->pid,
-					format_b(node->diff_rchar),
-					format_b(node->diff_wchar),
-					node->diff_syscr,
-					node->diff_syscw,
-					format_b(node->diff_read_bytes),
-					format_b(node->diff_write_bytes),
-					format_b(node->diff_cancelled_write_bytes),
-					p->name);
-		}
+		snprintf(fmt, sizeof(fmt),
+				"%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
+				p->pid,
+				format_b(p->diff_rchar),
+				format_b(p->diff_wchar),
+				p->diff_syscr,
+				p->diff_syscw,
+				format_b(p->diff_read_bytes),
+				format_b(p->diff_write_bytes),
+				format_b(p->diff_cancelled_write_bytes),
+				p->name);
 	}
 	else
 	{
@@ -1097,7 +977,7 @@ char *
 format_next_process(caddr_t handle)
 {
 	static char fmt[MAX_COLS];	/* static area where result is built */
-	struct top_proc *p = *nextactive++;
+	struct top_proc *p = &pgtable[proc_index++];
 
 	snprintf(fmt, sizeof(fmt),
 			 "%5d %-8.8s %3d %5s %5s %-6s %5s %5.2f%% %5.2f%% %s",
@@ -1135,9 +1015,7 @@ format_next_process(caddr_t handle)
    desired ordering.
  */
 
-#define ORDERKEY_PCTCPU  if (dresult = p2->pcpu - p1->pcpu,\
-			 (result = dresult > 0.0 ? 1 : dresult < 0.0 ? -1 : 0) == 0)
-#define ORDERKEY_CPTICKS if ((result = (long)p2->time - (long)p1->time) == 0)
+#define ORDERKEY_PCTCPU  if ((result = (int)(p2->pcpu - p1->pcpu)) == 0)
 #define ORDERKEY_STATE	 if ((result = p1->pgstate < p2->pgstate))
 #define ORDERKEY_PRIO	 if ((result = p2->pri - p1->pri) == 0)
 #define ORDERKEY_RSSIZE  if ((result = p2->rss - p1->rss) == 0)
@@ -1155,151 +1033,107 @@ format_next_process(caddr_t handle)
 
 /* compare_cpu - the comparison function for sorting by cpu percentage */
 
-int
-compare_cpu(
-			struct top_proc ** pp1,
-			struct top_proc ** pp2)
+static int
+compare_cpu(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-	double		dresult;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
 
 	ORDERKEY_PCTCPU
-		ORDERKEY_CPTICKS
 		ORDERKEY_STATE
 		ORDERKEY_PRIO
 		ORDERKEY_RSSIZE
 		ORDERKEY_MEM
 		;
 
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
+	return (result);
 }
 
 /* compare_size - the comparison function for sorting by total memory usage */
 
-int
-compare_size(
-			 struct top_proc ** pp1,
-			 struct top_proc ** pp2)
+static int
+compare_size(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-	double		dresult;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
 
 	ORDERKEY_MEM
 		ORDERKEY_RSSIZE
 		ORDERKEY_PCTCPU
-		ORDERKEY_CPTICKS
 		ORDERKEY_STATE
 		ORDERKEY_PRIO
 		;
 
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
+	return (result);
 }
 
 /* compare_res - the comparison function for sorting by resident set size */
 
-int
-compare_res(
-			struct top_proc ** pp1,
-			struct top_proc ** pp2)
+static int
+compare_res(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-	double		dresult;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
 
 	ORDERKEY_RSSIZE
 		ORDERKEY_MEM
 		ORDERKEY_PCTCPU
-		ORDERKEY_CPTICKS
 		ORDERKEY_STATE
 		ORDERKEY_PRIO
 		;
 
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
+	return (result);
 }
 
 /* compare_time - the comparison function for sorting by total cpu time */
 
-int
-compare_time(
-			 struct top_proc ** pp1,
-			 struct top_proc ** pp2)
+static int
+compare_time(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-	double		dresult;
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
 
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
-
-	ORDERKEY_CPTICKS
-		ORDERKEY_PCTCPU
+	ORDERKEY_PCTCPU
 		ORDERKEY_STATE
 		ORDERKEY_PRIO
 		ORDERKEY_MEM
 		ORDERKEY_RSSIZE
 		;
 
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
+	return (result);
 }
 
 
 /* compare_cmd - the comparison function for sorting by command name */
 
-int
-compare_cmd(
-			struct top_proc ** pp1,
-			struct top_proc ** pp2)
+static int
+compare_cmd(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-	double		dresult;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
 
 	ORDERKEY_NAME
 		ORDERKEY_PCTCPU
-		ORDERKEY_CPTICKS
 		ORDERKEY_STATE
 		ORDERKEY_PRIO
 		ORDERKEY_RSSIZE
 		ORDERKEY_MEM
 		;
 
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
+	return (result);
 }
 
-int
-compare_pid(struct top_proc ** pp1, struct top_proc ** pp2)
+static int
+compare_pid(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
 
 	ORDERKEY_PID
 		ORDERKEY_RCHAR
@@ -1312,19 +1146,15 @@ compare_pid(struct top_proc ** pp1, struct top_proc ** pp2)
 		ORDERKEY_NAME
 		;
 
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
+	return (result);
 }
 
-int
-compare_rchar(struct top_proc ** pp1, struct top_proc ** pp2)
+static int
+compare_rchar(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
 
 	ORDERKEY_RCHAR
 		ORDERKEY_PID
@@ -1337,19 +1167,15 @@ compare_rchar(struct top_proc ** pp1, struct top_proc ** pp2)
 		ORDERKEY_NAME
 		;
 
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
+	return (result);
 }
 
-int
-compare_wchar(struct top_proc ** pp1, struct top_proc ** pp2)
+static int
+compare_wchar(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
 
 	ORDERKEY_WCHAR
 		ORDERKEY_PID
@@ -1362,19 +1188,15 @@ compare_wchar(struct top_proc ** pp1, struct top_proc ** pp2)
 		ORDERKEY_NAME
 		;
 
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
+	return (result);
 }
 
-int
-compare_syscr(struct top_proc ** pp1, struct top_proc ** pp2)
+static int
+compare_syscr(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
 
 	ORDERKEY_SYSCR
 		ORDERKEY_PID
@@ -1387,19 +1209,15 @@ compare_syscr(struct top_proc ** pp1, struct top_proc ** pp2)
 		ORDERKEY_NAME
 		;
 
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
+	return (result);
 }
 
-int
-compare_syscw(struct top_proc ** pp1, struct top_proc ** pp2)
+static int
+compare_syscw(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
 
 	ORDERKEY_SYSCW
 		ORDERKEY_PID
@@ -1412,19 +1230,15 @@ compare_syscw(struct top_proc ** pp1, struct top_proc ** pp2)
 		ORDERKEY_NAME
 		;
 
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
+	return (result);
 }
 
-int
-compare_reads(struct top_proc ** pp1, struct top_proc ** pp2)
+static int
+compare_reads(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
 
 	ORDERKEY_READS
 		ORDERKEY_PID
@@ -1437,19 +1251,15 @@ compare_reads(struct top_proc ** pp1, struct top_proc ** pp2)
 		ORDERKEY_NAME
 		;
 
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
+	return (result);
 }
 
-int
-compare_writes(struct top_proc ** pp1, struct top_proc ** pp2)
+static int
+compare_writes(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
 
 	ORDERKEY_WRITES
 		ORDERKEY_PID
@@ -1462,19 +1272,15 @@ compare_writes(struct top_proc ** pp1, struct top_proc ** pp2)
 		ORDERKEY_NAME
 		;
 
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
+	return (result);
 }
 
-int
-compare_cwrites(struct top_proc ** pp1, struct top_proc ** pp2)
+static int
+compare_cwrites(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
 
 	ORDERKEY_CWRITES
 		ORDERKEY_PID
@@ -1487,134 +1293,7 @@ compare_cwrites(struct top_proc ** pp1, struct top_proc ** pp2)
 		ORDERKEY_NAME
 		;
 
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
-}
-
-struct io_node *
-new_io_node(pid_t pid)
-{
-	struct io_node *node;
-
-	node = (struct io_node *) malloc(sizeof(struct io_node));
-	bzero(node, sizeof(struct io_node));
-	node->pid = pid;
-	node->next = NULL;
-
-	return node;
-}
-
-struct io_node *
-get_io_stats(struct io_node *head, pid_t pid)
-{
-	struct io_node *node = head;
-
-	while (node != NULL)
-	{
-		if (node->pid == pid)
-		{
-			return node;
-		}
-		node = node->next;
-	}
-
-	return node;
-}
-
-struct io_node *
-insert_io_stats(struct io_node *head, struct io_node *node)
-{
-	struct io_node *c = head;
-	struct io_node *p = NULL;
-
-	if (node->pid < head->pid)
-	{
-		node->next = head;
-		head = node;
-		return head;
-	}
-
-	c = head->next;
-	p = head;
-	while (c != NULL)
-	{
-		if (node->pid < c->pid)
-		{
-			node->next = c;
-			p->next = node;
-			return head;
-		}
-		p = c;
-		c = c->next;
-	}
-
-	if (c == NULL)
-	{
-		p->next = node;
-	}
-
-	return head;
-}
-
-void
-update_io_stats(struct io_node *node, pid_t pid, long long rchar,
-	long long wchar, long long syscr, long long syscw, long long read_bytes,
-	long long write_bytes, long long cancelled_write_bytes)
-{
-	/* Calculate difference between previous and current values. */
-	node->diff_rchar = rchar - node->old_rchar;
-	node->diff_wchar = wchar - node->old_wchar;
-	node->diff_syscr = syscr - node->old_syscr;
-	node->diff_syscw = syscw - node->old_syscw;
-	node->diff_read_bytes = read_bytes - node->old_read_bytes;
-	node->diff_write_bytes = write_bytes - node->old_write_bytes;
-	node->diff_cancelled_write_bytes =
-			cancelled_write_bytes - node->old_cancelled_write_bytes;
-
-	/* Save the current values as previous values. */
-	node->old_rchar = rchar;
-	node->old_wchar = wchar;
-	node->old_syscr = syscr;
-	node->old_syscw = syscw;
-	node->old_read_bytes = read_bytes;
-	node->old_write_bytes = write_bytes;
-	node->old_cancelled_write_bytes = cancelled_write_bytes;
-}
-
-struct io_node *
-upsert_io_stats(struct io_node *head, pid_t pid, long long rchar,
-	long long wchar, long long syscr, long long syscw, long long read_bytes,
-	long long write_bytes, long long cancelled_write_bytes)
-{
-	struct io_node *c = head;
-
-	/* List is empty, create a new node. */
-	if (head == NULL)
-	{
-		head = new_io_node(pid);
-		update_io_stats(head, pid, rchar, wchar, syscr, syscw, read_bytes,
-				write_bytes, cancelled_write_bytes);
-		return head;
-	}
-
-	/* Check if this pid exists already. */
-	while (c != NULL)
-	{
-		if (c->pid == pid)
-		{
-			/* Found an existing node with same pid, update it. */
-			update_io_stats(c, pid, rchar, wchar, syscr, syscw, read_bytes,
-					write_bytes, cancelled_write_bytes);
-			return head;
-		}
-		c = c->next;
-	}
-
-	 /* Didn't find pig.  Create a new node, save the data and insert it. */
-	c = new_io_node(pid);
-	update_io_stats(c, pid, rchar, wchar, syscr, syscw, read_bytes,
-			write_bytes, cancelled_write_bytes);
-	head = insert_io_stats(head, c);
-	return head;
+	return (result);
 }
 
 /*

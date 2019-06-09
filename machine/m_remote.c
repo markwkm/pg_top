@@ -3,6 +3,10 @@
  */
 
 #include <stdlib.h>
+#ifdef __linux__
+#include <bsd/stdlib.h>
+#include <bsd/sys/tree.h>
+#endif /* __linux__ */
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -27,16 +31,16 @@
 		"FROM pg_memusage()"
 
 #define QUERY_PROCTAB \
-		"SELECT a.pid, comm, fullcomm, a.state, utime, stime, priority, nice,\n" \
+		"SELECT a.pid, comm, fullcomm, a.state, utime, stime, priority,\n" \
 		"       starttime, vsize, rss, usename, rchar, wchar,\n" \
 		"       syscr, syscw, reads, writes, cwrites, b.state\n" \
 		"FROM pg_proctab() a LEFT OUTER JOIN pg_stat_activity b\n" \
 		"                    ON a.pid = b.pid"
 
 #define QUERY_PROCTAB_QUERY \
-		"SELECT a.pid, comm, query, a.state, utime, stime, priority, nice,\n" \
+		"SELECT a.pid, comm, query, a.state, utime, stime, priority,\n" \
 		"       starttime, vsize, rss, usename, rchar, wchar,\n" \
-		"       syscr, syscw, reads, writes, cwrites\n" \
+		"       syscr, syscw, reads, writes, cwrites, b.state\n" \
 		"FROM pg_proctab() a LEFT OUTER JOIN pg_stat_activity b\n" \
 		"                    ON a.pid = b.pid"
 
@@ -54,9 +58,6 @@ enum column_proctab { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
 		c_priority, c_starttime, c_vsize, c_rss, c_username,
 		c_rchar, c_wchar, c_syscr, c_syscw, c_reads, c_writes, c_cwrites,
 		c_pgstate};
-
-#define HASH_SIZE (1003)
-#define HASH(x) (((x) * 1686629713U) % HASH_SIZE)
 
 #define bytetok(x)  (((x) + 512) >> 10)
 
@@ -78,8 +79,9 @@ enum column_proctab { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
 #define SWAPFREE 1
 #define SWAPCACHED 2
 
-struct top_proc
+struct top_proc_r
 {
+	RB_ENTRY(top_proc_r) entry;
 	pid_t pid;
 	char *name;
 	char *usename;
@@ -110,18 +112,17 @@ struct top_proc
 	long long read_bytes;
 	long long write_bytes;
 	long long cancelled_write_bytes;
-
-	struct top_proc *next;
 };
 
-static unsigned int activesize = 0;
 static time_t boottime = -1;
-static struct top_proc **nextactive;
-static struct top_proc **pactive;
-static struct top_proc *freelist = NULL;
-static struct top_proc *procblock = NULL;
-static struct top_proc *procmax = NULL;
-static struct top_proc *ptable[HASH_SIZE];
+static struct top_proc_r *pgrtable;
+static int proc_r_index;
+
+int topprocrcmp(struct top_proc_r *, struct top_proc_r *);
+
+RB_HEAD(pgprocr, top_proc_r) head_proc_r = RB_INITIALIZER(&head_proc_r);
+RB_PROTOTYPE(pgprocr, top_proc_r, entry, topprocrcmp)
+RB_GENERATE(pgprocr, top_proc_r, entry, topprocrcmp)
 
 static char *cpustatenames[NCPUSTATES + 1] =
 {
@@ -168,9 +169,7 @@ static int64_t cp_time[NCPUSTATES];
 static int64_t cp_old[NCPUSTATES];
 static int64_t cp_diff[NCPUSTATES];
 
-#define ORDERKEY_PCTCPU  if (dresult = p2->pcpu - p1->pcpu,\
-			 (result = dresult > 0.0 ? 1 : dresult < 0.0 ? -1 : 0) == 0)
-#define ORDERKEY_CPTICKS if ((result = (long)p2->time - (long)p1->time) == 0)
+#define ORDERKEY_PCTCPU  if ((result = (int)(p2->pcpu - p1->pcpu)) == 0)
 #define ORDERKEY_STATE	 if ((result = p1->pgstate < p2->pgstate))
 #define ORDERKEY_PRIO	if ((result = p2->pri - p1->pri) == 0)
 #define ORDERKEY_RSSIZE  if ((result = p2->rss - p1->rss) == 0)
@@ -178,13 +177,11 @@ static int64_t cp_diff[NCPUSTATES];
 #define ORDERKEY_NAME	if ((result = strcmp(p1->name, p2->name)) == 0)
 
 int check_for_function(PGconn *, char *);
-int compare_cpu_r(struct top_proc **, struct top_proc **);
-int compare_size_r(struct top_proc **, struct top_proc **);
-int compare_res_r(struct top_proc **, struct top_proc **);
-int compare_time_r(struct top_proc **, struct top_proc **);
-int compare_cmd_r(struct top_proc **, struct top_proc **);
-static void free_proc(struct top_proc *);
-static struct top_proc *new_proc();
+static int compare_cpu_r(const void *, const void *);
+static int compare_size_r(const void *, const void *);
+static int compare_res_r(const void *, const void *);
+static int compare_time_r(const void *, const void *);
+static int compare_cmd_r(const void *, const void *);
 
 int
 check_for_function(PGconn *pgconn, char *procname)
@@ -226,20 +223,14 @@ int
 
 /* compare_cpu_r - the comparison function for sorting by cpu percentage */
 
-int
-compare_cpu_r(struct top_proc **pp1, struct top_proc **pp2)
+static int
+compare_cpu_r(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-	double	  dresult;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
 
 	ORDERKEY_PCTCPU
-		ORDERKEY_CPTICKS
 		ORDERKEY_STATE
 		ORDERKEY_PRIO
 		ORDERKEY_RSSIZE
@@ -251,22 +242,16 @@ compare_cpu_r(struct top_proc **pp1, struct top_proc **pp2)
 
 /* The comparison function for sorting by total memory usage. */
 
-int
-compare_size_r(struct top_proc **pp1, struct top_proc **pp2)
+static int
+compare_size_r(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-	double	  dresult;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
 
 	ORDERKEY_MEM
 		ORDERKEY_RSSIZE
 		ORDERKEY_PCTCPU
-		ORDERKEY_CPTICKS
 		ORDERKEY_STATE
 		ORDERKEY_PRIO
 		;
@@ -276,22 +261,16 @@ compare_size_r(struct top_proc **pp1, struct top_proc **pp2)
 
 /* The comparison function for sorting by resident set size. */
 
-int
-compare_res_r(struct top_proc **pp1, struct top_proc **pp2)
+static int
+compare_res_r(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-	double	  dresult;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
 
 	ORDERKEY_RSSIZE
 		ORDERKEY_MEM
 		ORDERKEY_PCTCPU
-		ORDERKEY_CPTICKS
 		ORDERKEY_STATE
 		ORDERKEY_PRIO
 		;
@@ -301,20 +280,14 @@ compare_res_r(struct top_proc **pp1, struct top_proc **pp2)
 
 /* The comparison function for sorting by total cpu time. */
 
-int
-compare_time_r(struct top_proc **pp1, struct top_proc **pp2)
+static int
+compare_time_r(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-	double	  dresult;
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
 
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
-
-	ORDERKEY_CPTICKS
-		ORDERKEY_PCTCPU
+	ORDERKEY_PCTCPU
 		ORDERKEY_STATE
 		ORDERKEY_PRIO
 		ORDERKEY_MEM
@@ -326,21 +299,15 @@ compare_time_r(struct top_proc **pp1, struct top_proc **pp2)
 
 /* The comparison function for sorting by command name. */
 
-int
-compare_cmd_r(struct top_proc ** pp1, struct top_proc **pp2)
+static int
+compare_cmd_r(const void *v1, const void *v2)
 {
-	register struct top_proc *p1;
-	register struct top_proc *p2;
-	register long result;
-	double	  dresult;
-
-	/* remove one level of indirection */
-	p1 = *pp1;
-	p2 = *pp2;
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
 
 	ORDERKEY_NAME
 		ORDERKEY_PCTCPU
-		ORDERKEY_CPTICKS
 		ORDERKEY_STATE
 		ORDERKEY_PRIO
 		ORDERKEY_RSSIZE
@@ -365,7 +332,7 @@ char *
 format_next_io_r(caddr_t handler)
 {
 	static char fmt[MAX_COLS]; /* static area where result is built */
-	struct top_proc *p = *nextactive++;
+	struct top_proc_r *p = &pgrtable[proc_r_index++];
 
 	if (mode_stats == STATS_DIFF)
 		snprintf(fmt, sizeof(fmt),
@@ -399,7 +366,7 @@ char *
 format_next_process_r(caddr_t handler)
 {
 	static char fmt[MAX_COLS]; /* static area where result is built */
-	struct top_proc *p = *nextactive++;
+	struct top_proc_r *p = &pgrtable[proc_r_index++];
 
 	snprintf(fmt, sizeof(fmt),
 			"%5d %-8.8s %3d %5s %5s %-5s %6s %5.2f%% %5.2f%% %s",
@@ -415,13 +382,6 @@ format_next_process_r(caddr_t handler)
 			p->name);
 
 	return (fmt);
-}
-
-static void
-free_proc(struct top_proc *proc)
-{
-	proc->next = freelist;
-	freelist = proc;
 }
 
 void
@@ -522,10 +482,6 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 		int compare_index, struct pg_conninfo_ctx *conninfo)
 {
 	int i;
-	struct top_proc *pp;
-	struct top_proc *proc;
-	struct top_proc **active;
-	pid_t pid;
 
 	PGresult *pgresult = NULL;
 	int rows;
@@ -537,9 +493,12 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 	unsigned long now;
 	unsigned long elapsed;
 
+	int active_procs = 0;
 	int total_procs = 0;
 
 	int show_idle = sel->idle;
+
+	struct top_proc_r *n, *p;
 
 	memset(process_states, 0, sizeof(process_states));
 
@@ -573,11 +532,6 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 	}
 	timediff *= HZ;			 /* Convert to ticks. */
 
-	/* Mark all has table entries as not seen. */
-	for (i = 0; i < HASH_SIZE; ++i)
-		for (proc = ptable[i]; proc; proc = proc->next)
-			proc->state = 0;
-
 	connect_to_db(conninfo);
 	if (conninfo->connection != NULL)
 	{
@@ -596,179 +550,152 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 		rows = 0;
 	}
 
+	if (rows > 0) {
+		p = reallocarray(pgrtable, rows, sizeof(struct top_proc_r));
+		if (p == NULL) {
+			fprintf(stderr, "reallocarray error\n");
+			if (pgresult != NULL)
+				PQclear(pgresult);
+			disconnect_from_db(conninfo);
+			exit(1);
+		}
+		pgrtable = p;
+	}
+
 	for (i = 0; i < rows; i++)
 	{
 		unsigned long otime;
 		long long value;
 
-		pid = atoi(PQgetvalue(pgresult, i, c_pid));
-
-		/* Look up hash table entry. */
-		proc = pp = ptable[HASH(pid)];
-
-		while (proc && proc->pid != pid)
-			proc = proc->next;
-
-		/* Create a new entry if not found. */
-		if (proc == NULL)
+		n = malloc(sizeof(struct top_proc_r));
+		if (n == NULL) {
+			fprintf(stderr, "malloc error\n");
+			if (pgresult != NULL)
+				PQclear(pgresult);
+			disconnect_from_db(conninfo);
+			exit(1);
+		}
+		memset(n, 0, sizeof(struct top_proc_r));
+		n->pid = atoi(PQgetvalue(pgresult, i, c_pid));
+		p = RB_INSERT(pgprocr, &head_proc_r, n);
+		if (p != NULL)
 		{
-			proc = new_proc();
-			proc->pid = pid;
-			proc->next = pp;
-			ptable[HASH(pid)] = proc;
-			proc->time = 0;
-			proc->wcpu = 0;
+			free(n);
+			n = p;
+		}
+		else
+		{
+			n->time = 0;
+			n->wcpu = 0;
 		}
 
-		otime = proc->time;
+		otime = n->time;
 
 		if (sel->fullcmd && PQgetvalue(pgresult, i, c_fullcomm))
-			proc->name = strdup(PQgetvalue(pgresult, i, c_fullcomm));
+			n->name = strdup(PQgetvalue(pgresult, i, c_fullcomm));
 		else
-			proc->name = strdup(PQgetvalue(pgresult, i, c_comm));
+			n->name = strdup(PQgetvalue(pgresult, i, c_comm));
 
 		switch (PQgetvalue(pgresult, i, c_state)[0])
 		{
 		case 'R':
-			proc->state = 1;
+			n->state = 1;
 			break;
 		case 'S':
-			proc->state = 2;
+			n->state = 2;
 			break;
 		case 'D':
-			proc->state = 3;
+			n->state = 3;
 			break;
 		case 'Z':
-			proc->state = 4;
+			n->state = 4;
 			break;
 		case 'T':
-			proc->state = 5;
+			n->state = 5;
 			break;
 		case 'W':
-			proc->state = 6;
+			n->state = 6;
 			break;
 		case '\0':
 			continue;
 		}
-		update_state(&proc->pgstate, PQgetvalue(pgresult, i, c_pgstate));
+		update_state(&n->pgstate, PQgetvalue(pgresult, i, c_pgstate));
 
-		proc->time = (unsigned long) atol(PQgetvalue(pgresult, i, c_utime));
-		proc->time += (unsigned long) atol(PQgetvalue(pgresult, i, c_stime));
-		proc->pri = atol(PQgetvalue(pgresult, i, c_priority));
-		proc->start_time = (unsigned long)
+		n->time = (unsigned long) atol(PQgetvalue(pgresult, i, c_utime));
+		n->time += (unsigned long) atol(PQgetvalue(pgresult, i, c_stime));
+		n->pri = atol(PQgetvalue(pgresult, i, c_priority));
+		n->start_time = (unsigned long)
 				atol(PQgetvalue(pgresult, i, c_starttime));
-		proc->size = bytetok((unsigned long)
+		n->size = bytetok((unsigned long)
 				atol(PQgetvalue(pgresult, i, c_vsize)));
-		proc->rss = bytetok((unsigned long)
+		n->rss = bytetok((unsigned long)
 				atol(PQgetvalue(pgresult, i, c_rss)));
 
-		proc->usename = strdup(PQgetvalue(pgresult, i, c_username));
+		n->usename = strdup(PQgetvalue(pgresult, i, c_username));
 
 		value = atoll(PQgetvalue(pgresult, i, c_rchar));
-		proc->rchar_diff = value - proc->rchar;
-		proc->rchar = value;
+		n->rchar_diff = value - n->rchar;
+		n->rchar = value;
 
 		value = atoll(PQgetvalue(pgresult, i, c_wchar));
-		proc->wchar_diff = value - proc->wchar;
-		proc->wchar = value;
+		n->wchar_diff = value - n->wchar;
+		n->wchar = value;
 
 		value = atoll(PQgetvalue(pgresult, i, c_syscr));
-		proc->syscr_diff = value - proc->syscr;
-		proc->syscr = value;
+		n->syscr_diff = value - n->syscr;
+		n->syscr = value;
 
 		value = atoll(PQgetvalue(pgresult, i, c_syscw));
-		proc->syscw_diff = value - proc->syscw;
-		proc->syscw = value;
+		n->syscw_diff = value - n->syscw;
+		n->syscw = value;
 
 		value = atoll(PQgetvalue(pgresult, i, c_reads));
-		proc->read_bytes_diff = value - proc->read_bytes;
-		proc->read_bytes = value;
+		n->read_bytes_diff = value - n->read_bytes;
+		n->read_bytes = value;
 
 		value = atoll(PQgetvalue(pgresult, i, c_writes));
-		proc->write_bytes_diff = value - proc->write_bytes;
-		proc->write_bytes = value;
+		n->write_bytes_diff = value - n->write_bytes;
+		n->write_bytes = value;
 
 		value = atoll(PQgetvalue(pgresult, i, c_cwrites));
-		proc->cancelled_write_bytes_diff = value - proc->cancelled_write_bytes;
-		proc->cancelled_write_bytes = value;
+		n->cancelled_write_bytes_diff = value - n->cancelled_write_bytes;
+		n->cancelled_write_bytes = value;
 
 		++total_procs;
-		++process_states[proc->pgstate];
+		++process_states[n->pgstate];
 
 		if (timediff > 0.0)
 		{
-			if ((proc->pcpu = (proc->time - otime) / timediff) < 0.0001)
-				proc->pcpu = 0;
-			proc->wcpu = proc->pcpu * alpha + proc->wcpu * beta;
+			if ((n->pcpu = (n->time - otime) / timediff) < 0.0001)
+				n->pcpu = 0;
+			n->wcpu = n->pcpu * alpha + n->wcpu * beta;
 		}
-		else if ((elapsed = (now - boottime) * HZ - proc->start_time) > 0)
-			proc->wcpu = proc->pcpu;
+		else if ((elapsed = (now - boottime) * HZ - n->start_time) > 0)
+			n->wcpu = n->pcpu;
 		else
-			proc->wcpu = proc->pcpu = 0.0;
+			n->wcpu = n->pcpu = 0.0;
+
+		if ((show_idle || n->pgstate != STATE_IDLE) &&
+				(sel->usename[0] == '\0' ||
+						strcmp(n->usename, sel->usename) == 0))
+			memcpy(&pgrtable[active_procs++], n, sizeof(struct top_proc_r));
 	}
 
 	if (pgresult != NULL)
 		PQclear(pgresult);
 	disconnect_from_db(conninfo);
 
-	/* Make sure we have enough slots for the active procs. */
-	if (activesize < total_procs)
-	{
-		pactive = (struct top_proc **) realloc(pactive,
-				sizeof(struct top_proc *) * total_procs);
-		activesize = total_procs;
-	}
-
- 	/* Set up the active procs and flush dead entries. */
-	active = pactive;
-	for (i = 0; i < HASH_SIZE; i++)
-	{
-		struct top_proc *last;
-		struct top_proc *ptmp;
-
-		last = NULL;
-		proc = ptable[i];
-		while (proc != NULL)
-		{
-			if (proc->state == 0)
-			{
-				ptmp = proc;
-				if (last)
-				{
-					proc = last->next = proc->next;
-				}
-				else
-				{
-					proc = ptable[i] = proc->next;
-				}
-				free_proc(ptmp);
-			}
-			else
-			{
-				if ((show_idle || proc->state == 1 || proc->pcpu) &&
-						(sel->usename[0] == '\0' ||
-								strcmp(proc->usename, sel->usename) == 0))
-				{
-					*active++ = proc;
-					last = proc;
-				}
-				proc = proc->next;
-			}
-		}
-	}
-
-	si->p_active = active - pactive;
+	si->p_active = active_procs;
 	si->p_total = total_procs;
 	si->procstates = process_states;
 
 	/* Sort the "active" procs if specified. */
 	if (si->p_active)
-		qsort(pactive, si->p_active, sizeof(struct top_proc *),
+		qsort(pgrtable, si->p_active, sizeof(struct top_proc_r *),
 			proc_compares_r[compare_index]);
 
-	/* Don't even pretend that the return value thing here isn't bogus. */
-	nextactive = pactive;
-
+	/* don't even pretend that the return value thing here isn't bogus */
+	proc_r_index = 0;
 	return 0;
 }
 
@@ -803,46 +730,11 @@ machine_init_r(struct statics *statics, struct pg_conninfo_ctx *conninfo)
 	statics->flags.fullcmds = 1;
 	statics->flags.warmup = 1;
 
-	/* allocate needed space */
-	pactive = (struct top_proc **) malloc(sizeof(struct top_proc *) *
-			INITIAL_ACTIVE_SIZE);
-	activesize = INITIAL_ACTIVE_SIZE;
-
-	/* make sure the hash table is empty */
-	memset(ptable, 0, HASH_SIZE * sizeof(struct top_proc *));
-
 	return 0;
 }
 
-static struct top_proc *
-new_proc()
+int
+topprocrcmp(struct top_proc_r *e1, struct top_proc_r *e2)
 {
-	struct top_proc *p;
-
-	if (freelist)
-	{
-		p = freelist;
-		freelist = freelist->next;
-	}
-	else if (procblock)
-	{
-		p = procblock;
-		if (++procblock >= procmax)
-			procblock = NULL;
-	}
-	else
-	{
-		p = procblock = (struct top_proc *) calloc(PROCBLOCK_SIZE,
-				sizeof(struct top_proc));
-		procmax = procblock++ + PROCBLOCK_SIZE;
-	}
-
-	/* initialization */
-	if (p->name != NULL)
-	{
-		free(p->name);
-		p->name = NULL;
-	}
-
-	return p;
+	return (e1->pid < e2->pid ? -1 : e1->pid > e2->pid);
 }

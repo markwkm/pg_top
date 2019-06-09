@@ -256,6 +256,11 @@ if(LIBMACH)
     target_link_libraries(${PROJECT_NAME} ${LIBMACH})
 endif(LIBMACH)
 
+find_library(LIBBSD bsd)
+if(LIBBSD)
+    target_link_libraries(${PROJECT_NAME} ${LIBBSD})
+endif(LIBBSD)
+
 # FreeBSD specific libraries
 
 if(${MACHINE} STREQUAL freebsd)
