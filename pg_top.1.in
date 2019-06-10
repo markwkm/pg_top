@@ -300,9 +300,6 @@ Username of the process's owner (if
 .B \-u
 is specified, a UID column will be substituted for USERNAME).
 .TP
-.B PRI
-Current priority of the process.
-.TP
 .B SIZE
 Total size of the process (text, data, and stack) given in kilobytes.
 .TP

@@ -31,7 +31,7 @@
 		"FROM pg_memusage()"
 
 #define QUERY_PROCTAB \
-		"SELECT a.pid, comm, fullcomm, a.state, utime, stime, priority,\n" \
+		"SELECT a.pid, comm, fullcomm, a.state, utime, stime,\n" \
 		"       starttime, vsize, rss, usename, rchar, wchar,\n" \
 		"       syscr, syscw, reads, writes, cwrites, b.state,\n" \
 		"       extract(EPOCH FROM age(clock_timestamp(),\n" \
@@ -42,7 +42,7 @@
 		"                    ON a.pid = b.pid"
 
 #define QUERY_PROCTAB_QUERY \
-		"SELECT a.pid, comm, query, a.state, utime, stime, priority,\n" \
+		"SELECT a.pid, comm, query, a.state, utime, stime,\n" \
 		"       starttime, vsize, rss, usename, rchar, wchar,\n" \
 		"       syscr, syscw, reads, writes, cwrites, b.state,\n" \
 		"       extract(EPOCH FROM age(clock_timestamp(),\n" \
@@ -63,7 +63,7 @@ enum column_loadavg { c_load1, c_load5, c_load15, c_last_pid };
 enum column_memusage { c_memused, c_memfree, c_memshared, c_membuffers,
 		c_memcached, c_swapused, c_swapfree, c_swapcached};
 enum column_proctab { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
-		c_priority, c_starttime, c_vsize, c_rss, c_username,
+		c_starttime, c_vsize, c_rss, c_username,
 		c_rchar, c_wchar, c_syscr, c_syscw, c_reads, c_writes, c_cwrites,
 		c_pgstate, c_xtime, c_qtime};
 
@@ -93,7 +93,6 @@ struct top_proc_r
 	pid_t pid;
 	char *name;
 	char *usename;
-	int pri;
 	unsigned long size;
 	unsigned long rss; /* in k */
 	int state;
@@ -153,7 +152,7 @@ static char *swapnames[NSWAPSTATS + 1] =
 };
 
 static char fmt_header[] =
-		"  PID X        PRI  SIZE   RES STATE   XTIME  QTIME   WCPU    CPU COMMAND";
+		"  PID X         SIZE   RES STATE   XTIME  QTIME   WCPU    CPU COMMAND";
 
 /* Now the array that maps process state to a weight. */
 
@@ -181,7 +180,6 @@ static int64_t cp_diff[NCPUSTATES];
 
 #define ORDERKEY_PCTCPU  if ((result = (int)(p2->pcpu - p1->pcpu)) == 0)
 #define ORDERKEY_STATE	 if ((result = p1->pgstate < p2->pgstate))
-#define ORDERKEY_PRIO	if ((result = p2->pri - p1->pri) == 0)
 #define ORDERKEY_RSSIZE  if ((result = p2->rss - p1->rss) == 0)
 #define ORDERKEY_MEM	 if ((result = p2->size - p1->size) == 0)
 #define ORDERKEY_NAME	if ((result = strcmp(p1->name, p2->name)) == 0)
@@ -242,7 +240,6 @@ compare_cpu_r(const void *v1, const void *v2)
 
 	ORDERKEY_PCTCPU
 		ORDERKEY_STATE
-		ORDERKEY_PRIO
 		ORDERKEY_RSSIZE
 		ORDERKEY_MEM
 		;
@@ -263,7 +260,6 @@ compare_size_r(const void *v1, const void *v2)
 		ORDERKEY_RSSIZE
 		ORDERKEY_PCTCPU
 		ORDERKEY_STATE
-		ORDERKEY_PRIO
 		;
 
 	return result == 0 ? 0 : result < 0 ? -1 : 1;
@@ -282,7 +278,6 @@ compare_res_r(const void *v1, const void *v2)
 		ORDERKEY_MEM
 		ORDERKEY_PCTCPU
 		ORDERKEY_STATE
-		ORDERKEY_PRIO
 		;
 
 	return result == 0 ? 0 : result < 0 ? -1 : 1;
@@ -299,7 +294,6 @@ compare_time_r(const void *v1, const void *v2)
 
 	ORDERKEY_PCTCPU
 		ORDERKEY_STATE
-		ORDERKEY_PRIO
 		ORDERKEY_MEM
 		ORDERKEY_RSSIZE
 		;
@@ -319,7 +313,6 @@ compare_cmd_r(const void *v1, const void *v2)
 	ORDERKEY_NAME
 		ORDERKEY_PCTCPU
 		ORDERKEY_STATE
-		ORDERKEY_PRIO
 		ORDERKEY_RSSIZE
 		ORDERKEY_MEM
 		;
@@ -379,10 +372,9 @@ format_next_process_r(caddr_t handler)
 	struct top_proc_r *p = &pgrtable[proc_r_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			"%5d %-8.8s %3d %5s %5s %-6s %5s %5s %5.2f%% %5.2f%% %s",
+			"%5d %-8.8s %5s %5s %-6s %5s %5s %5.2f%% %5.2f%% %s",
 			(int) p->pid, /* Some OS's need to cast pid_t to int. */
 			p->usename,
-			p->pri < -99 ? -99 : p->pri,
 			format_k(p->size),
 			format_k(p->rss),
 			backendstatenames[p->pgstate],
@@ -634,7 +626,6 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 
 		n->time = (unsigned long) atol(PQgetvalue(pgresult, i, c_utime));
 		n->time += (unsigned long) atol(PQgetvalue(pgresult, i, c_stime));
-		n->pri = atol(PQgetvalue(pgresult, i, c_priority));
 		n->start_time = (unsigned long)
 				atol(PQgetvalue(pgresult, i, c_starttime));
 		n->size = bytetok((unsigned long)

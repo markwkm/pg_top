@@ -78,7 +78,6 @@ struct top_proc
 	/* Data from /proc/<pid>/stat. */
 	char	   *name;
 	char	   *usename;
-	int			pri;
 	unsigned long size,
 				rss;			/* in k */
 	int			state;
@@ -148,7 +147,7 @@ static char *swapnames[NSWAPSTATS + 1] =
 };
 
 static char fmt_header[] =
-"  PID X        PRI  SIZE   RES STATE   XTIME  QTIME   WCPU    CPU COMMAND";
+"  PID X         SIZE   RES STATE   XTIME  QTIME   WCPU    CPU COMMAND";
 
 /* these are names given to allowed sorting orders -- first is default */
 static char *ordernames[] = {
@@ -642,8 +641,7 @@ read_one_proc_stat(struct top_proc *proc, struct process_select *sel)
 
 	p = skip_token(p);			/* skip cutime */
 	p = skip_token(p);			/* skip cstime */
-
-	proc->pri = strtol(p, &p, 10);		/* priority */
+	p = skip_token(p);			/* skip priority */
 	p = skip_token(p);			/* skip nice */
 	p = skip_token(p);			/* skip num_threads */
 	p = skip_token(p);			/* skip itrealvalue, 0 */
@@ -962,10 +960,9 @@ format_next_process(caddr_t handle)
 	struct top_proc *p = &pgtable[proc_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			 "%5d %-8.8s %3d %5s %5s %-6s %5s %5s %5.2f%% %5.2f%% %s",
+			 "%5d %-8.8s %5s %5s %-6s %5s %5s %5.2f%% %5.2f%% %s",
 			 p->pid,
 			 p->usename,
-			 p->pri < -99 ? -99 : p->pri,
 			 format_k(p->size),
 			 format_k(p->rss),
 			 backendstatenames[p->pgstate],
@@ -1000,7 +997,6 @@ format_next_process(caddr_t handle)
 
 #define ORDERKEY_PCTCPU  if ((result = (int)(p2->pcpu - p1->pcpu)) == 0)
 #define ORDERKEY_STATE	 if ((result = p1->pgstate < p2->pgstate))
-#define ORDERKEY_PRIO	 if ((result = p2->pri - p1->pri) == 0)
 #define ORDERKEY_RSSIZE  if ((result = p2->rss - p1->rss) == 0)
 #define ORDERKEY_MEM	 if ((result = p2->size - p1->size) == 0)
 #define ORDERKEY_NAME	 if ((result = strcmp(p1->name, p2->name)) == 0)
@@ -1027,7 +1023,6 @@ compare_cpu(const void *v1, const void *v2)
 
 	ORDERKEY_PCTCPU
 		ORDERKEY_STATE
-		ORDERKEY_PRIO
 		ORDERKEY_RSSIZE
 		ORDERKEY_MEM
 		;
@@ -1048,7 +1043,6 @@ compare_size(const void *v1, const void *v2)
 		ORDERKEY_RSSIZE
 		ORDERKEY_PCTCPU
 		ORDERKEY_STATE
-		ORDERKEY_PRIO
 		;
 
 	return (result);
@@ -1067,7 +1061,6 @@ compare_res(const void *v1, const void *v2)
 		ORDERKEY_MEM
 		ORDERKEY_PCTCPU
 		ORDERKEY_STATE
-		ORDERKEY_PRIO
 		;
 
 	return (result);
@@ -1085,7 +1078,6 @@ compare_xtime(const void *v1, const void *v2)
 	ORDERKEY_XTIME
 		ORDERKEY_PCTCPU
 		ORDERKEY_STATE
-		ORDERKEY_PRIO
 		ORDERKEY_MEM
 		ORDERKEY_RSSIZE
 		;
@@ -1105,7 +1097,6 @@ compare_qtime(const void *v1, const void *v2)
 	ORDERKEY_QTIME
 		ORDERKEY_PCTCPU
 		ORDERKEY_STATE
-		ORDERKEY_PRIO
 		ORDERKEY_MEM
 		ORDERKEY_RSSIZE
 		;
@@ -1125,7 +1116,6 @@ compare_cmd(const void *v1, const void *v2)
 	ORDERKEY_NAME
 		ORDERKEY_PCTCPU
 		ORDERKEY_STATE
-		ORDERKEY_PRIO
 		ORDERKEY_RSSIZE
 		ORDERKEY_MEM
 		;
