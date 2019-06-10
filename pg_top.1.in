@@ -136,6 +136,12 @@ variable, if set.
 .TP
 \fB\-U \fR\fB\fIUSERNAME\fR\fR, \fB\-\-username=\fR\fB\fIUSERNAME\fR\fR
 User name to connect as.
+.TP
+\fB\-X
+Display I/O activity per process.  This depends on whether the platform pg_top
+is run on supports getting I/O statistics per process, or whether the database
+system that pg_proctab is installed on supports getting I/O statistics when
+pg_top attempts to get operating system statistics remotely.
 .PP
 Both
 .I COUNT

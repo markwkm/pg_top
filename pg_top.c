@@ -392,7 +392,7 @@ process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 	int i;
 	int option_index;
 
-	while ((i = getopt_long(ac, av, "CDITbcinrVh:s:d:U:o:Wp:x:z:",
+	while ((i = getopt_long(ac, av, "CDITbcinrVh:s:d:U:o:Wp:Xx:z:",
 			long_options, &option_index)) != EOF)
 	{
 		switch (i)
@@ -495,6 +495,10 @@ process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 
 		case 'r':		/* remote mode */
 			pgtctx->mode_remote = 1;
+			break;
+
+		case 'X':		/* i/O mode */
+			pgtctx->mode = MODE_IO_STATS;
 			break;
 
 		default:
