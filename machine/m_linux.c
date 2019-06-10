@@ -265,37 +265,6 @@ xfrm_cmdline(char *p, int len)
 	}
 }
 
-static void
-update_procname(struct top_proc * proc, char *cmd)
-
-{
-	printable(cmd);
-
-	if (proc->name == NULL)
-	{
-		proc->name = strdup(cmd);
-	}
-	else if (strcmp(proc->name, cmd) != 0)
-	{
-		free(proc->name);
-		proc->name = strdup(cmd);
-	}
-}
-
-static void
-update_usename(struct top_proc * proc, char *usename)
-{
-	if (proc->usename == NULL)
-	{
-		proc->usename = strdup(usename);
-	}
-	else if (strcmp(proc->usename, usename) != 0)
-	{
-		free(proc->usename);
-		proc->usename = strdup(usename);
-	}
-}
-
 int
 machine_init(struct statics * statics)
 
@@ -580,7 +549,8 @@ read_one_proc_stat(struct top_proc *proc, struct process_select *sel)
 			{
 				buffer[len] = '\0';
 				xfrm_cmdline(buffer, len);
-				update_procname(proc, buffer);
+				update_str(&proc->name, buffer);
+				printable(proc->name);
 			}
 			else
 			{
@@ -619,7 +589,8 @@ read_one_proc_stat(struct top_proc *proc, struct process_select *sel)
 	*q = '\0';
 	if (!fullcmd)
 	{
-		update_procname(proc, p);
+		update_str(&proc->name, p);
+		printable(proc->name);
 	}
 
 	/* scan the rest of the line */
@@ -863,9 +834,12 @@ get_process_info(struct system_info * si,
 
 			read_one_proc_stat(n, sel);
 			if (sel->fullcmd == 2)
-				update_procname(n, PQgetvalue(pgresult, i, 1));
+			{
+				update_str(&n->name, PQgetvalue(pgresult, i, 1));
+				printable(n->name);
+			}
 			update_state(&n->pgstate, PQgetvalue(pgresult, i, 2));
-			update_usename(n, PQgetvalue(pgresult, i, 3));
+			update_str(&n->usename, PQgetvalue(pgresult, i, 3));
 
 			total_procs++;
 			process_states[n->pgstate]++;

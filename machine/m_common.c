@@ -173,3 +173,15 @@ update_state(int *pgstate, char *state)
 	else
 		*pgstate = STATE_UNDEFINED;
 }
+
+void
+update_str(char **old, char *new)
+{
+	if (*old == NULL)
+		*old = strdup(new);
+	else if (strcmp(*old, new) != 0)
+	{
+		free(*old);
+		*old = strdup(new);
+	}
+}

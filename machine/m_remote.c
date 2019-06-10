@@ -592,9 +592,9 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 		otime = n->time;
 
 		if (sel->fullcmd && PQgetvalue(pgresult, i, c_fullcomm))
-			n->name = strdup(PQgetvalue(pgresult, i, c_fullcomm));
+			update_str(&n->name, PQgetvalue(pgresult, i, c_fullcomm));
 		else
-			n->name = strdup(PQgetvalue(pgresult, i, c_comm));
+			update_str(&n->name, PQgetvalue(pgresult, i, c_comm));
 
 		switch (PQgetvalue(pgresult, i, c_state)[0])
 		{
@@ -631,7 +631,7 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 		n->rss = bytetok((unsigned long)
 				atol(PQgetvalue(pgresult, i, c_rss)));
 
-		n->usename = strdup(PQgetvalue(pgresult, i, c_username));
+		update_str(&n->usename, PQgetvalue(pgresult, i, c_username));
 
 		value = atoll(PQgetvalue(pgresult, i, c_rchar));
 		n->rchar_diff = value - n->rchar;

@@ -164,6 +164,7 @@ char	   *format_next_io(caddr_t);
 char	   *format_next_process(caddr_t);
 uid_t			proc_owner(pid_t);
 void		update_state(int *pgstate, char *state);
+void		update_str(char **, char *);
 
 extern int	mode_stats;
 
