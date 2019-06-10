@@ -9,7 +9,11 @@
 #include "pg_top.h"
 
 #define QUERY_PROCESSES \
-		"SELECT pid, query, state, usename\n" \
+		"SELECT pid, query, state, usename,\n" \
+		"       extract(EPOCH FROM age(clock_timestamp(),\n" \
+		"                              xact_start))::BIGINT,\n" \
+		"       extract(EPOCH FROM age(clock_timestamp(),\n" \
+		"                              query_start))::BIGINT\n" \
 		"FROM pg_stat_activity;"
 
 #define QUERY_PROCESSES_9_1 \

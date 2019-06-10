@@ -85,6 +85,8 @@ struct top_proc
 	int	    	pgstate;
 	unsigned long time;
 	unsigned long start_time;
+	unsigned long xtime;
+	unsigned long qtime;
 	double		pcpu,
 				wcpu;
 
@@ -146,10 +148,12 @@ static char *swapnames[NSWAPSTATS + 1] =
 };
 
 static char fmt_header[] =
-"  PID X        PRI  SIZE   RES STATE    TIME   WCPU    CPU COMMAND";
+"  PID X        PRI  SIZE   RES STATE   XTIME  QTIME   WCPU    CPU COMMAND";
 
 /* these are names given to allowed sorting orders -- first is default */
-static char *ordernames[] = {"cpu", "size", "res", "time", "command", NULL};
+static char *ordernames[] = {
+		"cpu", "size", "res", "xtime", "qtime", "command", NULL
+};
 
 static char *ordernames_io[] = {
 		"pid", "rchar", "wchar", "syscr", "syscw", "reads", "writes",
@@ -160,7 +164,8 @@ static char *ordernames_io[] = {
 static int	compare_cpu();
 static int	compare_size();
 static int	compare_res();
-static int	compare_time();
+static int	compare_xtime();
+static int	compare_qtime();
 static int	compare_cmd();
 static int	compare_pid();
 static int	compare_rchar();
@@ -176,7 +181,8 @@ int			(*proc_compares[]) () =
 	compare_cpu,
 	compare_size,
 	compare_res,
-	compare_time,
+	compare_xtime,
+	compare_qtime,
 	compare_cmd,
 	NULL
 };
@@ -840,6 +846,8 @@ get_process_info(struct system_info * si,
 			}
 			update_state(&n->pgstate, PQgetvalue(pgresult, i, 2));
 			update_str(&n->usename, PQgetvalue(pgresult, i, 3));
+			n->xtime = atol(PQgetvalue(pgresult, i, 4));
+			n->qtime = atol(PQgetvalue(pgresult, i, 5));
 
 			total_procs++;
 			process_states[n->pgstate]++;
@@ -954,14 +962,15 @@ format_next_process(caddr_t handle)
 	struct top_proc *p = &pgtable[proc_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			 "%5d %-8.8s %3d %5s %5s %-6s %5s %5.2f%% %5.2f%% %s",
+			 "%5d %-8.8s %3d %5s %5s %-6s %5s %5s %5.2f%% %5.2f%% %s",
 			 p->pid,
 			 p->usename,
 			 p->pri < -99 ? -99 : p->pri,
 			 format_k(p->size),
 			 format_k(p->rss),
 			 backendstatenames[p->pgstate],
-			 format_time(p->time / HZ),
+			 format_time(p->xtime),
+			 format_time(p->qtime),
 			 p->wcpu * 100.0,
 			 p->pcpu * 100.0,
 			 p->name);
@@ -1003,6 +1012,8 @@ format_next_process(caddr_t handle)
 #define ORDERKEY_READS	 if ((result = p1->read_bytes - p2->read_bytes) == 0)
 #define ORDERKEY_WRITES	 if ((result = p1->write_bytes - p2->write_bytes) == 0)
 #define ORDERKEY_CWRITES if ((result = p1->cancelled_write_bytes - p2->cancelled_write_bytes) == 0)
+#define ORDERKEY_XTIME if ((result = p2->xtime - p1->xtime) == 0)
+#define ORDERKEY_QTIME if ((result = p2->qtime - p1->qtime) == 0)
 
 
 /* compare_cpu - the comparison function for sorting by cpu percentage */
@@ -1062,16 +1073,17 @@ compare_res(const void *v1, const void *v2)
 	return (result);
 }
 
-/* compare_time - the comparison function for sorting by total cpu time */
+/* compare_xtime - the comparison function for sorting by total cpu xtime */
 
 static int
-compare_time(const void *v1, const void *v2)
+compare_xtime(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
 	int result;
 
-	ORDERKEY_PCTCPU
+	ORDERKEY_XTIME
+		ORDERKEY_PCTCPU
 		ORDERKEY_STATE
 		ORDERKEY_PRIO
 		ORDERKEY_MEM
@@ -1081,6 +1093,25 @@ compare_time(const void *v1, const void *v2)
 	return (result);
 }
 
+/* compare_qtime - the comparison function for sorting by total cpu qtime */
+
+static int
+compare_qtime(const void *v1, const void *v2)
+{
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
+
+	ORDERKEY_QTIME
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		ORDERKEY_PRIO
+		ORDERKEY_MEM
+		ORDERKEY_RSSIZE
+		;
+
+	return (result);
+}
 
 /* compare_cmd - the comparison function for sorting by command name */
 

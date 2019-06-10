@@ -104,9 +104,9 @@ seconds.  The default delay between updates is \nD seconds.
 \fB\-o \fR\fB\fIFIELD\fR\fR, \fB\-\-order-field=\fR\fB\fIFIELD\fR\fR
 Sort the process display area on the specified field.  The field name is
 the name of the column as seen in the output, but in lower case.  Likely
-values are \*(lqcpu\*(rq, \*(lqsize\*(rq, \*(lqres\*(rq, and \*(lqtime\*(rq,
-but may vary on different operating systems.  Note that
-not all operating systems support this option.
+values are \*(lqcpu\*(rq, \*(lqsize\*(rq, \*(lqres\*(rq, \*(lqxtime\*(rq and
+\*(lqqtime\*(rq, but may vary on different operating systems.  Note that not
+all operating systems support this option.
 .TP
 \fB\-x \fR\fB\fICOUNT\fR\fR, \fB\-\-set-display=\fR\fB\fICOUNT\fR\fR
 Show only
@@ -243,7 +243,7 @@ Change the number of processes to display (prompt for new number).
 Change the order in which the display is sorted.  This command is not
 available on all systems.  The sort key names when viewing processes vary
 fron system to system but usually include:  \*(lqcpu\*(rq, \*(lqres\*(rq,
-\*(lqsize\*(rq, \*(lqtime\*(rq.  The default is cpu.
+\*(lqsize\*(rq, \*(lqxtime\*(rq and \*(lqqtime\*(rq.  The default is cpu.
 .TP
 .B P
 Sort by processor utilization.
@@ -315,8 +315,11 @@ Current backend state (typically one of \*(lqidle\*(rq,
 \*(lqactive\*(rq, \*(lqidltxn\*(rq, \*(lqfast\*(rq, \*(lqdisabl\*(eq, or
 \*(lqstop\*(rq).
 .TP
-.B TIME
-Number of system and user cpu seconds that the process has used.
+.B XTIME
+Elapsed time since the current transactions started.
+.TP
+.B QTIME
+Elapsed time since the current query started.
 .TP
 .B CPU
 Percentage of available cpu time used by this process.

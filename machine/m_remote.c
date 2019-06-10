@@ -33,14 +33,22 @@
 #define QUERY_PROCTAB \
 		"SELECT a.pid, comm, fullcomm, a.state, utime, stime, priority,\n" \
 		"       starttime, vsize, rss, usename, rchar, wchar,\n" \
-		"       syscr, syscw, reads, writes, cwrites, b.state\n" \
+		"       syscr, syscw, reads, writes, cwrites, b.state,\n" \
+		"       extract(EPOCH FROM age(clock_timestamp(),\n" \
+		"                              xact_start))::BIGINT,\n" \
+		"       extract(EPOCH FROM age(clock_timestamp(),\n" \
+		"                              query_start))::BIGINT\n" \
 		"FROM pg_proctab() a LEFT OUTER JOIN pg_stat_activity b\n" \
 		"                    ON a.pid = b.pid"
 
 #define QUERY_PROCTAB_QUERY \
 		"SELECT a.pid, comm, query, a.state, utime, stime, priority,\n" \
 		"       starttime, vsize, rss, usename, rchar, wchar,\n" \
-		"       syscr, syscw, reads, writes, cwrites, b.state\n" \
+		"       syscr, syscw, reads, writes, cwrites, b.state,\n" \
+		"       extract(EPOCH FROM age(clock_timestamp(),\n" \
+		"                              xact_start))::BIGINT,\n" \
+		"       extract(EPOCH FROM age(clock_timestamp(),\n" \
+		"                              query_start))::BIGINT\n" \
 		"FROM pg_proctab() a LEFT OUTER JOIN pg_stat_activity b\n" \
 		"                    ON a.pid = b.pid"
 
@@ -57,7 +65,7 @@ enum column_memusage { c_memused, c_memfree, c_memshared, c_membuffers,
 enum column_proctab { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
 		c_priority, c_starttime, c_vsize, c_rss, c_username,
 		c_rchar, c_wchar, c_syscr, c_syscw, c_reads, c_writes, c_cwrites,
-		c_pgstate};
+		c_pgstate, c_xtime, c_qtime};
 
 #define bytetok(x)  (((x) + 512) >> 10)
 
@@ -92,6 +100,8 @@ struct top_proc_r
 	int pgstate;
 	unsigned long time;
 	unsigned long start_time;
+	unsigned long xtime;
+	unsigned long qtime;
 	double pcpu;
 	double wcpu;
 
@@ -143,7 +153,7 @@ static char *swapnames[NSWAPSTATS + 1] =
 };
 
 static char fmt_header[] =
-		"  PID X        PRI  SIZE   RES STATE   TIME   WCPU    CPU COMMAND";
+		"  PID X        PRI  SIZE   RES STATE   XTIME  QTIME   WCPU    CPU COMMAND";
 
 /* Now the array that maps process state to a weight. */
 
@@ -369,14 +379,15 @@ format_next_process_r(caddr_t handler)
 	struct top_proc_r *p = &pgrtable[proc_r_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			"%5d %-8.8s %3d %5s %5s %-5s %6s %5.2f%% %5.2f%% %s",
+			"%5d %-8.8s %3d %5s %5s %-6s %5s %5s %5.2f%% %5.2f%% %s",
 			(int) p->pid, /* Some OS's need to cast pid_t to int. */
 			p->usename,
 			p->pri < -99 ? -99 : p->pri,
 			format_k(p->size),
 			format_k(p->rss),
 			backendstatenames[p->pgstate],
-			format_time(p->time),
+			format_time(p->xtime),
+			format_time(p->qtime),
 			p->wcpu * 100.0,
 			p->pcpu * 100.0,
 			p->name);
@@ -632,6 +643,9 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 				atol(PQgetvalue(pgresult, i, c_rss)));
 
 		update_str(&n->usename, PQgetvalue(pgresult, i, c_username));
+
+		n->xtime = atol(PQgetvalue(pgresult, i, c_xtime));
+		n->qtime = atol(PQgetvalue(pgresult, i, c_qtime));
 
 		value = atoll(PQgetvalue(pgresult, i, c_rchar));
 		n->rchar_diff = value - n->rchar;
