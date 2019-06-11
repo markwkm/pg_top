@@ -14,6 +14,7 @@ set(PROJECT_VERSION
     ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
 
 set(CMAKE_C_FLAGS "-Wall")
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Handle cmake -D command line options
 
@@ -133,8 +134,8 @@ foreach(f
     )
     if(CHECK_FOR_SIGKILL EQUAL 0)
         execute_process(
-            COMMAND awk -f sigconv.awk ${f}
-            OUTPUT_FILE sigdesc.h
+            COMMAND awk -f ${CMAKE_SOURCE_DIR}/sigconv.awk ${f}
+            OUTPUT_FILE ${CMAKE_BINARY_DIR}/sigdesc.h
         )
         break()
     endif(CHECK_FOR_SIGKILL EQUAL 0)
@@ -143,24 +144,24 @@ endforeach(f)
 # Build config.h header.
 
 configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-    ${CMAKE_CURRENT_BINARY_DIR}/config.h
+    ${CMAKE_SOURCE_DIR}/config.h.in
+    ${CMAKE_BINARY_DIR}/config.h
 )
 
 # Build manual page with appropriate machine specific notes.
 
 configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/pg_top.1.in
-    ${CMAKE_CURRENT_BINARY_DIR}/pg_top.1
+    ${CMAKE_SOURCE_DIR}/pg_top.1.in
+    ${CMAKE_BINARY_DIR}/pg_top.1
 )
-if(EXISTS "machine/m_${MACHINE}.man")
+if(EXISTS "${CMAKE_SOURCE_DIR}/machine/m_${MACHINE}.man")
     execute_process(
-        COMMAND cat machine/m_${MACHINE}.man
+        COMMAND cat ${CMAKE_SOURCE_DIR}/machine/m_${MACHINE}.man
         OUTPUT_VARIABLE MANUAL_SUPPLIMENT
     )
-    file(APPEND pg_top.1 "${MANUAL_SUPPLIMENT}")
-endif(EXISTS "machine/m_${MACHINE}.man")
-file(APPEND pg_top.1 "${MANUAL_SUPPLIMENT}")
+    file(APPEND ${CMAKE_BINARY_DIR}/pg_top.1 "${MANUAL_SUPPLIMENT}")
+endif(EXISTS "${CMAKE_SOURCE_DIR}/machine/m_${MACHINE}.man")
+file(APPEND ${CMAKE_BINARY_DIR}/pg_top.1 "${MANUAL_SUPPLIMENT}")
 
 # Set appropriate compile flags.
 
@@ -272,12 +273,12 @@ endif(${MACHINE} STREQUAL freebsd)
 
 install(
     PROGRAMS
-    ${PROJECT_NAME}
+    ${CMAKE_BINARY_DIR}/${PROJECT_NAME}
     DESTINATION "${INSTALLDEST}/bin"
 )
 install(
     FILES
-    pg_top.1
+    ${CMAKE_BINARY_DIR}/pg_top.1
     DESTINATION "${INSTALLDEST}/share/man/man1"
 )
 
@@ -288,8 +289,8 @@ include(InstallRequiredSystemLibraries)
 set(CPACK_CMAKE_GENERATOR "Unix Makefiles")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "pg_top is 'top' for PostgreSQL")
 set(CPACK_PACKAGE_VENDOR "pg_top")
-set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/README")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")

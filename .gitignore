@@ -2,7 +2,6 @@
 *.o
 *.in
 .deps
-Makefile
 config.h
 !config.h.in
 depcomp
@@ -12,6 +11,8 @@ sigdesc.h
 tags
 
 # cmake
+
+/_builds
 
 CMakeCache.txt
 CMakeFiles/
