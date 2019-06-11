@@ -301,6 +301,10 @@ set(
 )
 set(
     CPACK_SOURCE_IGNORE_FILES
+    "${CPACK_SOURCE_IGNORE_FILES};/\\\\.gitignore\\$"
+)
+set(
+    CPACK_SOURCE_IGNORE_FILES
     "${CPACK_SOURCE_IGNORE_FILES};/CMakeCache\\\\.txt\\$"
 )
 set(
@@ -333,15 +337,15 @@ set(
 )
 set(
     CPACK_SOURCE_IGNORE_FILES
+    "${CPACK_SOURCE_IGNORE_FILES};/Makefile\\$"
+)
+set(
+    CPACK_SOURCE_IGNORE_FILES
     "${CPACK_SOURCE_IGNORE_FILES};/pg_top\\\\.1\\$"
 )
 set(
     CPACK_SOURCE_IGNORE_FILES
     "${CPACK_SOURCE_IGNORE_FILES};/sigdesc\\\\.h\\$"
-)
-set(
-    CPACK_SOURCE_IGNORE_FILES
-    "${CPACK_SOURCE_IGNORE_FILES};/README\\\\.git\\$"
 )
 
 include(CPack)
