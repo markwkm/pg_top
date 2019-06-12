@@ -325,59 +325,33 @@ cmd_order(struct pg_top_context *pgtctx)
 	int no_command = No;
 	char tempbuf[50];
 
-	switch (pgtctx->mode)
+	if (pgtctx->statics.order_names == NULL)
 	{
-	case MODE_IO_STATS:
+		new_message(MT_standout, " Ordering not supported.");
+		putchar('\r');
+		no_command = Yes;
+	}
+	else
+	{
 		new_message(MT_standout, "Order to sort: ");
 		if (readline(tempbuf, sizeof(tempbuf), No) > 0)
 		{
-			if ((i = string_index(tempbuf,
-					pgtctx->statics.order_names_io)) == -1)
+			i = string_index(tempbuf, pgtctx->statics.order_names);
+			if (i == -1)
 			{
 				new_message(MT_standout, " %s: unrecognized sorting order",
-							tempbuf);
+						tempbuf);
 				no_command = Yes;
 			}
 			else
 			{
-				pgtctx->io_order_index = i;
+				pgtctx->order_index = i;
 			}
+			putchar('\r');
 		}
 		else
 		{
 			clear_message();
-		}
-		break;
-	case MODE_PROCESSES:
-	default:
-		if (pgtctx->statics.order_names == NULL)
-		{
-			new_message(MT_standout, " Ordering not supported.");
-			putchar('\r');
-			no_command = Yes;
-		}
-		else
-		{
-			new_message(MT_standout, "Order to sort: ");
-			if (readline(tempbuf, sizeof(tempbuf), No) > 0)
-			{
-				i = string_index(tempbuf, pgtctx->statics.order_names) == -1;
-				if (i == -1)
-				{
-					new_message(MT_standout, " %s: unrecognized sorting order",
-							tempbuf);
-					no_command = Yes;
-				}
-				else
-				{
-					pgtctx->order_index = i;
-				}
-				putchar('\r');
-			}
-			else
-			{
-				clear_message();
-			}
 		}
 	}
 	return no_command;
@@ -586,7 +560,6 @@ show_help(struct statics * stp)
 {
 	static char *fullhelp;
 	char	   *p = NULL;
-	char	   *q = NULL;
 
 	if (fullhelp == NULL)
 	{
@@ -599,17 +572,8 @@ show_help(struct statics * stp)
 		{
 			p = "not supported";
 		}
-		if (stp->order_names != NULL)
-		{
-			q = string_list(stp->order_names_io);
-		}
-		if (q == NULL)
-		{
-			q = "not supported";
-		}
-		fullhelp = (char *) malloc(strlen(help_text) + strlen(p) + strlen(q) +
-				2);
-		sprintf(fullhelp, help_text, p, q);
+		fullhelp = (char *) malloc(strlen(help_text) + strlen(p) + 2);
+		sprintf(fullhelp, help_text, p);
 	}
 
 	display_pager("pg_top version ");

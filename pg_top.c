@@ -185,29 +185,20 @@ do_display(struct pg_top_context *pgtctx)
 	register int i = 0;
 	register int active_procs;
 
-	int tmp_index = 0;
-
 	caddr_t processes;
 	time_t curr_time;
 	static struct ext_decl exts = {NULL, NULL};
 
-	switch (pgtctx->mode) {
-	case MODE_IO_STATS:
-		tmp_index = pgtctx->io_order_index;
-		break;
-	default:
-		tmp_index = 0;
-	}
 	/* get the current stats and processes */
 	if (pgtctx->mode_remote == 0)
 	{
 		get_system_info(&pgtctx->system_info);
 #ifdef __linux__
-		processes = get_process_info(&pgtctx->system_info, &pgtctx->ps, tmp_index,
-				&pgtctx->conninfo, pgtctx->mode);
+		processes = get_process_info(&pgtctx->system_info, &pgtctx->ps,
+				pgtctx->order_index, &pgtctx->conninfo, pgtctx->mode);
 #else
-		processes = get_process_info(&pgtctx->system_info, &pgtctx->ps, tmp_index,
-				&pgtctx->conninfo);
+		processes = get_process_info(&pgtctx->system_info, &pgtctx->ps,
+				pgtctx->order_index, &pgtctx->conninfo);
 #endif /* __linux__ */
 	}
 	else
@@ -716,10 +707,9 @@ main(int argc, char *argv[])
 	pgtctx.dostates = No;
 	pgtctx.do_unames = Yes;
 	pgtctx.interactive = Maybe;
-	pgtctx.io_order_index = 0;
 	pgtctx.mode = MODE_PROCESSES;
 	pgtctx.mode_remote = No;
-	pgtctx.order_index = 0;
+	pgtctx.order_index = -1;
 	pgtctx.ps.idle = Yes;
 	pgtctx.ps.fullcmd = Yes;
 	pgtctx.ps.command = NULL;
@@ -1018,17 +1008,17 @@ main(int argc, char *argv[])
 		{
 			get_system_info(&pgtctx.system_info);
 #ifdef __linux__
-			(void) get_process_info(&pgtctx.system_info, &pgtctx.ps, 0,
+			(void) get_process_info(&pgtctx.system_info, &pgtctx.ps, -1,
 					&pgtctx.conninfo, pgtctx.mode);
 #else
-			(void) get_process_info(&pgtctx.system_info, &pgtctx.ps, 0,
+			(void) get_process_info(&pgtctx.system_info, &pgtctx.ps, -1,
 					&pgtctx.conninfo);
 #endif /* __linux__ */
 		}
 		else
 		{
 			get_system_info_r(&pgtctx.system_info, &pgtctx.conninfo);
-			(void) get_process_info_r(&pgtctx.system_info, &pgtctx.ps, 0,
+			(void) get_process_info_r(&pgtctx.system_info, &pgtctx.ps, -1,
 					&pgtctx.conninfo);
 		}
 

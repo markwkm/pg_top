@@ -455,7 +455,6 @@ machine_init(struct statics * statics)
 	statics->cpustate_names = cpustatenames;
 	statics->memory_names = memorynames;
 	statics->order_names = ordernames;
-	statics->order_names_io = ordernames_io;
 	statics->flags.fullcmds = 1;
 	statics->flags.warmup = 1;
 

@@ -144,7 +144,11 @@ static char *memorynames[NMEMSTATS + 1] =
 };
 
 /* these are names given to allowed sorting orders -- first is default */
-static char *ordernames[] = {"cpu", "size", "res", "time", "command", NULL};
+static char *ordernames[] =
+{
+		"cpu", "size", "res", "xtime", "qtime", "rchar", "wchar", "syscr",
+		"syscw", "reads", "writes", "cwrites", "command", NULL
+};
 
 static char *swapnames[NSWAPSTATS + 1] =
 {
@@ -183,13 +187,30 @@ static int64_t cp_diff[NCPUSTATES];
 #define ORDERKEY_RSSIZE  if ((result = p2->rss - p1->rss) == 0)
 #define ORDERKEY_MEM	 if ((result = p2->size - p1->size) == 0)
 #define ORDERKEY_NAME	if ((result = strcmp(p1->name, p2->name)) == 0)
+#define ORDERKEY_RCHAR	 if ((result = p1->rchar - p2->rchar) == 0)
+#define ORDERKEY_WCHAR	 if ((result = p1->wchar - p2->wchar) == 0)
+#define ORDERKEY_SYSCR	 if ((result = p1->syscr - p2->syscr) == 0)
+#define ORDERKEY_SYSCW	 if ((result = p1->syscw - p2->syscw) == 0)
+#define ORDERKEY_READS	 if ((result = p1->read_bytes - p2->read_bytes) == 0)
+#define ORDERKEY_WRITES	 if ((result = p1->write_bytes - p2->write_bytes) == 0)
+#define ORDERKEY_CWRITES if ((result = p1->cancelled_write_bytes - p2->cancelled_write_bytes) == 0)
+#define ORDERKEY_XTIME if ((result = p2->xtime - p1->xtime) == 0)
+#define ORDERKEY_QTIME if ((result = p2->qtime - p1->qtime) == 0)
 
 int check_for_function(PGconn *, char *);
-static int compare_cpu_r(const void *, const void *);
-static int compare_size_r(const void *, const void *);
-static int compare_res_r(const void *, const void *);
-static int compare_time_r(const void *, const void *);
 static int compare_cmd_r(const void *, const void *);
+static int compare_cpu_r(const void *, const void *);
+static int compare_cwrites_r(const void *, const void *);
+static int compare_qtime_r(const void *, const void *);
+static int compare_rchar_r(const void *, const void *);
+static int compare_reads_r(const void *, const void *);
+static int compare_res_r(const void *, const void *);
+static int compare_size_r(const void *, const void *);
+static int compare_syscr_r(const void *, const void *);
+static int compare_syscw_r(const void *, const void *);
+static int compare_wchar_r(const void *, const void *);
+static int compare_writes_r(const void *, const void *);
+static int compare_xtime_r(const void *, const void *);
 
 int
 check_for_function(PGconn *pgconn, char *procname)
@@ -218,88 +239,23 @@ check_for_function(PGconn *pgconn, char *procname)
 	return 0;
 }
 
-int
-(*proc_compares_r[])() =
+int (*proc_compares_r[])() =
 {
 	compare_cpu_r,
 	compare_size_r,
 	compare_res_r,
-	compare_time_r,
+	compare_xtime_r,
+	compare_qtime_r,
+	compare_rchar_r,
+	compare_wchar_r,
+	compare_syscr_r,
+	compare_syscw_r,
+	compare_reads_r,
+	compare_writes_r,
+	compare_cwrites_r,
 	compare_cmd_r,
 	NULL
 };
-
-/* compare_cpu_r - the comparison function for sorting by cpu percentage */
-
-static int
-compare_cpu_r(const void *v1, const void *v2)
-{
-	struct top_proc_r *p1 = (struct top_proc_r *) v1;
-	struct top_proc_r *p2 = (struct top_proc_r *) v2;
-	int result;
-
-	ORDERKEY_PCTCPU
-		ORDERKEY_STATE
-		ORDERKEY_RSSIZE
-		ORDERKEY_MEM
-		;
-
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
-}
-
-/* The comparison function for sorting by total memory usage. */
-
-static int
-compare_size_r(const void *v1, const void *v2)
-{
-	struct top_proc_r *p1 = (struct top_proc_r *) v1;
-	struct top_proc_r *p2 = (struct top_proc_r *) v2;
-	int result;
-
-	ORDERKEY_MEM
-		ORDERKEY_RSSIZE
-		ORDERKEY_PCTCPU
-		ORDERKEY_STATE
-		;
-
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
-}
-
-/* The comparison function for sorting by resident set size. */
-
-static int
-compare_res_r(const void *v1, const void *v2)
-{
-	struct top_proc_r *p1 = (struct top_proc_r *) v1;
-	struct top_proc_r *p2 = (struct top_proc_r *) v2;
-	int result;
-
-	ORDERKEY_RSSIZE
-		ORDERKEY_MEM
-		ORDERKEY_PCTCPU
-		ORDERKEY_STATE
-		;
-
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
-}
-
-/* The comparison function for sorting by total cpu time. */
-
-static int
-compare_time_r(const void *v1, const void *v2)
-{
-	struct top_proc_r *p1 = (struct top_proc_r *) v1;
-	struct top_proc_r *p2 = (struct top_proc_r *) v2;
-	int result;
-
-	ORDERKEY_PCTCPU
-		ORDERKEY_STATE
-		ORDERKEY_MEM
-		ORDERKEY_RSSIZE
-		;
-
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
-}
 
 /* The comparison function for sorting by command name. */
 
@@ -317,7 +273,239 @@ compare_cmd_r(const void *v1, const void *v2)
 		ORDERKEY_MEM
 		;
 
-	return result == 0 ? 0 : result < 0 ? -1 : 1;
+	return (result);
+}
+
+/* compare_cpu_r - the comparison function for sorting by cpu percentage */
+
+static int
+compare_cpu_r(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		ORDERKEY_RSSIZE
+		ORDERKEY_MEM
+		;
+
+	return (result);
+}
+
+static int
+compare_cwrites_r(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_CWRITES
+		ORDERKEY_RCHAR
+		ORDERKEY_WCHAR
+		ORDERKEY_SYSCR
+		ORDERKEY_SYSCW
+		ORDERKEY_READS
+		ORDERKEY_WRITES
+		ORDERKEY_NAME
+		;
+
+	return (result);
+}
+
+/* compare_qtime_r - the comparison function for sorting by total cpu qtime */
+
+static int
+compare_qtime_r(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_QTIME
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		ORDERKEY_MEM
+		ORDERKEY_RSSIZE
+		;
+
+	return (result);
+}
+
+/* The comparison function for sorting by resident set size. */
+
+static int
+compare_res_r(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_RSSIZE
+		ORDERKEY_MEM
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		;
+
+	return (result);
+}
+
+/* The comparison function for sorting by total memory usage. */
+
+static int
+compare_rchar_r(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_RCHAR
+		ORDERKEY_WCHAR
+		ORDERKEY_SYSCR
+		ORDERKEY_SYSCW
+		ORDERKEY_READS
+		ORDERKEY_WRITES
+		ORDERKEY_CWRITES
+		ORDERKEY_NAME
+		;
+
+	return (result);
+}
+
+static int
+compare_reads_r(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_READS
+		ORDERKEY_RCHAR
+		ORDERKEY_WCHAR
+		ORDERKEY_SYSCR
+		ORDERKEY_SYSCW
+		ORDERKEY_WRITES
+		ORDERKEY_CWRITES
+		ORDERKEY_NAME
+		;
+
+	return (result);
+}
+
+static int
+compare_size_r(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_MEM
+		ORDERKEY_RSSIZE
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		;
+
+	return (result);
+}
+
+static int
+compare_syscr_r(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_SYSCR
+		ORDERKEY_RCHAR
+		ORDERKEY_WCHAR
+		ORDERKEY_SYSCW
+		ORDERKEY_READS
+		ORDERKEY_WRITES
+		ORDERKEY_CWRITES
+		ORDERKEY_NAME
+		;
+
+	return (result);
+}
+
+static int
+compare_syscw_r(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_SYSCW
+		ORDERKEY_RCHAR
+		ORDERKEY_WCHAR
+		ORDERKEY_SYSCR
+		ORDERKEY_READS
+		ORDERKEY_WRITES
+		ORDERKEY_CWRITES
+		ORDERKEY_NAME
+		;
+
+	return (result);
+}
+
+/* compare_xtime_r - the comparison function for sorting by total cpu xtime */
+
+static int
+compare_xtime_r(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_XTIME
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		ORDERKEY_MEM
+		ORDERKEY_RSSIZE
+		;
+
+	return (result);
+}
+
+static int
+compare_wchar_r(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_WCHAR
+		ORDERKEY_RCHAR
+		ORDERKEY_SYSCR
+		ORDERKEY_SYSCW
+		ORDERKEY_READS
+		ORDERKEY_WRITES
+		ORDERKEY_CWRITES
+		ORDERKEY_NAME
+		;
+
+	return (result);
+}
+
+static int
+compare_writes_r(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_WRITES
+		ORDERKEY_RCHAR
+		ORDERKEY_WCHAR
+		ORDERKEY_SYSCR
+		ORDERKEY_SYSCW
+		ORDERKEY_READS
+		ORDERKEY_CWRITES
+		ORDERKEY_NAME
+		;
+
+	return (result);
 }
 
 char *
@@ -695,8 +883,8 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 	si->procstates = process_states;
 
 	/* Sort the "active" procs if specified. */
-	if (si->p_active)
-		qsort(pgrtable, si->p_active, sizeof(struct top_proc_r *),
+	if (compare_index >= 0 && si->p_active)
+		qsort(pgrtable, si->p_active, sizeof(struct top_proc_r),
 			proc_compares_r[compare_index]);
 
 	/* don't even pretend that the return value thing here isn't bogus */

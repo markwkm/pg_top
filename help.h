@@ -26,7 +26,6 @@ h or ?  - help; show this text\n\
 i       - toggle the displaying of idle processes\n\
 n or #  - change number of processes to display\n\
 o       - specify sort order (%s)\n\
-          i/o stats (%s)\n\
 q       - quit\n\
 s       - change number of seconds to delay between updates\n\
 u       - display processes for only one user (+ selects all users)\n\

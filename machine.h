@@ -58,7 +58,6 @@ struct statics
 	char	  **memory_names;
 	char	  **swap_names;		/* optional */
 	char	  **order_names;	/* optional */
-	char	  **order_names_io;	/* optional */
 	char	  **color_names;	/* optional */
 	time_t		boottime;		/* optional */
 	int		    ncpus;

@@ -10,6 +10,7 @@ Release 4.0.0
      * Show database username instead of operating system username
      * Make connections with password persistent and clear connection memory in
        these scenarios
+     * Fix sorting when specified from the command line and in interactive mode
 
 Release 3.7.0
 
