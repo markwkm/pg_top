@@ -1161,10 +1161,3 @@ get_io_info(struct io_info *io_info)
 	/* Not supported yet */
 	memset(io_info, 0, sizeof(*io_info));
 }
-
-void
-get_disk_info(struct disk_info *disk_info, char *data_directory)
-{
-	/* Not supported yet */
-	memset(disk_info, 0, sizeof(*disk_info));
-}

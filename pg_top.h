@@ -89,7 +89,6 @@ struct pg_top_context
 #endif
 	struct db_info db_info;
 	int delay;
-	struct disk_info disk_info;
 	int displays;
 	void (*d_header)(char *);
 	char do_unames;

@@ -1316,27 +1316,3 @@ get_io_info(struct io_info *io_info)
 	io_info->writesectors = (double)(cur_info.writesectors - last_io_info.writesectors) / timediff;
 	last_io_info = cur_info;
 }
-
-/*
- * Get disk space information for the disk that contains the data
- * directory.
- */
-void
-get_disk_info(struct disk_info *disk_info, char *data_directory)
-{
-	struct statfs buf;
-
-	/* If no data directory found, return nothing */
-	if (!data_directory)
-	{
-		memset(disk_info, 0, sizeof(*disk_info));
-		return;
-	}
-
-	/* Get statistics */
-	if (statfs(data_directory, &buf) == 0)
-	{
-		disk_info->size = (int64_t)buf.f_bsize * (int64_t)buf.f_blocks;
-		disk_info->avail = (int64_t)buf.f_bsize * (int64_t)buf.f_bavail;
-	}
-}

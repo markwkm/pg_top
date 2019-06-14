@@ -127,7 +127,6 @@ void		(*d_memory) (long *) = i_memory;
 void		(*d_swap) (long *) = i_swap;
 void		(*d_db) (struct db_info *) = i_db;
 void		(*d_io) (struct io_info *) = i_io;
-void		(*d_disk) (struct disk_info *) = i_disk;
 void		(*d_message) () = i_message;
 void		(*d_process) (int, char *) = i_process;
 
@@ -214,9 +213,6 @@ do_display(struct pg_top_context *pgtctx)
 	/* Get database I/O information */
 	get_io_info(&pgtctx->io_info);
 
-	/* display database disk info */
-	get_disk_info(&pgtctx->disk_info, get_data_directory(&pgtctx->conninfo));
-
 	/* display the load averages */
 	(*d_loadave) (pgtctx->system_info.last_pid, pgtctx->system_info.load_avg);
 
@@ -262,9 +258,6 @@ do_display(struct pg_top_context *pgtctx)
 
 	/* display database I/O */
 	(*d_io) (&pgtctx->io_info);
-
-	/* display database disk info */
-	(*d_disk) (&pgtctx->disk_info);
 
 	/* display swap stats */
 	(*d_swap) (pgtctx->system_info.swap);
@@ -355,7 +348,6 @@ do_display(struct pg_top_context *pgtctx)
 				d_memory = u_memory;
 				d_db = u_db;
 				d_io = u_io;
-				d_disk = u_disk;
 				d_swap = u_swap;
 				d_message = u_message;
 				pgtctx->d_header = u_header;
@@ -560,7 +552,6 @@ reset_display(struct pg_top_context *pgtctx)
 	d_swap = i_swap;
 	d_db = i_db;
 	d_io = i_io;
-	d_disk = i_disk;
 	d_message = i_message;
 	pgtctx->d_header = i_header;
 	d_process = i_process;
@@ -1027,9 +1018,6 @@ main(int argc, char *argv[])
 
 		/* Get database I/O information */
 		get_io_info(&pgtctx.io_info);
-
-		/* Get database disk information */
-		get_disk_info(&pgtctx.disk_info, get_data_directory(&pgtctx.conninfo));
 
 		pgtctx.timeout.tv_sec = 1;
 		pgtctx.timeout.tv_usec = 0;
