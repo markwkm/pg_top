@@ -102,7 +102,6 @@ struct top_proc_r
 	unsigned long xtime;
 	unsigned long qtime;
 	double pcpu;
-	double wcpu;
 
 	/* The change in the previous values and current values. */
 	long long rchar_diff;
@@ -156,7 +155,7 @@ static char *swapnames[NSWAPSTATS + 1] =
 };
 
 static char fmt_header[] =
-		"  PID X         SIZE   RES STATE   XTIME  QTIME   WCPU    CPU COMMAND";
+		"  PID X         SIZE   RES STATE   XTIME  QTIME  %CPU COMMAND";
 
 /* Now the array that maps process state to a weight. */
 
@@ -560,7 +559,7 @@ format_next_process_r(caddr_t handler)
 	struct top_proc_r *p = &pgrtable[proc_r_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			"%5d %-8.8s %5s %5s %-6s %5s %5s %5.2f%% %5.2f%% %s",
+			"%5d %-8.8s %5s %5s %-6s %5s %5s %5.1f %s",
 			(int) p->pid, /* Some OS's need to cast pid_t to int. */
 			p->usename,
 			format_k(p->size),
@@ -568,7 +567,6 @@ format_next_process_r(caddr_t handler)
 			backendstatenames[p->pgstate],
 			format_time(p->xtime),
 			format_time(p->qtime),
-			p->wcpu * 100.0,
 			p->pcpu * 100.0,
 			p->name);
 
@@ -679,10 +677,6 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 
 	struct timeval thistime;
 	double timediff;
-	double alpha;
-	double beta;
-	unsigned long now;
-	unsigned long elapsed;
 
 	int active_procs = 0;
 	int total_procs = 0;
@@ -706,21 +700,6 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 	}
 	lasttime = thistime;
 
-	/* Round current time to a second. */
-	now = (unsigned long) thistime.tv_sec;
-	if (thistime.tv_usec >= 500000)
-		now++;
-
-	/* Calculate constants for the exponental average. */
-	if (timediff > 0.0 && timediff < 30.0)
-	{
-		alpha = 0.5 * (timediff / 30.0);
-		beta = 1.0 - alpha;
-	}
-	else
-	{
-		alpha = beta = 0.5;
-	}
 	timediff *= HZ;			 /* Convert to ticks. */
 
 	connect_to_db(conninfo);
@@ -777,7 +756,6 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 		else
 		{
 			n->time = 0;
-			n->wcpu = 0;
 		}
 
 		otime = n->time;
@@ -861,12 +839,7 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 		{
 			if ((n->pcpu = (n->time - otime) / timediff) < 0.0001)
 				n->pcpu = 0;
-			n->wcpu = n->pcpu * alpha + n->wcpu * beta;
 		}
-		else if ((elapsed = (now - boottime) * HZ - n->start_time) > 0)
-			n->wcpu = n->pcpu;
-		else
-			n->wcpu = n->pcpu = 0.0;
 
 		if ((show_idle || n->pgstate != STATE_IDLE) &&
 				(sel->usename[0] == '\0' ||

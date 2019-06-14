@@ -84,8 +84,7 @@ struct top_proc
 	unsigned long start_time;
 	unsigned long xtime;
 	unsigned long qtime;
-	double		pcpu,
-				wcpu;
+	double		pcpu;
 
 	/* Data from /proc/<pid>/io. */
 	long long rchar;
@@ -145,7 +144,7 @@ static char *swapnames[NSWAPSTATS + 1] =
 };
 
 static char fmt_header[] =
-"  PID X         SIZE   RES STATE   XTIME  QTIME   WCPU    CPU COMMAND";
+"  PID X         SIZE   RES STATE   XTIME  QTIME  %CPU COMMAND";
 
 /* these are names given to allowed sorting orders -- first is default */
 static char *ordernames[] =
@@ -718,11 +717,7 @@ get_process_info(struct system_info * si,
 				 int compare_index, struct pg_conninfo_ctx *conninfo, int mode)
 {
 	struct timeval thistime;
-	double		timediff,
-				alpha,
-				beta;
-	unsigned long now;
-	unsigned long elapsed;
+	double		timediff;
 
 	/* calculate the time difference since our last check */
 	gettimeofday(&thistime, 0);
@@ -737,23 +732,6 @@ get_process_info(struct system_info * si,
 	}
 	lasttime = thistime;
 
-	/* round current time to a second */
-	now = (unsigned long) thistime.tv_sec;
-	if (thistime.tv_usec >= 500000)
-	{
-		now++;
-	}
-
-	/* calculate constants for the exponental average */
-	if (timediff > 0.0 && timediff < 30.0)
-	{
-		alpha = 0.5 * (timediff / 30.0);
-		beta = 1.0 - alpha;
-	}
-	else
-	{
-		alpha = beta = 0.5;
-	}
 	timediff *= HZ;				/* convert to ticks */
 
 	/* read the process information */
@@ -817,7 +795,6 @@ get_process_info(struct system_info * si,
 			else
 			{
 				n->time = 0;
-				n->wcpu = 0;
 			}
 
 			otime = n->time;
@@ -842,15 +819,6 @@ get_process_info(struct system_info * si,
 				{
 					n->pcpu = 0;
 				}
-				n->wcpu = n->pcpu * alpha + n->wcpu * beta;
-			}
-			else if ((elapsed = (now - boottime) * HZ - n->start_time) > 0)
-			{
-				n->wcpu = n->pcpu;
-			}
-			else
-			{
-				n->wcpu = n->pcpu = 0.0;
 			}
 
 			if ((show_idle || n->pgstate != STATE_IDLE) &&
@@ -940,7 +908,7 @@ format_next_process(caddr_t handle)
 	struct top_proc *p = &pgtable[proc_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			 "%5d %-8.8s %5s %5s %-6s %5s %5s %5.2f%% %5.2f%% %s",
+			 "%5d %-8.8s %5s %5s %-6s %5s %5s %5.1f %s",
 			 p->pid,
 			 p->usename,
 			 format_k(p->size),
@@ -948,7 +916,6 @@ format_next_process(caddr_t handle)
 			 backendstatenames[p->pgstate],
 			 format_time(p->xtime),
 			 format_time(p->qtime),
-			 p->wcpu * 100.0,
 			 p->pcpu * 100.0,
 			 p->name);
 

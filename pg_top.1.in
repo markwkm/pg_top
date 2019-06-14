@@ -324,7 +324,7 @@ Elapsed time since the current transactions started.
 .B QTIME
 Elapsed time since the current query started.
 .TP
-.B CPU
+.B %CPU
 Percentage of available cpu time used by this process.
 .TP
 .B COMMAND
