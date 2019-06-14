@@ -9,12 +9,20 @@
 #include "pg_top.h"
 
 #define QUERY_PROCESSES \
-		"SELECT pid, query, state, usename,\n" \
+		"WITH lock_activity AS\n" \
+		"(\n" \
+		"     SELECT pid, count(*) AS lock_count\n" \
+		"     FROM pg_locks\n" \
+		"     GROUP BY pid\n" \
+		")\n" \
+		"SELECT a.pid, query, state, usename,\n" \
 		"       extract(EPOCH FROM age(clock_timestamp(),\n" \
 		"                              xact_start))::BIGINT,\n" \
 		"       extract(EPOCH FROM age(clock_timestamp(),\n" \
-		"                              query_start))::BIGINT\n" \
-		"FROM pg_stat_activity;"
+		"                              query_start))::BIGINT,\n" \
+		"       coalesce(lock_count, 0) AS lock_count\n" \
+		"FROM pg_stat_activity a LEFT OUTER JOIN lock_activity b\n" \
+		"  ON a.pid = b.pid;"
 
 #define QUERY_PROCESSES_9_1 \
 		"SELECT procpid, current_query\n" \

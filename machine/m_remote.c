@@ -31,26 +31,44 @@
 		"FROM pg_memusage()"
 
 #define QUERY_PROCTAB \
+		"WITH lock_activity AS\n" \
+		"(\n" \
+		"     SELECT pid, count(*) AS lock_count\n" \
+		"     FROM pg_locks\n" \
+		"     GROUP BY pid\n" \
+		")\n" \
 		"SELECT a.pid, comm, fullcomm, a.state, utime, stime,\n" \
 		"       starttime, vsize, rss, usename, rchar, wchar,\n" \
 		"       syscr, syscw, reads, writes, cwrites, b.state,\n" \
 		"       extract(EPOCH FROM age(clock_timestamp(),\n" \
 		"                              xact_start))::BIGINT,\n" \
 		"       extract(EPOCH FROM age(clock_timestamp(),\n" \
-		"                              query_start))::BIGINT\n" \
+		"                              query_start))::BIGINT,\n" \
+		"       coalesce(lock_count, 0) AS lock_count\n" \
 		"FROM pg_proctab() a LEFT OUTER JOIN pg_stat_activity b\n" \
-		"                    ON a.pid = b.pid"
+		"                    ON a.pid = b.pid\n" \
+		"     LEFT OUTER JOIN lock_activity c\n" \
+		"  ON a.pid = c.pid;"
 
 #define QUERY_PROCTAB_QUERY \
+		"WITH lock_activity AS\n" \
+		"(\n" \
+		"     SELECT pid, count(*) AS lock_count\n" \
+		"     FROM pg_locks\n" \
+		"     GROUP BY pid\n" \
+		")\n" \
 		"SELECT a.pid, comm, query, a.state, utime, stime,\n" \
 		"       starttime, vsize, rss, usename, rchar, wchar,\n" \
 		"       syscr, syscw, reads, writes, cwrites, b.state,\n" \
 		"       extract(EPOCH FROM age(clock_timestamp(),\n" \
 		"                              xact_start))::BIGINT,\n" \
 		"       extract(EPOCH FROM age(clock_timestamp(),\n" \
-		"                              query_start))::BIGINT\n" \
+		"                              query_start))::BIGINT,\n" \
+		"       coalesce(lock_count, 0) AS lock_count\n" \
 		"FROM pg_proctab() a LEFT OUTER JOIN pg_stat_activity b\n" \
-		"                    ON a.pid = b.pid"
+		"                    ON a.pid = b.pid\n" \
+		"     LEFT OUTER JOIN lock_activity c\n" \
+		"  ON a.pid = c.pid;"
 
 #define QUERY_PG_PROC \
 		"SELECT COUNT(*)\n" \
@@ -65,7 +83,7 @@ enum column_memusage { c_memused, c_memfree, c_memshared, c_membuffers,
 enum column_proctab { c_pid, c_comm, c_fullcomm, c_state, c_utime, c_stime,
 		c_starttime, c_vsize, c_rss, c_username,
 		c_rchar, c_wchar, c_syscr, c_syscw, c_reads, c_writes, c_cwrites,
-		c_pgstate, c_xtime, c_qtime};
+		c_pgstate, c_xtime, c_qtime, c_locks};
 
 #define bytetok(x)  (((x) + 512) >> 10)
 
@@ -101,6 +119,7 @@ struct top_proc_r
 	unsigned long start_time;
 	unsigned long xtime;
 	unsigned long qtime;
+	unsigned int locks;
 	double pcpu;
 
 	/* The change in the previous values and current values. */
@@ -146,7 +165,7 @@ static char *memorynames[NMEMSTATS + 1] =
 static char *ordernames[] =
 {
 		"cpu", "size", "res", "xtime", "qtime", "rchar", "wchar", "syscr",
-		"syscw", "reads", "writes", "cwrites", "command", NULL
+		"syscw", "reads", "writes", "cwrites", "locks", "command", NULL
 };
 
 static char *swapnames[NSWAPSTATS + 1] =
@@ -155,7 +174,7 @@ static char *swapnames[NSWAPSTATS + 1] =
 };
 
 static char fmt_header[] =
-		"  PID X         SIZE   RES STATE   XTIME  QTIME  %CPU COMMAND";
+		"  PID X         SIZE   RES STATE   XTIME  QTIME  %CPU LOCKS COMMAND";
 
 /* Now the array that maps process state to a weight. */
 
@@ -195,11 +214,13 @@ static int64_t cp_diff[NCPUSTATES];
 #define ORDERKEY_CWRITES if ((result = p1->cancelled_write_bytes - p2->cancelled_write_bytes) == 0)
 #define ORDERKEY_XTIME if ((result = p2->xtime - p1->xtime) == 0)
 #define ORDERKEY_QTIME if ((result = p2->qtime - p1->qtime) == 0)
+#define ORDERKEY_LOCKS if ((result = p2->locks - p1->locks) == 0)
 
 int check_for_function(PGconn *, char *);
 static int compare_cmd_r(const void *, const void *);
 static int compare_cpu_r(const void *, const void *);
 static int compare_cwrites_r(const void *, const void *);
+static int compare_locks_r(const void *, const void *);
 static int compare_qtime_r(const void *, const void *);
 static int compare_rchar_r(const void *, const void *);
 static int compare_reads_r(const void *, const void *);
@@ -252,6 +273,7 @@ int (*proc_compares_r[])() =
 	compare_reads_r,
 	compare_writes_r,
 	compare_cwrites_r,
+	compare_locks_r,
 	compare_cmd_r,
 	NULL
 };
@@ -308,6 +330,29 @@ compare_cwrites_r(const void *v1, const void *v2)
 		ORDERKEY_READS
 		ORDERKEY_WRITES
 		ORDERKEY_NAME
+		;
+
+	return (result);
+}
+
+/*
+ * compare_locks_r - the comparison function for sorting by total locks
+ * acquired
+ */
+
+int
+compare_locks_r(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_LOCKS
+		ORDERKEY_QTIME
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		ORDERKEY_MEM
+		ORDERKEY_RSSIZE
 		;
 
 	return (result);
@@ -559,7 +604,7 @@ format_next_process_r(caddr_t handler)
 	struct top_proc_r *p = &pgrtable[proc_r_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			"%5d %-8.8s %5s %5s %-6s %5s %5s %5.1f %s",
+			"%5d %-8.8s %5s %5s %-6s %5s %5s %5.1f %5d %s",
 			(int) p->pid, /* Some OS's need to cast pid_t to int. */
 			p->usename,
 			format_k(p->size),
@@ -568,6 +613,7 @@ format_next_process_r(caddr_t handler)
 			format_time(p->xtime),
 			format_time(p->qtime),
 			p->pcpu * 100.0,
+			p->locks,
 			p->name);
 
 	return (fmt);
@@ -803,6 +849,8 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 
 		n->xtime = atol(PQgetvalue(pgresult, i, c_xtime));
 		n->qtime = atol(PQgetvalue(pgresult, i, c_qtime));
+
+		n->locks = atol(PQgetvalue(pgresult, i, c_locks));
 
 		value = atoll(PQgetvalue(pgresult, i, c_rchar));
 		n->rchar_diff = value - n->rchar;

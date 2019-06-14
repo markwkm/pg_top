@@ -84,6 +84,7 @@ struct top_proc
 	unsigned long start_time;
 	unsigned long xtime;
 	unsigned long qtime;
+	unsigned int locks;
 	double		pcpu;
 
 	/* Data from /proc/<pid>/io. */
@@ -144,19 +145,20 @@ static char *swapnames[NSWAPSTATS + 1] =
 };
 
 static char fmt_header[] =
-"  PID X         SIZE   RES STATE   XTIME  QTIME  %CPU COMMAND";
+"  PID X         SIZE   RES STATE   XTIME  QTIME  %CPU LOCKS COMMAND";
 
 /* these are names given to allowed sorting orders -- first is default */
 static char *ordernames[] =
 {
 		"cpu", "size", "res", "xtime", "qtime", "rchar", "wchar", "syscr",
-		"syscw", "reads", "writes", "cwrites", "command", NULL
+		"syscw", "reads", "writes", "cwrites", "locks", "command", NULL
 };
 
 /* forward definitions for comparison functions */
 static int compare_cmd(const void *, const void *);
 static int compare_cpu(const void *, const void *);
 static int compare_cwrites(const void *, const void *);
+static int compare_locks(const void *, const void *);
 static int compare_qtime(const void *, const void *);
 static int compare_rchar(const void *, const void *);
 static int compare_reads(const void *, const void *);
@@ -182,6 +184,7 @@ int			(*proc_compares[]) () =
 	compare_reads,
 	compare_writes,
 	compare_cwrites,
+	compare_locks,
 	compare_cmd,
 	NULL
 };
@@ -809,6 +812,7 @@ get_process_info(struct system_info * si,
 			update_str(&n->usename, PQgetvalue(pgresult, i, 3));
 			n->xtime = atol(PQgetvalue(pgresult, i, 4));
 			n->qtime = atol(PQgetvalue(pgresult, i, 5));
+			n->locks = atoi(PQgetvalue(pgresult, i, 6));
 
 			total_procs++;
 			process_states[n->pgstate]++;
@@ -908,7 +912,7 @@ format_next_process(caddr_t handle)
 	struct top_proc *p = &pgtable[proc_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			 "%5d %-8.8s %5s %5s %-6s %5s %5s %5.1f %s",
+			 "%5d %-8.8s %5s %5s %-6s %5s %5s %5.1f %5d %s",
 			 p->pid,
 			 p->usename,
 			 format_k(p->size),
@@ -917,6 +921,7 @@ format_next_process(caddr_t handle)
 			 format_time(p->xtime),
 			 format_time(p->qtime),
 			 p->pcpu * 100.0,
+			 p->locks,
 			 p->name);
 
 	/* return the result */
@@ -944,6 +949,7 @@ format_next_process(caddr_t handle)
 
 #define ORDERKEY_CWRITES if ((result = p1->cancelled_write_bytes - \
                                        p2->cancelled_write_bytes) == 0)
+#define ORDERKEY_LOCKS   if ((result = p2->locks - p1->locks) == 0)
 #define ORDERKEY_MEM     if ((result = p2->size - p1->size) == 0)
 #define ORDERKEY_NAME    if ((result = strcmp(p1->name, p2->name)) == 0)
 #define ORDERKEY_PCTCPU  if ((result = (int)(p2->pcpu - p1->pcpu)) == 0)
@@ -1010,6 +1016,28 @@ compare_cwrites(const void *v1, const void *v2)
 		ORDERKEY_READS
 		ORDERKEY_WRITES
 		ORDERKEY_NAME
+		;
+
+	return (result);
+}
+
+/*
+ * compare_locks - the comparison function for sorting by total locks ancquired
+ */
+
+static int
+compare_locks(const void *v1, const void *v2)
+{
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
+
+	ORDERKEY_LOCKS
+		ORDERKEY_QTIME
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		ORDERKEY_MEM
+		ORDERKEY_RSSIZE
 		;
 
 	return (result);

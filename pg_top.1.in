@@ -327,6 +327,9 @@ Elapsed time since the current query started.
 .B %CPU
 Percentage of available cpu time used by this process.
 .TP
+.B LOCKS
+Number of locks granted to this process.
+.TP
 .B COMMAND
 Name of the command that the process is currently running.
 .SH COLOR
