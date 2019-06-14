@@ -13,13 +13,6 @@
 
 #include "machine.h"
 
-/* Query to fetch information about database activity */
-#define QUERY_STAT_DB \
-		"SELECT datid, datname, numbackends, xact_commit, xact_rollback, \n" \
-		"       blks_read, blks_hit, tup_returned, tup_fetched, \n" \
-		"       tup_inserted, tup_updated, tup_deleted, conflicts \n" \
-		"FROM pg_stat_database;"
-
 char *backendstatenames[] =
 {
 	"", "idle", "active", "idltxn", "fast", "abort", "disabl", NULL

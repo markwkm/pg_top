@@ -4,7 +4,6 @@
  *	for any specific machine.
  *
  *	Copyright (c) 2007-2019, Mark Wong
- *	Portions Copyright (c) 2013 VMware, Inc. All Rights Reserved.
  */
 
 #ifndef _MACHINE_H_
@@ -94,20 +93,6 @@ struct system_info
 /* cpu_states is an array of percentages * 10.	For example,
    the (integer) value 105 is 10.5% (or .105).
  */
-
-/*
- * Database activity information
- */
-struct db_info {
-	int numDb;
-	int64_t numXact;
-	int64_t numRollback;
-	int64_t numBlockRead;
-	int64_t numBlockHit;
-	int64_t numTupleFetched;
-	int64_t numTupleAltered;
-	int64_t numConflict;
-};
 
 /*
  * the process_select struct tells get_process_info what processes we

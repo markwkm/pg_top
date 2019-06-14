@@ -7,7 +7,6 @@
  *
  *	Copyright (c) 1984, 1989, William LeFebvre, Rice University
  *	Copyright (c) 1989, 1990, 1992, William LeFebvre, Northwestern University
- *	Portions Copyright (c) 2013 VMware, Inc. All Rights Reserved.
  */
 
 /*
@@ -73,8 +72,6 @@ static int	y_mem = Y_MEM;
 static int	x_swap = -1;
 static int	y_swap = -1;
 static int	y_message = Y_MESSAGE;
-static int	x_db = X_DB;
-static int	y_db = Y_DB;
 static int	x_header = X_HEADER;
 static int	y_header = Y_HEADER;
 static int	x_idlecursor = X_IDLECURSOR;
@@ -1218,32 +1215,6 @@ u_swap(long *stats)
 		/* format the new line */
 		summary_format_memory(x_swap, y_swap, stats, swap_names, swap_cidx);
 	}
-}
-
-/*
- *     *_db(db_info) - print "DB activity: " followed by database activity
- */
-void
-i_db(struct db_info *db_info)
-{
-	u_db(db_info);
-}
-
-void
-u_db(struct db_info *db_info)
-{
-	char buf[128];
-
-	display_write(x_db, y_db, 0, 0, "DB activity: ");
-	snprintf(buf, 80, "%3ld tps, %2ld rollbs/s, %3ld buffer r/s, %2ld hit%%, %6ld row r/s, %4ld row w/s ",
-			 db_info->numXact, db_info->numRollback,
-			 db_info->numBlockRead,
-			 db_info->numBlockRead + db_info->numBlockHit > 0 ?
-				((int64_t)(db_info->numBlockHit * 100 /
-					(db_info->numBlockRead + db_info->numBlockHit))) : 0,
-			 db_info->numTupleFetched,
-			 db_info->numTupleAltered);
-	display_write(-1, -1, 0, 0, buf);
 }
 
 /*

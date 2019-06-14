@@ -87,7 +87,6 @@ struct pg_top_context
 #ifdef ENABLE_COLOR
 	int color_on;
 #endif
-	struct db_info db_info;
 	int delay;
 	int displays;
 	void (*d_header)(char *);

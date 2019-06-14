@@ -12,7 +12,6 @@ char	   *copyright =
  *	Copyright (c) 1994, 1995, William LeFebvre, Argonne National Laboratory
  *	Copyright (c) 1996, William LeFebvre, Group sys Consulting
  *	Copyright (c) 2007-2019, Mark Wong
- *	Portions Copyright (c) 2013 VMware, Inc. All Rights Reserved.
  */
 
 /*
@@ -125,7 +124,6 @@ void		(*d_procstates) (int, int *) = i_procstates;
 void		(*d_cpustates) (int64_t *) = i_cpustates;
 void		(*d_memory) (long *) = i_memory;
 void		(*d_swap) (long *) = i_swap;
-void		(*d_db) (struct db_info *) = i_db;
 void		(*d_message) () = i_message;
 void		(*d_process) (int, char *) = i_process;
 
@@ -246,9 +244,6 @@ do_display(struct pg_top_context *pgtctx)
 	/* display memory stats */
 	(*d_memory) (pgtctx->system_info.memory);
 
-	/* display database activity */
-	(*d_db) (&pgtctx->db_info);
-
 	/* display swap stats */
 	(*d_swap) (pgtctx->system_info.swap);
 
@@ -336,7 +331,6 @@ do_display(struct pg_top_context *pgtctx)
 				d_procstates = u_procstates;
 				d_cpustates = u_cpustates;
 				d_memory = u_memory;
-				d_db = u_db;
 				d_swap = u_swap;
 				d_message = u_message;
 				pgtctx->d_header = u_header;
@@ -539,7 +533,6 @@ reset_display(struct pg_top_context *pgtctx)
 	d_cpustates = i_cpustates;
 	d_memory = i_memory;
 	d_swap = i_swap;
-	d_db = i_db;
 	d_message = i_message;
 	pgtctx->d_header = i_header;
 	d_process = i_process;
