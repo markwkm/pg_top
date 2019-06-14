@@ -598,9 +598,9 @@ get_process_info(struct system_info * si, struct process_select * sel, int x,
 	buffer = (struct kinfo_proc *) malloc( len * sizeof(struct kinfo_proc) );
 
 	for (i = 0; i < nproc ; i++) {
-		size_t size = sizeof(struct kinfo_proc);
+		size_t size = sizeof(struct kinfo_proc);	
 		mib[3] = atoi(PQgetvalue(pgresult, i, 0));
-
+		
 		if (sysctl(mib, sizeof(mib)/sizeof(int), &buffer[i], &size, NULL,
 				0) == -1) {
 			perror("sysctl atoi loop");
@@ -952,11 +952,4 @@ proc_owner(pid_t pid)
 		}
 	}
 	return (-1);
-}
-
-void
-get_io_info(struct io_info *io_info)
-{
-	/* Not supported yet */
-	memset(io_info, 0, sizeof(*io_info));
 }

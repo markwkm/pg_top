@@ -96,7 +96,6 @@ struct pg_top_context
 	char *header_text;
 	char *header_processes;
 	char interactive;
-	struct io_info io_info;
 	int mode;
 	int mode_remote; /* Mode for monitoring a remote database system. */
 	int order_index;

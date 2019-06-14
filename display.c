@@ -75,8 +75,6 @@ static int	y_swap = -1;
 static int	y_message = Y_MESSAGE;
 static int	x_db = X_DB;
 static int	y_db = Y_DB;
-static int	x_io = X_IO;
-static int	y_io = Y_IO;
 static int	x_header = X_HEADER;
 static int	y_header = Y_HEADER;
 static int	x_idlecursor = X_IDLECURSOR;
@@ -1246,29 +1244,6 @@ u_db(struct db_info *db_info)
 			 db_info->numTupleFetched,
 			 db_info->numTupleAltered);
 	display_write(-1, -1, 0, 0, buf);
-}
-
-/*
- *     *_io(io_info) - print "DB I/O: " followed by IO summary
- */
-void
-i_io(struct io_info *io_info)
-{
-	char buf[128];
-	display_write(x_io, y_io, 0, 0, "DB I/O: ");
-
-	snprintf(buf, 80, "%5ld reads/s, %5ld KB/s, %5ld writes/s, %5ld KB/s  ",
-			 io_info->reads,
-			 io_info->readsectors / 2,
-			 io_info->writes,
-			 io_info->writesectors / 2);
-	display_write(-1, -1, 0, 0, buf);
-}
-
-void
-u_io(struct io_info *io_info)
-{
-	i_io(io_info);
 }
 
 /*

@@ -31,8 +31,6 @@ void		i_swap(long *stats);
 void		u_swap(long *stats);
 void		i_db(struct db_info *db_info);
 void		u_db(struct db_info *db_info);
-void		i_io(struct io_info *io_info);
-void		u_io(struct io_info *io_info);
 void		i_message();
 void		u_message();
 void		i_header(char *text);

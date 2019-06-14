@@ -776,10 +776,3 @@ struct prpsinfo *baseptr;
 	lasttime = thistime;
 
 }
-
-void
-get_io_info(struct io_info *io_info)
-{
-	/* Not supported yet */
-	memset(io_info, 0, sizeof(*io_info));
-}
