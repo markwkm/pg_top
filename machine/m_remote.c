@@ -139,6 +139,20 @@ struct top_proc_r
 	long long read_bytes;
 	long long write_bytes;
 	long long cancelled_write_bytes;
+
+	/* Replication data */
+	char *application_name;
+	char *client_addr;
+	char *repstate;
+	char *primary;
+	char *sent;
+	char *write;
+	char *flush;
+	char *replay;
+	long long sent_lag;
+	long long write_lag;
+	long long flush_lag;
+	long long replay_lag;
 };
 
 static time_t boottime = -1;
@@ -165,7 +179,8 @@ static char *memorynames[NMEMSTATS + 1] =
 static char *ordernames[] =
 {
 		"cpu", "size", "res", "xtime", "qtime", "rchar", "wchar", "syscr",
-		"syscw", "reads", "writes", "cwrites", "locks", "command", NULL
+		"syscw", "reads", "writes", "cwrites", "locks", "command", "flag",
+		"rlag", "slag", "wlag", NULL
 };
 
 static char *swapnames[NSWAPSTATS + 1] =
@@ -203,6 +218,11 @@ static int64_t cp_diff[NCPUSTATES];
 #define ORDERKEY_PCTCPU  if ((result = (int)(p2->pcpu - p1->pcpu)) == 0)
 #define ORDERKEY_STATE	 if ((result = p1->pgstate < p2->pgstate))
 #define ORDERKEY_RSSIZE  if ((result = p2->rss - p1->rss) == 0)
+#define ORDERKEY_LAG_FLUSH  if ((result = p2->flush_lag - p1->flush_lag) == 0)
+#define ORDERKEY_LAG_REPLAY if ((result = p2->replay_lag - \
+                                          p1->replay_lag) == 0)
+#define ORDERKEY_LAG_SENT   if ((result = p2->sent_lag - p1->sent_lag) == 0)
+#define ORDERKEY_LAG_WRITE  if ((result = p2->write_lag - p1->write_lag) == 0)
 #define ORDERKEY_MEM	 if ((result = p2->size - p1->size) == 0)
 #define ORDERKEY_NAME	if ((result = strcmp(p1->name, p2->name)) == 0)
 #define ORDERKEY_RCHAR	 if ((result = p1->rchar - p2->rchar) == 0)
@@ -220,6 +240,10 @@ int check_for_function(PGconn *, char *);
 static int compare_cmd_r(const void *, const void *);
 static int compare_cpu_r(const void *, const void *);
 static int compare_cwrites_r(const void *, const void *);
+static int compare_lag_flush(const void *, const void *);
+static int compare_lag_replay(const void *, const void *);
+static int compare_lag_sent(const void *, const void *);
+static int compare_lag_write(const void *, const void *);
 static int compare_locks_r(const void *, const void *);
 static int compare_qtime_r(const void *, const void *);
 static int compare_rchar_r(const void *, const void *);
@@ -275,6 +299,10 @@ int (*proc_compares_r[])() =
 	compare_cwrites_r,
 	compare_locks_r,
 	compare_cmd_r,
+	compare_lag_flush,
+	compare_lag_replay,
+	compare_lag_sent,
+	compare_lag_write,
 	NULL
 };
 
@@ -335,6 +363,73 @@ compare_cwrites_r(const void *v1, const void *v2)
 	return (result);
 }
 
+static int
+compare_lag_flush(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_LAG_FLUSH
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		ORDERKEY_MEM
+		ORDERKEY_RSSIZE
+		;
+
+	return (result);
+}
+
+static int
+compare_lag_replay(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_LAG_REPLAY
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		ORDERKEY_MEM
+		ORDERKEY_RSSIZE
+		;
+
+	return (result);
+}
+
+static int
+compare_lag_sent(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_LAG_SENT
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		ORDERKEY_MEM
+		ORDERKEY_RSSIZE
+		;
+
+	return (result);
+}
+
+static int
+compare_lag_write(const void *v1, const void *v2)
+{
+	struct top_proc_r *p1 = (struct top_proc_r *) v1;
+	struct top_proc_r *p2 = (struct top_proc_r *) v2;
+	int result;
+
+	ORDERKEY_LAG_WRITE
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		ORDERKEY_MEM
+		ORDERKEY_RSSIZE
+		;
+
+	return (result);
+}
 /*
  * compare_locks_r - the comparison function for sorting by total locks
  * acquired
@@ -619,6 +714,33 @@ format_next_process_r(caddr_t handler)
 	return (fmt);
 }
 
+char *
+format_next_replication_r(caddr_t handle)
+{
+	static char fmt[MAX_COLS];	/* static area where result is built */
+	struct top_proc_r *p = &pgrtable[proc_r_index++];
+
+	snprintf(fmt, sizeof(fmt),
+			 "%5d %-8.8s %-11.11s %15s %-9.9s %9s %9s %9s %9s %9s %5s %5s %5s %5s",
+			 p->pid,
+			 p->usename,
+			 p->application_name,
+			 p->client_addr,
+			 p->repstate,
+			 p->primary,
+			 p->sent,
+			 p->write,
+			 p->flush,
+			 p->replay,
+			 format_b(p->sent_lag),
+			 format_b(p->write_lag),
+			 format_b(p->flush_lag),
+			 format_b(p->replay_lag));
+
+	/* return the result */
+	return (fmt);
+}
+
 void
 get_system_info_r(struct system_info *info, struct pg_conninfo_ctx *conninfo)
 {
@@ -714,7 +836,7 @@ get_system_info_r(struct system_info *info, struct pg_conninfo_ctx *conninfo)
 
 caddr_t
 get_process_info_r(struct system_info *si, struct process_select *sel,
-		int compare_index, struct pg_conninfo_ctx *conninfo)
+		int compare_index, struct pg_conninfo_ctx *conninfo, int mode)
 {
 	int i;
 
@@ -751,13 +873,19 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 	connect_to_db(conninfo);
 	if (conninfo->connection != NULL)
 	{
-		if (sel->fullcmd == 2)
-		{
-			pgresult = PQexec(conninfo->connection, QUERY_PROCTAB_QUERY);
-		}
-		else
-		{
-			pgresult = PQexec(conninfo->connection, QUERY_PROCTAB);
+		switch (mode) {
+		case MODE_REPLICATION:
+			pgresult = pg_replication(conninfo->connection);
+			break;
+		default:
+			if (sel->fullcmd == 2)
+			{
+				pgresult = PQexec(conninfo->connection, QUERY_PROCTAB_QUERY);
+			}
+			else
+			{
+				pgresult = PQexec(conninfo->connection, QUERY_PROCTAB);
+			}
 		}
 		rows = PQntuples(pgresult);
 	}
@@ -806,93 +934,113 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 
 		otime = n->time;
 
-		if (sel->fullcmd && PQgetvalue(pgresult, i, c_fullcomm))
-			update_str(&n->name, PQgetvalue(pgresult, i, c_fullcomm));
-		else
-			update_str(&n->name, PQgetvalue(pgresult, i, c_comm));
+		switch (mode) {
+		case MODE_REPLICATION:
+			update_str(&n->usename, PQgetvalue(pgresult, i, 1));
+			update_str(&n->application_name, PQgetvalue(pgresult, i, 2));
+			update_str(&n->client_addr, PQgetvalue(pgresult, i, 3));
+			update_str(&n->repstate, PQgetvalue(pgresult, i, 4));
+			update_str(&n->primary, PQgetvalue(pgresult, i, 5));
+			update_str(&n->sent, PQgetvalue(pgresult, i, 6));
+			update_str(&n->write, PQgetvalue(pgresult, i, 7));
+			update_str(&n->flush, PQgetvalue(pgresult, i, 8));
+			update_str(&n->replay, PQgetvalue(pgresult, i, 9));
+			n->sent_lag = atol(PQgetvalue(pgresult, i, 10));
+			n->write_lag = atol(PQgetvalue(pgresult, i, 11));
+			n->flush_lag = atol(PQgetvalue(pgresult, i, 12));
+			n->replay_lag = atol(PQgetvalue(pgresult, i, 13));
 
-		switch (PQgetvalue(pgresult, i, c_state)[0])
-		{
-		case 'R':
-			n->state = 1;
-			break;
-		case 'S':
-			n->state = 2;
-			break;
-		case 'D':
-			n->state = 3;
-			break;
-		case 'Z':
-			n->state = 4;
-			break;
-		case 'T':
-			n->state = 5;
-			break;
-		case 'W':
-			n->state = 6;
-			break;
-		case '\0':
-			continue;
-		}
-		update_state(&n->pgstate, PQgetvalue(pgresult, i, c_pgstate));
-
-		n->time = (unsigned long) atol(PQgetvalue(pgresult, i, c_utime));
-		n->time += (unsigned long) atol(PQgetvalue(pgresult, i, c_stime));
-		n->start_time = (unsigned long)
-				atol(PQgetvalue(pgresult, i, c_starttime));
-		n->size = bytetok((unsigned long)
-				atol(PQgetvalue(pgresult, i, c_vsize)));
-		n->rss = bytetok((unsigned long)
-				atol(PQgetvalue(pgresult, i, c_rss)));
-
-		update_str(&n->usename, PQgetvalue(pgresult, i, c_username));
-
-		n->xtime = atol(PQgetvalue(pgresult, i, c_xtime));
-		n->qtime = atol(PQgetvalue(pgresult, i, c_qtime));
-
-		n->locks = atol(PQgetvalue(pgresult, i, c_locks));
-
-		value = atoll(PQgetvalue(pgresult, i, c_rchar));
-		n->rchar_diff = value - n->rchar;
-		n->rchar = value;
-
-		value = atoll(PQgetvalue(pgresult, i, c_wchar));
-		n->wchar_diff = value - n->wchar;
-		n->wchar = value;
-
-		value = atoll(PQgetvalue(pgresult, i, c_syscr));
-		n->syscr_diff = value - n->syscr;
-		n->syscr = value;
-
-		value = atoll(PQgetvalue(pgresult, i, c_syscw));
-		n->syscw_diff = value - n->syscw;
-		n->syscw = value;
-
-		value = atoll(PQgetvalue(pgresult, i, c_reads));
-		n->read_bytes_diff = value - n->read_bytes;
-		n->read_bytes = value;
-
-		value = atoll(PQgetvalue(pgresult, i, c_writes));
-		n->write_bytes_diff = value - n->write_bytes;
-		n->write_bytes = value;
-
-		value = atoll(PQgetvalue(pgresult, i, c_cwrites));
-		n->cancelled_write_bytes_diff = value - n->cancelled_write_bytes;
-		n->cancelled_write_bytes = value;
-
-		++total_procs;
-		++process_states[n->pgstate];
-
-		if (timediff > 0.0)
-		{
-			if ((n->pcpu = (n->time - otime) / timediff) < 0.0001)
-				n->pcpu = 0;
-		}
-
-		if ((show_idle || n->pgstate != STATE_IDLE) &&
-				(sel->usename[0] == '\0' ||
-						strcmp(n->usename, sel->usename) == 0))
 			memcpy(&pgrtable[active_procs++], n, sizeof(struct top_proc_r));
+			break;
+		default:
+			if (sel->fullcmd && PQgetvalue(pgresult, i, c_fullcomm))
+				update_str(&n->name, PQgetvalue(pgresult, i, c_fullcomm));
+			else
+				update_str(&n->name, PQgetvalue(pgresult, i, c_comm));
+
+			switch (PQgetvalue(pgresult, i, c_state)[0])
+			{
+			case 'R':
+				n->state = 1;
+				break;
+			case 'S':
+				n->state = 2;
+				break;
+			case 'D':
+				n->state = 3;
+				break;
+			case 'Z':
+				n->state = 4;
+				break;
+			case 'T':
+				n->state = 5;
+				break;
+			case 'W':
+				n->state = 6;
+				break;
+			case '\0':
+				continue;
+			}
+			update_state(&n->pgstate, PQgetvalue(pgresult, i, c_pgstate));
+
+			n->time = (unsigned long) atol(PQgetvalue(pgresult, i, c_utime));
+			n->time += (unsigned long) atol(PQgetvalue(pgresult, i, c_stime));
+			n->start_time = (unsigned long)
+					atol(PQgetvalue(pgresult, i, c_starttime));
+			n->size = bytetok((unsigned long)
+					atol(PQgetvalue(pgresult, i, c_vsize)));
+			n->rss = bytetok((unsigned long)
+					atol(PQgetvalue(pgresult, i, c_rss)));
+
+			update_str(&n->usename, PQgetvalue(pgresult, i, c_username));
+
+			n->xtime = atol(PQgetvalue(pgresult, i, c_xtime));
+			n->qtime = atol(PQgetvalue(pgresult, i, c_qtime));
+
+			n->locks = atol(PQgetvalue(pgresult, i, c_locks));
+
+			value = atoll(PQgetvalue(pgresult, i, c_rchar));
+			n->rchar_diff = value - n->rchar;
+			n->rchar = value;
+
+			value = atoll(PQgetvalue(pgresult, i, c_wchar));
+			n->wchar_diff = value - n->wchar;
+			n->wchar = value;
+
+			value = atoll(PQgetvalue(pgresult, i, c_syscr));
+			n->syscr_diff = value - n->syscr;
+			n->syscr = value;
+
+			value = atoll(PQgetvalue(pgresult, i, c_syscw));
+			n->syscw_diff = value - n->syscw;
+			n->syscw = value;
+
+			value = atoll(PQgetvalue(pgresult, i, c_reads));
+			n->read_bytes_diff = value - n->read_bytes;
+			n->read_bytes = value;
+
+			value = atoll(PQgetvalue(pgresult, i, c_writes));
+			n->write_bytes_diff = value - n->write_bytes;
+			n->write_bytes = value;
+
+			value = atoll(PQgetvalue(pgresult, i, c_cwrites));
+			n->cancelled_write_bytes_diff = value - n->cancelled_write_bytes;
+			n->cancelled_write_bytes = value;
+
+			++total_procs;
+			++process_states[n->pgstate];
+
+			if (timediff > 0.0)
+			{
+				if ((n->pcpu = (n->time - otime) / timediff) < 0.0001)
+					n->pcpu = 0;
+			}
+
+			if ((show_idle || n->pgstate != STATE_IDLE) &&
+					(sel->usename[0] == '\0' ||
+							strcmp(n->usename, sel->usename) == 0))
+				memcpy(&pgrtable[active_procs++], n, sizeof(struct top_proc_r));
+		}
 	}
 
 	if (pgresult != NULL)

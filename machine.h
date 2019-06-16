@@ -30,6 +30,7 @@
 /* Display modes. */
 #define MODE_PROCESSES 0
 #define MODE_IO_STATS 3
+#define MODE_REPLICATION 4
 
 /* Display modes for table and index statistics. */
 #define STATS_DIFF 0
@@ -120,6 +121,7 @@ caddr_t get_process_info(struct system_info *, struct process_select *, int,
 char	   *format_header(char *);
 char	   *format_next_io(caddr_t);
 char	   *format_next_process(caddr_t);
+char	   *format_next_replication(caddr_t);
 uid_t			proc_owner(pid_t);
 void		update_state(int *pgstate, char *state);
 void		update_str(char **, char *);

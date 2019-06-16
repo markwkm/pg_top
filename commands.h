@@ -33,6 +33,7 @@ int cmd_io(struct pg_top_context *);
 int cmd_locks(struct pg_top_context *);
 int cmd_number(struct pg_top_context *);
 int cmd_quit(struct pg_top_context *);
+int cmd_replication(struct pg_top_context *);
 int cmd_order(struct pg_top_context *);
 int cmd_order_cpu(struct pg_top_context *);
 int cmd_order_mem(struct pg_top_context *);

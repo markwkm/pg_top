@@ -137,6 +137,11 @@ variable, if set.
 \fB\-U \fR\fB\fIUSERNAME\fR\fR, \fB\-\-username=\fR\fB\fIUSERNAME\fR\fR
 User name to connect as.
 .TP
+\fB\-R
+Display WAL sender processes' replication activity to connected standy servers.
+Only directly connected standbys are listed; no information is available about
+downstream standby servers.
+.TP
 \fB\-X
 Display I/O activity per process.  This depends on whether the platform pg_top
 is run on supports getting I/O statistics per process, or whether the database
@@ -296,7 +301,8 @@ processes.  This display is similar in spirit to
 .IR ps (1)
 but it is not exactly the same.  The columns displayed by pg_top will
 differ slightly between operating systems.  Generally, the following
-fields are displayed:
+display are available:
+.SH ACTIVITY DISPLAY
 .TP
 .B PID
 The process id.
@@ -332,6 +338,49 @@ Number of locks granted to this process.
 .TP
 .B COMMAND
 Name of the command that the process is currently running.
+.SH REPLICATION DISPLAY
+.TP
+.B PID
+The process id.
+.TP
+.B USERNAME
+Name of the user logged into this WAL sender process
+.TP
+.B APPLICATION
+Name of the application that is connected to this WAL sender
+.TP
+.B CLIENT
+IP address of the client connected to this WAL sender
+.TP
+.B STATE
+Current WAL sender state
+.TP
+.B PRIMARY
+Current transaction log insert location on primary node
+.TP
+.B SENT
+Last write-ahead log location sent on this connection
+.TP
+.B WRITE
+Last write-ahead log location written to disk
+.TP
+.B FLUSH
+Last write-ahead log location flushed to disk
+.TP
+.B REPLAY
+Last write-ahead log location replayed into the database
+.TP
+.B SLAG
+Size of write-ahead log location remaining to be sent
+.TP
+.B WLAG
+Size of write-ahead log location remaining to be written to disk
+.TP
+.B FLAG
+Size of write-ahead log location remaining to be flushed to disk
+.TP
+.B RLAG
+Size of write-ahead log location remaining to be replayed into the database
 .SH COLOR
 pg_top supports the use of ANSI color in its output. By default, color is
 available but not used.  The environment variable

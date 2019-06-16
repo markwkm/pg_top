@@ -50,6 +50,9 @@ extern int max_topn;
 char header_io_stats[64] =
 		"  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
 
+char header_replication_stats[] =
+		"  PID USERNAME APPLICATION          CLIENT STATE     PRIMARY   SENT      WRITE     FLUSH     REPLAY     SLAG  WLAG  FLAG  RLAG";
+
 #define BEGIN "BEGIN;"
 #define ROLLBACK "ROLLBACK;"
 
@@ -75,6 +78,7 @@ struct cmd cmd_map[] = {
 	{'o', cmd_order},
 	{'P', cmd_order_cpu},
 	{'q', cmd_quit},
+	{'R', cmd_replication},
 	{'Q', cmd_current_query},
 	{'s', cmd_delay},
 	{'t', cmd_toggle},
@@ -315,6 +319,15 @@ cmd_quit(struct pg_top_context *pgtctx)
 {
 	quit(0);
 	/* NOT REACHED */
+	return No;
+}
+
+int
+cmd_replication(struct pg_top_context *pgtctx)
+{
+	pgtctx->mode = MODE_REPLICATION;
+	pgtctx->header_text = header_replication_stats;
+	reset_display(pgtctx);
 	return No;
 }
 

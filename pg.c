@@ -38,6 +38,21 @@
 		"FROM pg_stat_activity\n" \
 		"WHERE procpid = %d;"
 
+#define REPLICATION \
+		"SELECT pid, usename, application_name, client_addr, state,\n" \
+		"       pg_current_xlog_insert_location() AS primary,\n" \
+		"       sent_location, write_location, flush_location,\n" \
+		"       replay_location, \n" \
+		"       pg_xlog_location_diff(pg_current_xlog_insert_location(),\n" \
+		"                             sent_location) as sent_lag,\n" \
+		"       pg_xlog_location_diff(pg_current_xlog_insert_location(),\n" \
+		"                             write_location) as write_lag,\n" \
+		"       pg_xlog_location_diff(pg_current_xlog_insert_location(),\n" \
+		"                             flush_location) as flush_lag,\n" \
+		"       pg_xlog_location_diff(pg_current_xlog_insert_location(),\n" \
+		"                             replay_location) as replay_lag\n" \
+		"       FROM pg_stat_replication;"
+
 #define GET_LOCKS \
 		"SELECT datname, relname, mode, granted\n" \
 		"FROM pg_stat_activity, pg_locks\n" \
@@ -127,6 +142,17 @@ pg_processes(PGconn *pgconn)
 		pgresult = PQexec(pgconn, QUERY_PROCESSES_9_1);
 	}
 	PQexec(pgconn, "ROLLBACK;;");
+	return pgresult;
+}
+
+PGresult *
+pg_replication(PGconn *pgconn)
+{
+	PGresult *pgresult;
+	PQexec(pgconn, "BEGIN;");
+	PQexec(pgconn, "SET statement_timeout = '2s';");
+	pgresult = PQexec(pgconn, REPLICATION);
+	PQexec(pgconn, "ROLLBACK;");
 	return pgresult;
 }
 

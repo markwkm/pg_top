@@ -11,6 +11,10 @@ Release 4.0.0
      * Make connections with password persistent and clear connection memory in
        these scenarios
      * Fix sorting when specified from the command line and in interactive mode
+     * Add display for top replication processes using 'R' command line
+       argument or 'R' command
+     * Add 'a' command to switch to top 'activity' processes, the default,
+       while removing the 'I' for the top I/O display as a toggle
 
 Release 3.7.0
 

@@ -17,6 +17,7 @@ void	    disconnect_from_db(struct pg_conninfo_ctx *);
 
 PGresult   *pg_locks(PGconn *, int);
 PGresult   *pg_processes(PGconn *);
+PGresult   *pg_replication(PGconn *);
 PGresult   *pg_query(PGconn *, int);
 
 enum BackendState

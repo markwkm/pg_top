@@ -104,6 +104,20 @@ struct top_proc
 	long long diff_read_bytes;
 	long long diff_write_bytes;
 	long long diff_cancelled_write_bytes;
+
+	/* Replication data */
+	char *application_name;
+	char *client_addr;
+	char *repstate;
+	char *primary;
+	char *sent;
+	char *write;
+	char *flush;
+	char *replay;
+	long long sent_lag;
+	long long write_lag;
+	long long flush_lag;
+	long long replay_lag;
 };
 
 int topproccmp(struct top_proc *, struct top_proc *);
@@ -151,13 +165,18 @@ static char fmt_header[] =
 static char *ordernames[] =
 {
 		"cpu", "size", "res", "xtime", "qtime", "rchar", "wchar", "syscr",
-		"syscw", "reads", "writes", "cwrites", "locks", "command", NULL
+		"syscw", "reads", "writes", "cwrites", "locks", "command", "flag",
+		"rlag", "slag", "wlag", NULL
 };
 
 /* forward definitions for comparison functions */
 static int compare_cmd(const void *, const void *);
 static int compare_cpu(const void *, const void *);
 static int compare_cwrites(const void *, const void *);
+static int compare_lag_flush(const void *, const void *);
+static int compare_lag_replay(const void *, const void *);
+static int compare_lag_sent(const void *, const void *);
+static int compare_lag_write(const void *, const void *);
 static int compare_locks(const void *, const void *);
 static int compare_qtime(const void *, const void *);
 static int compare_rchar(const void *, const void *);
@@ -186,6 +205,10 @@ int			(*proc_compares[]) () =
 	compare_cwrites,
 	compare_locks,
 	compare_cmd,
+	compare_lag_flush,
+	compare_lag_replay,
+	compare_lag_sent,
+	compare_lag_write,
 	NULL
 };
 
@@ -755,7 +778,11 @@ get_process_info(struct system_info * si,
 		connect_to_db(conninfo);
 		if (conninfo->connection != NULL)
 		{
-			pgresult = pg_processes(conninfo->connection);
+			if (mode == MODE_REPLICATION) {
+				pgresult = pg_replication(conninfo->connection);
+			} else {
+				pgresult = pg_processes(conninfo->connection);
+			}
 			rows = PQntuples(pgresult);
 		}
 		else
@@ -802,33 +829,55 @@ get_process_info(struct system_info * si,
 
 			otime = n->time;
 
-			read_one_proc_stat(n, sel);
-			if (sel->fullcmd == 2)
+			if (mode == MODE_REPLICATION)
 			{
-				update_str(&n->name, PQgetvalue(pgresult, i, 1));
-				printable(n->name);
-			}
-			update_state(&n->pgstate, PQgetvalue(pgresult, i, 2));
-			update_str(&n->usename, PQgetvalue(pgresult, i, 3));
-			n->xtime = atol(PQgetvalue(pgresult, i, 4));
-			n->qtime = atol(PQgetvalue(pgresult, i, 5));
-			n->locks = atoi(PQgetvalue(pgresult, i, 6));
+				update_str(&n->usename, PQgetvalue(pgresult, i, 1));
+				update_str(&n->application_name, PQgetvalue(pgresult, i, 2));
+				update_str(&n->client_addr, PQgetvalue(pgresult, i, 3));
+				update_str(&n->repstate, PQgetvalue(pgresult, i, 4));
+				update_str(&n->primary, PQgetvalue(pgresult, i, 5));
+				update_str(&n->sent, PQgetvalue(pgresult, i, 6));
+				update_str(&n->write, PQgetvalue(pgresult, i, 7));
+				update_str(&n->flush, PQgetvalue(pgresult, i, 8));
+				update_str(&n->replay, PQgetvalue(pgresult, i, 9));
+				n->sent_lag = atol(PQgetvalue(pgresult, i, 10));
+				n->write_lag = atol(PQgetvalue(pgresult, i, 11));
+				n->flush_lag = atol(PQgetvalue(pgresult, i, 12));
+				n->replay_lag = atol(PQgetvalue(pgresult, i, 13));
 
-			total_procs++;
-			process_states[n->pgstate]++;
-
-			if (timediff > 0.0)
-			{
-				if ((n->pcpu = (n->time - otime) / timediff) < 0.0001)
-				{
-					n->pcpu = 0;
-				}
-			}
-
-			if ((show_idle || n->pgstate != STATE_IDLE) &&
-					(sel->usename[0] == '\0' ||
-							strcmp(n->usename, sel->usename) == 0))
 				memcpy(&pgtable[active_procs++], n, sizeof(struct top_proc));
+			}
+			else
+			{
+				read_one_proc_stat(n, sel);
+				if (sel->fullcmd == 2)
+				{
+					update_str(&n->name, PQgetvalue(pgresult, i, 1));
+					printable(n->name);
+				}
+				update_state(&n->pgstate, PQgetvalue(pgresult, i, 2));
+				update_str(&n->usename, PQgetvalue(pgresult, i, 3));
+				n->xtime = atol(PQgetvalue(pgresult, i, 4));
+				n->qtime = atol(PQgetvalue(pgresult, i, 5));
+				n->locks = atoi(PQgetvalue(pgresult, i, 6));
+
+				process_states[n->pgstate]++;
+
+				if (timediff > 0.0)
+				{
+					if ((n->pcpu = (n->time - otime) / timediff) < 0.0001)
+					{
+						n->pcpu = 0;
+					}
+				}
+
+				if ((show_idle || n->pgstate != STATE_IDLE) &&
+						(sel->usename[0] == '\0' ||
+								strcmp(n->usename, sel->usename) == 0))
+					memcpy(&pgtable[active_procs++], n,
+							sizeof(struct top_proc));
+			}
+			total_procs++;
 		}
 		if (pgresult != NULL)
 			PQclear(pgresult);
@@ -928,6 +977,33 @@ format_next_process(caddr_t handle)
 	return (fmt);
 }
 
+char *
+format_next_replication(caddr_t handle)
+{
+	static char fmt[MAX_COLS];	/* static area where result is built */
+	struct top_proc *p = &pgtable[proc_index++];
+
+	snprintf(fmt, sizeof(fmt),
+			 "%5d %-8.8s %-11.11s %15s %-9.9s %9s %9s %9s %9s %9s %5s %5s %5s %5s",
+			 p->pid,
+			 p->usename,
+			 p->application_name,
+			 p->client_addr,
+			 p->repstate,
+			 p->primary,
+			 p->sent,
+			 p->write,
+			 p->flush,
+			 p->replay,
+			 format_b(p->sent_lag),
+			 format_b(p->write_lag),
+			 format_b(p->flush_lag),
+			 format_b(p->replay_lag));
+
+	/* return the result */
+	return (fmt);
+}
+
 /* comparison routines for qsort */
 
 /*
@@ -949,6 +1025,11 @@ format_next_process(caddr_t handle)
 
 #define ORDERKEY_CWRITES if ((result = p1->cancelled_write_bytes - \
                                        p2->cancelled_write_bytes) == 0)
+#define ORDERKEY_LAG_FLUSH  if ((result = p2->flush_lag - p1->flush_lag) == 0)
+#define ORDERKEY_LAG_REPLAY if ((result = p2->replay_lag - \
+                                          p1->replay_lag) == 0)
+#define ORDERKEY_LAG_SENT   if ((result = p2->sent_lag - p1->sent_lag) == 0)
+#define ORDERKEY_LAG_WRITE  if ((result = p2->write_lag - p1->write_lag) == 0)
 #define ORDERKEY_LOCKS   if ((result = p2->locks - p1->locks) == 0)
 #define ORDERKEY_MEM     if ((result = p2->size - p1->size) == 0)
 #define ORDERKEY_NAME    if ((result = strcmp(p1->name, p2->name)) == 0)
@@ -1016,6 +1097,74 @@ compare_cwrites(const void *v1, const void *v2)
 		ORDERKEY_READS
 		ORDERKEY_WRITES
 		ORDERKEY_NAME
+		;
+
+	return (result);
+}
+
+static int
+compare_lag_flush(const void *v1, const void *v2)
+{
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
+
+	ORDERKEY_LAG_FLUSH
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		ORDERKEY_MEM
+		ORDERKEY_RSSIZE
+		;
+
+	return (result);
+}
+
+static int
+compare_lag_replay(const void *v1, const void *v2)
+{
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
+
+	ORDERKEY_LAG_REPLAY
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		ORDERKEY_MEM
+		ORDERKEY_RSSIZE
+		;
+
+	return (result);
+}
+
+static int
+compare_lag_sent(const void *v1, const void *v2)
+{
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
+
+	ORDERKEY_LAG_SENT
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		ORDERKEY_MEM
+		ORDERKEY_RSSIZE
+		;
+
+	return (result);
+}
+
+static int
+compare_lag_write(const void *v1, const void *v2)
+{
+	struct top_proc *p1 = (struct top_proc *) v1;
+	struct top_proc *p2 = (struct top_proc *) v2;
+	int result;
+
+	ORDERKEY_LAG_WRITE
+		ORDERKEY_PCTCPU
+		ORDERKEY_STATE
+		ORDERKEY_MEM
+		ORDERKEY_RSSIZE
 		;
 
 	return (result);

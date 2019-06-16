@@ -201,7 +201,7 @@ do_display(struct pg_top_context *pgtctx)
 	{
 		get_system_info_r(&pgtctx->system_info, &pgtctx->conninfo);
 		processes = get_process_info_r(&pgtctx->system_info, &pgtctx->ps,
-				pgtctx->order_index, &pgtctx->conninfo);
+				pgtctx->order_index, &pgtctx->conninfo, pgtctx->mode);
 	}
 
 	/* display the load averages */
@@ -285,6 +285,15 @@ do_display(struct pg_top_context *pgtctx)
 			}
 			break;
 #endif /* __linux__ */
+		case MODE_REPLICATION:
+			for (i = 0; i < active_procs; i++)
+			{
+				if (pgtctx->mode_remote == 0)
+					(*d_process) (i, format_next_replication(processes));
+				else
+					(*d_process) (i, format_next_replication_r(processes));
+			}
+			break;
 		case MODE_PROCESSES:
 		default:
 			for (i = 0; i < active_procs; i++)
@@ -358,7 +367,7 @@ process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 	int i;
 	int option_index;
 
-	while ((i = getopt_long(ac, av, "CDITbcinrVh:s:d:U:o:Wp:Xx:z:",
+	while ((i = getopt_long(ac, av, "CDITbcinRrVh:s:d:U:o:Wp:Xx:z:",
 			long_options, &option_index)) != EOF)
 	{
 		switch (i)
@@ -457,6 +466,10 @@ process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 
 		case 'h':		/* socket location */
 			pgtctx->conninfo.values[PG_HOST] = strdup(optarg);
+			break;
+
+		case 'R':		/* replication mode */
+			pgtctx->mode = MODE_REPLICATION;
 			break;
 
 		case 'r':		/* remote mode */
@@ -991,7 +1004,7 @@ main(int argc, char *argv[])
 		{
 			get_system_info_r(&pgtctx.system_info, &pgtctx.conninfo);
 			(void) get_process_info_r(&pgtctx.system_info, &pgtctx.ps, -1,
-					&pgtctx.conninfo);
+					&pgtctx.conninfo, -1);
 		}
 
 		pgtctx.timeout.tv_sec = 1;
