@@ -40,6 +40,13 @@ execute_process(
 string(TOLOWER "${MACHINE}" MACHINE)
 message("-- machine - ${MACHINE}")
 
+execute_process(
+    COMMAND uname -m
+    OUTPUT_VARIABLE ARCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+message("-- arch - ${ARCH}")
+
 # Some machines modules need additional information.
 
 execute_process(
@@ -349,3 +356,19 @@ set(
 )
 
 include(CPack)
+
+set(OUTPUT "${PROJECT_VERSION}")
+
+add_custom_target(appimage
+    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/AppRun AppDir
+    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/pg_top.desktop AppDir
+    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/pg_top.png AppDir
+    COMMAND mkdir -p AppDir/usr/lib
+    COMMAND cp -aL
+            `ldd pg_top | grep libpq.so | cut -d \" \" -f 3` AppDir/usr/lib
+    COMMAND cp -aL
+            `ldd pg_top | grep libtinfo.so | cut -d \" \" -f 3` AppDir/usr/lib
+    COMMAND cp -aL
+            `ldd pg_top | grep libbsd.so | cut -d \" \" -f 3` AppDir/usr/lib
+    COMMAND VERSION=${PROJECT_VERSION} appimagetool-${ARCH}.AppImage AppDir
+)

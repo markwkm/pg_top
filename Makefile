@@ -1,5 +1,14 @@
 default:
-	@echo "targets: clean, debug, package, release"
+	@echo "targets: appimage (Linux only), clean, debug, package, release"
+
+UNAME_S := $(shell uname -s)
+
+appimage:
+	cmake -H. -B_builds/appimage -DCMAKE_INSTALL_PREFIX=/usr
+	cd _builds/appimage && make
+	cd _builds/appimage && sed -i -e 's#/usr#././#g' pg_top
+	cd _builds/appimage && make install DESTDIR=AppDir
+	cd _builds/appimage && make appimage
 
 clean:
 	-rm -rf _builds

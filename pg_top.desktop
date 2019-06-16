@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=pg_top
+Exec=pg_top
+Icon=pg_top
+Type=Application
+Categories=Utility;Database;
+Terminal=true
