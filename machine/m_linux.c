@@ -161,6 +161,12 @@ static char *swapnames[NSWAPSTATS + 1] =
 static char fmt_header[] =
 "  PID X         SIZE   RES STATE   XTIME  QTIME  %CPU LOCKS COMMAND";
 
+char fmt_header_io[] =
+		"  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
+
+char fmt_header_replication[] =
+		"  PID USERNAME APPLICATION          CLIENT STATE     PRIMARY    SENT       WRITE      FLUSH      REPLAY      SLAG  WLAG  FLAG  RLAG";
+
 /* these are names given to allowed sorting orders -- first is default */
 static char *ordernames[] =
 {

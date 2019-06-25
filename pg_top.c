@@ -858,11 +858,20 @@ main(int argc, char *argv[])
 	/* initialize termcap */
 	init_termcap(pgtctx.interactive);
 
+	/* 0 corresponds to machine headers definitions */
+	pgtctx.header_options[0][MODE_PROCESSES] = format_header(uname_field);
+	pgtctx.header_options[0][MODE_IO_STATS] = fmt_header_io;
+	pgtctx.header_options[0][MODE_REPLICATION] = fmt_header_replication;
+
+	/* 1 corresponds to headers definitions when remotely connecting to pg */
+	pgtctx.header_options[1][MODE_PROCESSES] = format_header_r(uname_field);
+	pgtctx.header_options[1][MODE_IO_STATS] = fmt_header_io_r;
+	pgtctx.header_options[1][MODE_REPLICATION] = fmt_header_replication_r;
+
 	/* get the string to use for the process area header */
-	if (pgtctx.mode_remote == 0)
-		pgtctx.header_text = pgtctx.header_processes = format_header(uname_field);
-	else
-		pgtctx.header_text = pgtctx.header_processes = format_header_r(uname_field);
+
+	pgtctx.header_text =
+			pgtctx.header_options[pgtctx.mode_remote][pgtctx.mode];
 
 #ifdef ENABLE_COLOR
 	/* Disable colours on non-smart terminals */

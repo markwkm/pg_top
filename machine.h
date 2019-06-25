@@ -28,9 +28,14 @@
 #endif
 
 /* Display modes. */
-#define MODE_PROCESSES 0
-#define MODE_IO_STATS 3
-#define MODE_REPLICATION 4
+
+enum DisplayMode
+{
+	MODE_PROCESSES,
+	MODE_IO_STATS,
+	MODE_REPLICATION,
+	MODE_TYPES /* number of modes */
+};
 
 /* Display modes for table and index statistics. */
 #define STATS_DIFF 0
@@ -130,5 +135,7 @@ extern int	mode_stats;
 
 extern char *backendstatenames[];
 extern char *procstatenames[];
+extern char fmt_header_io[];
+extern char fmt_header_replication[];
 
 #endif   /* _MACHINE_H_ */

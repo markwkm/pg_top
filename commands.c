@@ -47,12 +47,6 @@ extern int	overstrike;
 
 extern int max_topn;
 
-char header_io_stats[64] =
-		"  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
-
-char header_replication_stats[] =
-		"  PID USERNAME APPLICATION          CLIENT STATE     PRIMARY   SENT      WRITE     FLUSH     REPLAY     SLAG  WLAG  FLAG  RLAG";
-
 #define BEGIN "BEGIN;"
 #define ROLLBACK "ROLLBACK;"
 
@@ -62,6 +56,7 @@ struct cmd cmd_map[] = {
     {' ', cmd_update},
     {'?', cmd_help},
 	{'A', cmd_explain_analyze},
+	{'a', cmd_activity},
 	{'c', cmd_cmdline},
 #ifdef ENABLE_COLOR
 	{'C', cmd_color},
@@ -86,6 +81,16 @@ struct cmd cmd_map[] = {
 	{'u', cmd_user},
     {'\0', NULL},
 };
+
+int
+cmd_activity(struct pg_top_context *pgtctx)
+{
+	pgtctx->mode = MODE_PROCESSES;
+	pgtctx->header_text =
+			pgtctx->header_options[pgtctx->mode_remote][pgtctx->mode];
+	reset_display(pgtctx);
+	return No;
+}
 
 #ifdef ENABLE_COLOR
 int
@@ -250,17 +255,9 @@ cmd_idletog(struct pg_top_context *pgtctx)
 int
 cmd_io(struct pg_top_context *pgtctx)
 {
-	if (pgtctx->mode == MODE_IO_STATS)
-	{
-		pgtctx->mode = MODE_PROCESSES;
-		pgtctx->header_text =
-				pgtctx->header_processes;
-	}
-	else
-	{
-		pgtctx->mode = MODE_IO_STATS;
-		pgtctx->header_text = header_io_stats;
-	}
+	pgtctx->mode = MODE_IO_STATS;
+	pgtctx->header_text =
+			pgtctx->header_options[pgtctx->mode_remote][pgtctx->mode];
 	reset_display(pgtctx);
 	return No;
 }
@@ -326,7 +323,8 @@ int
 cmd_replication(struct pg_top_context *pgtctx)
 {
 	pgtctx->mode = MODE_REPLICATION;
-	pgtctx->header_text = header_replication_stats;
+	pgtctx->header_text =
+			pgtctx->header_options[pgtctx->mode_remote][pgtctx->mode];
 	reset_display(pgtctx);
 	return No;
 }

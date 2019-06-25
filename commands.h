@@ -17,6 +17,7 @@ struct cmd {
 #define EXPLAIN 0
 #define EXPLAIN_ANALYZE 1
 
+int cmd_activity(struct pg_top_context *);
 #ifdef ENABLE_COLOR
 int cmd_color(struct pg_top_context *);
 #endif /* ENABLE_COLOR */

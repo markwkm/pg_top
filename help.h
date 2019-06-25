@@ -11,6 +11,7 @@ These single-character commands are available:\n\
 ^L      - redraw screen\n\
 <sp>    - update screen\n\
 A       - EXPLAIN ANALYZE (UPDATE/DELETE safe)\n\
+a       - show PostgreSQL activity\n\
 C       - toggle the use of color\n\
 E       - show execution plan (UPDATE/DELETE safe)\n\
 I       - show I/O statistics per process (Linux only)\n\

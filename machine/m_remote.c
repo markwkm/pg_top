@@ -191,6 +191,12 @@ static char *swapnames[NSWAPSTATS + 1] =
 static char fmt_header[] =
 		"  PID X         SIZE   RES STATE   XTIME  QTIME  %CPU LOCKS COMMAND";
 
+char fmt_header_io_r[] =
+		"  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
+
+char fmt_header_replication_r[] =
+		"  PID USERNAME APPLICATION          CLIENT STATE     PRIMARY    SENT       WRITE      FLUSH      REPLAY      SLAG  WLAG  FLAG  RLAG";
+
 /* Now the array that maps process state to a weight. */
 
 unsigned char sort_state_r[] =

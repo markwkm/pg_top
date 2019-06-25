@@ -16,4 +16,7 @@ char *format_next_io_r(caddr_t);
 char *format_next_process_r(caddr_t);
 char *format_next_replication_r(caddr_t);
 
+extern char fmt_header_io_r[];
+extern char fmt_header_replication_r[];
+
 #endif /* _REMOTE_H_ */

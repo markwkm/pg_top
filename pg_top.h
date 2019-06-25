@@ -92,8 +92,8 @@ struct pg_top_context
 	void (*d_header)(char *);
 	char do_unames;
 	char dostates;
+	char *header_options[2][MODE_TYPES];
 	char *header_text;
-	char *header_processes;
 	char interactive;
 	int mode;
 	int mode_remote; /* Mode for monitoring a remote database system. */

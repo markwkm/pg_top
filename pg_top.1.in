@@ -211,6 +211,9 @@ Redraw the screen.
 Display the actual query plan (EXPLAIN ANALYZE) of the currently running SQL
 statement by re-running the SQL statement (prompt for process id.)
 .TP
+.B a
+Display the top PostgreSQL processor activity. (default)
+.TP
 .B C
 Toggle the use of color in the display.
 .TP
