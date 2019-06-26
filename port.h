@@ -10,8 +10,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef PG_PORT_H
-#define PG_PORT_H
+#ifndef _PORT_H_
+#define _PORT_H_
 
 #include <stdbool.h>
 
@@ -27,4 +27,4 @@
 /* Portable prompt handling */
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
-#endif   /* PG_PORT_H */
+#endif   /* _PORT_H_ */

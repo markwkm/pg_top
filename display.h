@@ -44,4 +44,4 @@ void		display_pagerstart();
 void		display_pagerend();
 void		display_pager(char *data);
 
-#endif
+#endif /* _DISPLAY_H */

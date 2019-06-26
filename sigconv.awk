@@ -1,6 +1,8 @@
 BEGIN		{
 		    nsig = 0;
 		    j = 0;
+		    print "#ifndef _SIGDESC_H_"
+		    print "#define _SIGDESC_H_"
 		    print "/* This file was automatically generated */"
 		    print "/* by the awk script \"sigconv.awk\".      */\n"
 		    print "struct sigdesc {"
@@ -53,4 +55,5 @@ END				{
 					    printf("    { %s },\n", siglist[n]);
 
 				    printf("    { NULL,\t 0 }\n};\n");
+				    print "#endif /* _SIGDESC_H_ */"
 				}

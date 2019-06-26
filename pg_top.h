@@ -6,8 +6,8 @@
  *	Copyright (c) 2007-2019, Mark Wong
  */
 
-#ifndef _PG_TOPP_H_
-#define _PG_TOPP_H_
+#ifndef _PG_TOP_H_
+#define _PG_TOP_H_
 
 #include "machine.h"
 
@@ -111,4 +111,4 @@ struct pg_top_context
 void		quit(int);
 void		reset_display(struct pg_top_context *);
 
-#endif   /* _PG_TOPP_H_ */
+#endif   /* _PG_TOP_H_ */

@@ -1,3 +1,5 @@
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
 #cmakedefine ENABLE_COLOR 1
 #cmakedefine HAVE_GETOPT 1
 #cmakedefine HAVE_MEMCPY 1
@@ -20,3 +22,4 @@
 #cmakedefine TIME_WITH_SYS_TIME 1
 #cmakedefine RETSIGTYPE @RETSIGTYPE@
 #cmakedefine time_t @time_t@
+#endif /* _CONFIG_H_ */
