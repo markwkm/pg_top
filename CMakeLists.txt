@@ -18,10 +18,6 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Handle cmake -D command line options
 
-if (DESTDIR)
-    set(INSTALLDEST ${DESTDIR})
-endif (DESTDIR)
-
 if (NOT DEFINED ENABLE_COLOR)
     set(ENABLE_COLOR 1)
 elseif(ENABLE_COLOR EQUAL 0)
@@ -281,12 +277,12 @@ endif(${MACHINE} STREQUAL freebsd)
 install(
     PROGRAMS
     ${CMAKE_BINARY_DIR}/${PROJECT_NAME}
-    DESTINATION "${INSTALLDEST}/bin"
+    DESTINATION "bin"
 )
 install(
     FILES
     ${CMAKE_BINARY_DIR}/pg_top.1
-    DESTINATION "${INSTALLDEST}/share/man/man1"
+    DESTINATION "share/man/man1"
 )
 
 # CPack rules for creating distribution files.

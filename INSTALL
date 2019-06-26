@@ -13,9 +13,9 @@ cmake [options] CMakeLists.txt
 
 options:
 
-    -DDESTDIR=PREFIX
+    -DCMAKE_INSTALL_PREFIX=PREFIX
 
-    Install files in PREFIX.
+    Install files in PREFIX.  Default is '/usr/local'.
 
     -DENABLE_COLOR=0
 
