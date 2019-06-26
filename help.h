@@ -16,11 +16,7 @@ C       - toggle the use of color\n\
 E       - show execution plan (UPDATE/DELETE safe)\n\
 I       - show I/O statistics per process (Linux only)\n\
 L       - show locks held by a process\n\
-M       - sort by memory usage\n\
-N       - sort by pid\n\
-P       - sort by CPU usage\n\
 Q       - show current query of a process\n\
-T       - sort by time\n\
 c       - toggle the display of process commands\n\
 d       - change number of displays to show\n\
 h or ?  - help; show this text\n\

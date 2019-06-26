@@ -68,16 +68,12 @@ struct cmd cmd_map[] = {
 	{'I', cmd_io},
 	{'L', cmd_locks},
 	{'n', cmd_number},
-	{'M', cmd_order_mem},
-	{'N', cmd_order_pid},
 	{'o', cmd_order},
-	{'P', cmd_order_cpu},
 	{'q', cmd_quit},
 	{'R', cmd_replication},
 	{'Q', cmd_current_query},
 	{'s', cmd_delay},
 	{'t', cmd_toggle},
-	{'T', cmd_order_time},
 	{'u', cmd_user},
     {'\0', NULL},
 };
@@ -392,42 +388,6 @@ cmd_order_mem(struct pg_top_context *pgtctx)
 	int i;
 
 	if ((i = string_index("size", pgtctx->statics.order_names)) == -1)
-	{
-		new_message(MT_standout, " Unrecognized sorting order");
-		putchar('\r');
-		return Yes;
-	}
-	else
-	{
-		pgtctx->order_index = i;
-	}
-	return No;
-}
-
-int
-cmd_order_pid(struct pg_top_context *pgtctx)
-{
-	int i;
-
-	if ((i = string_index("pid", pgtctx->statics.order_names)) == -1)
-	{
-		new_message(MT_standout, " Unrecognized sorting order");
-		putchar('\r');
-		return Yes;
-	}
-	else
-	{
-		pgtctx->order_index = i;
-	}
-	return No;
-}
-
-int
-cmd_order_time(struct pg_top_context *pgtctx)
-{
-	int i;
-
-	if ((i = string_index("time", pgtctx->statics.order_names)) == -1)
 	{
 		new_message(MT_standout, " Unrecognized sorting order");
 		putchar('\r');

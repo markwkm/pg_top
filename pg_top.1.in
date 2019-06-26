@@ -244,12 +244,6 @@ Toggle the display of idle processes.
 Display the currently held locks by a backend process (prompt for process
 id.)
 .TP
-.B M
-Order by memory utilization.
-.TP
-.B N
-Sort by process id.
-.TP
 .B n or #
 Change the number of processes to display (prompt for new number).
 .TP
@@ -257,10 +251,8 @@ Change the number of processes to display (prompt for new number).
 Change the order in which the display is sorted.  This command is not
 available on all systems.  The sort key names when viewing processes vary
 fron system to system but usually include:  \*(lqcpu\*(rq, \*(lqres\*(rq,
-\*(lqsize\*(rq, \*(lqxtime\*(rq and \*(lqqtime\*(rq.  The default is cpu.
-.TP
-.B P
-Sort by processor utilization.
+\*(lqsize\*(rq, \*(lqxtime\*(rq and \*(lqqtime\*(rq.  The default is unsorted.
+See the interactive help for available sort key names.
 .TP
 .B Q
 Display the currently running query of a backend process (prompt for process
@@ -273,9 +265,6 @@ Quit
 .B s
 Change the number of seconds to delay between displays
 (prompt for new number).
-.TP
-.B T
-Order by time.
 .TP
 .B u
 Display only processes owned by a specific username (prompt for username).
