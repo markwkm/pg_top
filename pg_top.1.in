@@ -46,30 +46,27 @@ is redirected to a file, it acts as if it were being run on a dumb
 terminal.
 .SH OPTIONS
 .TP
-.B \-C, \-\-color-mode
-Turn off the use of color in the display.
-.TP
-.B \-I, \-\-hide-idle
-Do not display idle processes.
-By default, pg_top displays both active and idle processes.
-.TP
-.B \-T, \-\-show-tags
-List all available color tags and the current set of tests used for
-color highlighting, then exit.
-.TP
-.B \-W, \-\-password
-Forces pg_top to prompt for a password before connecting to a database.  pg_top
-will also keep the database connection open while running, and will clear the
-database connection from memory for security.
-.TP
 .B \-b, \-\-batch
 Use \*(lqbatch\*(rq mode.  In this mode, all input from the terminal is
 ignored.  Interrupt characters (such as ^C and ^\e) still have an effect.
 This is the default on a dumb terminal, or when the output is not a terminal.
 .TP
+.B \-C, \-\-color-mode
+Turn off the use of color in the display.
+.TP
 .B \-c, \-\-show-command
 Show the command name for each process. Default is to show the full
 command line.  This option is not supported on all platforms.
+.TP
+\fB\-h \fR\fB\fIHOST\fR\fR, \fB\-\-host=\fR\fB\fIHOST\fR\fR
+Specifies the host name of the machine on which the server is running. If
+the value begins with a slash, it is used as the directory for the Unix
+domain socket. The default is taken from the PGHOST environment variable,
+if set.
+.TP
+.B \-I, \-\-hide-idle
+Do not display idle processes.
+By default, pg_top displays both active and idle processes.
 .TP
 .B \-i, \-\-interactive
 Use \*(lqinteractive\*(rq mode.  In this mode, any input is immediately
@@ -84,16 +81,28 @@ intelligent terminal.
 Use \*(lqnon-interactive\*(rq mode.  This is indentical to \*(lqbatch\*(rq
 mode.
 .TP
+\fB\-o \fR\fB\fIFIELD\fR\fR, \fB\-\-order-field=\fR\fB\fIFIELD\fR\fR
+Sort the process display area on the specified field.  The field name is
+the name of the column as seen in the output, but in lower case.  Likely
+values are \*(lqcpu\*(rq, \*(lqsize\*(rq, \*(lqres\*(rq, \*(lqxtime\*(rq and
+\*(lqqtime\*(rq, but may vary on different operating systems.  Note that not
+all operating systems support this option.
+.TP
+\fB\-p \fR\fB\fIPORT\fR\fR, \fB\-\-port=\fR\fB\fIPORT\fR\fR
+Specifies the TCP port or local Unix domain socket file extension on which
+the server is listening for connections. Defaults to the PGPORT environment
+variable, if set.
+.TP
+\fB\-R
+Display WAL sender processes' replication activity to connected standy servers.
+Only directly connected standbys are listed; no information is available about
+downstream standby servers.
+.TP
 .B \-r, \-\-remote-mode
 Monitor a remote database where the database is on a system other than where
 pg_top is running from.
 .I pg_top
 will monitor a remote database if it has the pg_proctab extension installed.
-.TP
-.B \-V, \-\-version
-Write version number information to stderr then exit immediately.
-No other processing takes place when this option is used.  To see current
-revision information while pg_top is running, use the help command \*(lq?\*(rq.
 .TP
 \fB\-s \fR\fB\fITIME\fR\fR, \fB\-\-set-delay=\fR\fB\fITIME\fR\fR
 .I TIME
@@ -101,12 +110,28 @@ Set the delay between screen updates to
 .I TIME
 seconds.  The default delay between updates is \nD seconds.
 .TP
-\fB\-o \fR\fB\fIFIELD\fR\fR, \fB\-\-order-field=\fR\fB\fIFIELD\fR\fR
-Sort the process display area on the specified field.  The field name is
-the name of the column as seen in the output, but in lower case.  Likely
-values are \*(lqcpu\*(rq, \*(lqsize\*(rq, \*(lqres\*(rq, \*(lqxtime\*(rq and
-\*(lqqtime\*(rq, but may vary on different operating systems.  Note that not
-all operating systems support this option.
+.B \-T, \-\-show-tags
+List all available color tags and the current set of tests used for
+color highlighting, then exit.
+.TP
+\fB\-U \fR\fB\fIUSERNAME\fR\fR, \fB\-\-username=\fR\fB\fIUSERNAME\fR\fR
+User name to connect as.
+.TP
+.B \-V, \-\-version
+Write version number information to stderr then exit immediately.
+No other processing takes place when this option is used.  To see current
+revision information while pg_top is running, use the help command \*(lq?\*(rq.
+.TP
+.B \-W, \-\-password
+Forces pg_top to prompt for a password before connecting to a database.  pg_top
+will also keep the database connection open while running, and will clear the
+database connection from memory for security.
+.TP
+\fB\-X
+Display I/O activity per process.  This depends on whether the platform pg_top
+is run on supports getting I/O statistics per process, or whether the database
+system that pg_proctab is installed on supports getting I/O statistics when
+pg_top attempts to get operating system statistics remotely.
 .TP
 \fB\-x \fR\fB\fICOUNT\fR\fR, \fB\-\-set-display=\fR\fB\fICOUNT\fR\fR
 Show only
@@ -122,31 +147,6 @@ is set.  The default is 1 for dumb terminals.
 Show only those processes owned by
 .IR USERNAME .
 This option currently only accepts usernames.
-.TP
-\fB\-h \fR\fB\fIHOST\fR\fR, \fB\-\-host=\fR\fB\fIHOST\fR\fR
-Specifies the host name of the machine on which the server is running. If
-the value begins with a slash, it is used as the directory for the Unix
-domain socket. The default is taken from the PGHOST environment variable,
-if set.
-.TP
-\fB\-p \fR\fB\fIPORT\fR\fR, \fB\-\-port=\fR\fB\fIPORT\fR\fR
-Specifies the TCP port or local Unix domain socket file extension on which
-the server is listening for connections. Defaults to the PGPORT environment
-variable, if set.
-.TP
-\fB\-U \fR\fB\fIUSERNAME\fR\fR, \fB\-\-username=\fR\fB\fIUSERNAME\fR\fR
-User name to connect as.
-.TP
-\fB\-R
-Display WAL sender processes' replication activity to connected standy servers.
-Only directly connected standbys are listed; no information is available about
-downstream standby servers.
-.TP
-\fB\-X
-Display I/O activity per process.  This depends on whether the platform pg_top
-is run on supports getting I/O statistics per process, or whether the database
-system that pg_proctab is installed on supports getting I/O statistics when
-pg_top attempts to get operating system statistics remotely.
 .PP
 Both
 .I COUNT
@@ -236,8 +236,6 @@ Display re-determined execution plan (EXPLAIN) of the SQL statement by a
 backend process (prompt for process id.)
 .TP
 .B i
-(or
-.BR I )
 Toggle the display of idle processes.
 .TP
 .B L
@@ -327,6 +325,34 @@ Percentage of available cpu time used by this process.
 .TP
 .B LOCKS
 Number of locks granted to this process.
+.TP
+.B COMMAND
+Name of the command that the process is currently running.
+.SH I/O DISPLAY (Linux only)
+.TP
+.B PID
+The process id.
+.TP
+.B RCHAR
+Number of bytes read from cache or storage.
+.TP
+.B WCHAR
+Number of bytes written to cache or storage.
+.TP
+.B SYSCR
+Count the number of read I/O operations.
+.TP
+.B SYSCW
+Count the number of write I/O operations.
+.TP
+.B READS
+Number of bytes read from storage.
+.TP
+.B WRITES
+Number of bytes wriiten to storage.
+.TP
+.B CWRITES
+The number of bytes which this process caused to not happen.
 .TP
 .B COMMAND
 Name of the command that the process is currently running.
