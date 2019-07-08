@@ -79,7 +79,7 @@ struct top_proc
 	unsigned long size,
 				rss;			/* in k */
 	int			state;
-	int	    	pgstate;
+	int			pgstate;
 	unsigned long time;
 	unsigned long start_time;
 	unsigned long xtime;
@@ -88,39 +88,39 @@ struct top_proc
 	double		pcpu;
 
 	/* Data from /proc/<pid>/io. */
-	long long rchar;
-	long long wchar;
-	long long syscr;
-	long long syscw;
-	long long read_bytes;
-	long long write_bytes;
-	long long cancelled_write_bytes;
+	long long	rchar;
+	long long	wchar;
+	long long	syscr;
+	long long	syscw;
+	long long	read_bytes;
+	long long	write_bytes;
+	long long	cancelled_write_bytes;
 
 	/* The change in the previous values and current values. */
-	long long diff_rchar;
-	long long diff_wchar;
-	long long diff_syscr;
-	long long diff_syscw;
-	long long diff_read_bytes;
-	long long diff_write_bytes;
-	long long diff_cancelled_write_bytes;
+	long long	diff_rchar;
+	long long	diff_wchar;
+	long long	diff_syscr;
+	long long	diff_syscw;
+	long long	diff_read_bytes;
+	long long	diff_write_bytes;
+	long long	diff_cancelled_write_bytes;
 
 	/* Replication data */
-	char *application_name;
-	char *client_addr;
-	char *repstate;
-	char *primary;
-	char *sent;
-	char *write;
-	char *flush;
-	char *replay;
-	long long sent_lag;
-	long long write_lag;
-	long long flush_lag;
-	long long replay_lag;
+	char	   *application_name;
+	char	   *client_addr;
+	char	   *repstate;
+	char	   *primary;
+	char	   *sent;
+	char	   *write;
+	char	   *flush;
+	char	   *replay;
+	long long	sent_lag;
+	long long	write_lag;
+	long long	flush_lag;
+	long long	replay_lag;
 };
 
-int topproccmp(struct top_proc *, struct top_proc *);
+int			topproccmp(struct top_proc *, struct top_proc *);
 
 RB_HEAD(pgproc, top_proc) head_proc = RB_INITIALIZER(&head_proc);
 RB_PROTOTYPE(pgproc, top_proc, entry, topproccmp)
@@ -161,61 +161,61 @@ static char *swapnames[NSWAPSTATS + 1] =
 static char fmt_header[] =
 "  PID X         SIZE   RES STATE   XTIME  QTIME  %CPU LOCKS COMMAND";
 
-char fmt_header_io[] =
-		"  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
+char		fmt_header_io[] =
+"  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
 
-char fmt_header_replication[] =
-		"  PID USERNAME APPLICATION          CLIENT STATE     PRIMARY    SENT       WRITE      FLUSH      REPLAY      SLAG  WLAG  FLAG  RLAG";
+char		fmt_header_replication[] =
+"  PID USERNAME APPLICATION          CLIENT STATE     PRIMARY    SENT       WRITE      FLUSH      REPLAY      SLAG  WLAG  FLAG  RLAG";
 
 /* these are names given to allowed sorting orders -- first is default */
 static char *ordernames[] =
 {
-		"cpu", "size", "res", "xtime", "qtime", "rchar", "wchar", "syscr",
-		"syscw", "reads", "writes", "cwrites", "locks", "command", "flag",
-		"rlag", "slag", "wlag", NULL
+	"cpu", "size", "res", "xtime", "qtime", "rchar", "wchar", "syscr",
+	"syscw", "reads", "writes", "cwrites", "locks", "command", "flag",
+	"rlag", "slag", "wlag", NULL
 };
 
 /* forward definitions for comparison functions */
-static int compare_cmd(const void *, const void *);
-static int compare_cpu(const void *, const void *);
-static int compare_cwrites(const void *, const void *);
-static int compare_lag_flush(const void *, const void *);
-static int compare_lag_replay(const void *, const void *);
-static int compare_lag_sent(const void *, const void *);
-static int compare_lag_write(const void *, const void *);
-static int compare_locks(const void *, const void *);
-static int compare_qtime(const void *, const void *);
-static int compare_rchar(const void *, const void *);
-static int compare_reads(const void *, const void *);
-static int compare_res(const void *, const void *);
-static int compare_size(const void *, const void *);
-static int compare_syscr(const void *, const void *);
-static int compare_syscw(const void *, const void *);
-static int compare_wchar(const void *, const void *);
-static int compare_writes(const void *, const void *);
-static int compare_xtime(const void *, const void *);
+static int	compare_cmd(const void *, const void *);
+static int	compare_cpu(const void *, const void *);
+static int	compare_cwrites(const void *, const void *);
+static int	compare_lag_flush(const void *, const void *);
+static int	compare_lag_replay(const void *, const void *);
+static int	compare_lag_sent(const void *, const void *);
+static int	compare_lag_write(const void *, const void *);
+static int	compare_locks(const void *, const void *);
+static int	compare_qtime(const void *, const void *);
+static int	compare_rchar(const void *, const void *);
+static int	compare_reads(const void *, const void *);
+static int	compare_res(const void *, const void *);
+static int	compare_size(const void *, const void *);
+static int	compare_syscr(const void *, const void *);
+static int	compare_syscw(const void *, const void *);
+static int	compare_wchar(const void *, const void *);
+static int	compare_writes(const void *, const void *);
+static int	compare_xtime(const void *, const void *);
 
 int			(*proc_compares[]) () =
 {
 	compare_cpu,
-	compare_size,
-	compare_res,
-	compare_xtime,
-	compare_qtime,
-	compare_rchar,
-	compare_wchar,
-	compare_syscr,
-	compare_syscw,
-	compare_reads,
-	compare_writes,
-	compare_cwrites,
-	compare_locks,
-	compare_cmd,
-	compare_lag_flush,
-	compare_lag_replay,
-	compare_lag_sent,
-	compare_lag_write,
-	NULL
+		compare_size,
+		compare_res,
+		compare_xtime,
+		compare_qtime,
+		compare_rchar,
+		compare_wchar,
+		compare_syscr,
+		compare_syscw,
+		compare_reads,
+		compare_writes,
+		compare_cwrites,
+		compare_locks,
+		compare_cmd,
+		compare_lag_flush,
+		compare_lag_replay,
+		compare_lag_sent,
+		compare_lag_write,
+		NULL
 };
 
 /*=SYSTEM STATE INFO====================================================*/
@@ -235,12 +235,12 @@ static struct timeval lasttime;
 #define INITIAL_ACTIVE_SIZE  (256)
 #define PROCBLOCK_SIZE		 (32)
 static struct top_proc *pgtable;
-static int proc_index;
+static int	proc_index;
 static time_t boottime = -1;
 
 /* these are for passing data back to the machine independant portion */
 
-static int64_t	cpu_states[NCPUSTATES];
+static int64_t cpu_states[NCPUSTATES];
 static int	process_states[NPROCSTATES];
 static long memory_stats[NMEMSTATS];
 static long swap_stats[NSWAPSTATS];
@@ -289,8 +289,7 @@ xfrm_cmdline(char *p, int len)
 }
 
 int
-machine_init(struct statics * statics)
-
+machine_init(struct statics *statics)
 {
 	/* make sure the proc filesystem is mounted */
 	{
@@ -377,10 +376,8 @@ machine_init(struct statics * statics)
 	return 0;
 }
 
-
 void
-get_system_info(struct system_info * info)
-
+get_system_info(struct system_info *info)
 {
 	char		buffer[4096 + 1];
 	int			fd,
@@ -417,7 +414,7 @@ get_system_info(struct system_info * info)
 		if ((len = read(fd, buffer, sizeof(buffer) - 1)) > 0)
 		{
 			buffer[len] = '\0';
-			p = skip_token(buffer);		/* "cpu" */
+			p = skip_token(buffer); /* "cpu" */
 			cp_time[0] = strtoul(p, &p, 0);
 			cp_time[1] = strtoul(p, &p, 0);
 			cp_time[2] = strtoul(p, &p, 0);
@@ -469,7 +466,7 @@ get_system_info(struct system_info * info)
 					memory_stats[MEMFREE] = bytetok(memory_stats[MEMFREE]);
 					memory_stats[MEMSHARED] = bytetok(memory_stats[MEMSHARED]);
 					memory_stats[MEMBUFFERS] =
-							bytetok(memory_stats[MEMBUFFERS]);
+						bytetok(memory_stats[MEMBUFFERS]);
 					memory_stats[MEMCACHED] = bytetok(memory_stats[MEMCACHED]);
 					mem = 1;
 				}
@@ -541,7 +538,6 @@ get_system_info(struct system_info * info)
 	info->swap = swap_stats;
 }
 
-
 static void
 read_one_proc_stat(struct top_proc *proc, struct process_select *sel)
 {
@@ -553,7 +549,7 @@ read_one_proc_stat(struct top_proc *proc, struct process_select *sel)
 	int			fullcmd;
 	char		value[BUFFERLEN + 1];
 
-	long long tmp;
+	long long	tmp;
 
 	/* if anything goes wrong, we return with proc->state == 0 */
 	proc->state = 0;
@@ -662,10 +658,9 @@ read_one_proc_stat(struct top_proc *proc, struct process_select *sel)
 	p = skip_token(p);			/* skip nice */
 	p = skip_token(p);			/* skip num_threads */
 	p = skip_token(p);			/* skip itrealvalue, 0 */
-	proc->start_time = strtoul(p, &p, 10);		/* start_time */
+	proc->start_time = strtoul(p, &p, 10);	/* start_time */
 	proc->size = bytetok(strtoul(p, &p, 10));	/* vsize */
 	proc->rss = pagetok(strtoul(p, &p, 10));	/* rss */
-
 
 #if 0
 	/* for the record, here are the rest of the fields */
@@ -695,8 +690,8 @@ read_one_proc_stat(struct top_proc *proc, struct process_select *sel)
 	{
 		/*
 		 * CONFIG_TASK_IO_ACCOUNTING is not enabled in the Linux kernel or
-		 * this version of Linux may not support collecting i/o statistics
-		 * per pid.  Report 0's.
+		 * this version of Linux may not support collecting i/o statistics per
+		 * pid.  Report 0's.
 		 */
 		proc->rchar = 0;
 		proc->wchar = 0;
@@ -713,39 +708,38 @@ read_one_proc_stat(struct top_proc *proc, struct process_select *sel)
 	buffer[len] = '\0';
 	p = buffer;
 
-	GET_VALUE(tmp);			/* rchar */
+	GET_VALUE(tmp);				/* rchar */
 	proc->diff_rchar = tmp - proc->rchar;
 	proc->rchar = tmp;
 
-	GET_VALUE(tmp);			/* wchar */
+	GET_VALUE(tmp);				/* wchar */
 	proc->diff_wchar = tmp - proc->wchar;
 	proc->wchar = tmp;
 
-	GET_VALUE(tmp);			/* syscr */
+	GET_VALUE(tmp);				/* syscr */
 	proc->diff_syscr = tmp - proc->syscr;
 	proc->syscr = tmp;
 
-	GET_VALUE(tmp);			/* syscw */
+	GET_VALUE(tmp);				/* syscw */
 	proc->diff_syscw = tmp - proc->syscw;
 	proc->syscw = tmp;
 
-	GET_VALUE(tmp);			/* read_bytes */
+	GET_VALUE(tmp);				/* read_bytes */
 	proc->diff_read_bytes = tmp - proc->read_bytes;
 	proc->read_bytes = tmp;
 
-	GET_VALUE(tmp); 			/* write_bytes */
+	GET_VALUE(tmp);				/* write_bytes */
 	proc->diff_write_bytes = tmp - proc->write_bytes;
 	proc->write_bytes = tmp;
 
-	GET_VALUE(tmp); 			/* cancelled_write_bytes */
+	GET_VALUE(tmp);				/* cancelled_write_bytes */
 	proc->diff_cancelled_write_bytes = tmp - proc->cancelled_write_bytes;
 	proc->cancelled_write_bytes = tmp;
 }
 
-
 caddr_t
-get_process_info(struct system_info * si,
-				 struct process_select * sel,
+get_process_info(struct system_info *si,
+				 struct process_select *sel,
 				 int compare_index, struct pg_conninfo_ctx *conninfo, int mode)
 {
 	struct timeval thistime;
@@ -777,16 +771,20 @@ get_process_info(struct system_info * si,
 		int			rows;
 		PGresult   *pgresult = NULL;
 
-		struct top_proc *n, *p;
+		struct top_proc *n,
+				   *p;
 
 		memset(process_states, 0, sizeof(process_states));
 
 		connect_to_db(conninfo);
 		if (conninfo->connection != NULL)
 		{
-			if (mode == MODE_REPLICATION) {
+			if (mode == MODE_REPLICATION)
+			{
 				pgresult = pg_replication(conninfo->connection);
-			} else {
+			}
+			else
+			{
 				pgresult = pg_processes(conninfo->connection);
 			}
 			rows = PQntuples(pgresult);
@@ -796,9 +794,11 @@ get_process_info(struct system_info * si,
 			rows = 0;
 		}
 
-		if (rows > 0) {
+		if (rows > 0)
+		{
 			p = reallocarray(pgtable, rows, sizeof(struct top_proc));
-			if (p == NULL) {
+			if (p == NULL)
+			{
 				fprintf(stderr, "reallocarray error\n");
 				if (pgresult != NULL)
 					PQclear(pgresult);
@@ -813,7 +813,8 @@ get_process_info(struct system_info * si,
 			unsigned long otime;
 
 			n = malloc(sizeof(struct top_proc));
-			if (n == NULL) {
+			if (n == NULL)
+			{
 				fprintf(stderr, "malloc error\n");
 				if (pgresult != NULL)
 					PQclear(pgresult);
@@ -878,10 +879,10 @@ get_process_info(struct system_info * si,
 				}
 
 				if ((show_idle || n->pgstate != STATE_IDLE) &&
-						(sel->usename[0] == '\0' ||
-								strcmp(n->usename, sel->usename) == 0))
+					(sel->usename[0] == '\0' ||
+					 strcmp(n->usename, sel->usename) == 0))
 					memcpy(&pgtable[active_procs++], n,
-							sizeof(struct top_proc));
+						   sizeof(struct top_proc));
 			}
 			total_procs++;
 		}
@@ -898,7 +899,7 @@ get_process_info(struct system_info * si,
 	if (compare_index >= 0 && si->p_active)
 	{
 		qsort(pgtable, si->p_active, sizeof(struct top_proc),
-				proc_compares[compare_index]);
+			  proc_compares[compare_index]);
 	}
 
 	/* don't even pretend that the return value thing here isn't bogus */
@@ -906,10 +907,8 @@ get_process_info(struct system_info * si,
 	return (caddr_t) 0;
 }
 
-
 char *
 format_header(char *uname_field)
-
 {
 	int			uname_len = strlen(uname_field);
 
@@ -921,7 +920,6 @@ format_header(char *uname_field)
 	return fmt_header;
 }
 
-
 char *
 format_next_io(caddr_t handle)
 {
@@ -931,30 +929,30 @@ format_next_io(caddr_t handle)
 	if (mode_stats == STATS_DIFF)
 	{
 		snprintf(fmt, sizeof(fmt),
-				"%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
-				p->pid,
-				format_b(p->diff_rchar),
-				format_b(p->diff_wchar),
-				p->diff_syscr,
-				p->diff_syscw,
-				format_b(p->diff_read_bytes),
-				format_b(p->diff_write_bytes),
-				format_b(p->diff_cancelled_write_bytes),
-				p->name);
+				 "%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
+				 p->pid,
+				 format_b(p->diff_rchar),
+				 format_b(p->diff_wchar),
+				 p->diff_syscr,
+				 p->diff_syscw,
+				 format_b(p->diff_read_bytes),
+				 format_b(p->diff_write_bytes),
+				 format_b(p->diff_cancelled_write_bytes),
+				 p->name);
 	}
 	else
 	{
 		snprintf(fmt, sizeof(fmt),
-				"%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
-				p->pid,
-				format_b(p->rchar),
-				format_b(p->wchar),
-				p->syscr,
-				p->syscw,
-				format_b(p->read_bytes),
-				format_b(p->write_bytes),
-				format_b(p->cancelled_write_bytes),
-				p->name);
+				 "%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
+				 p->pid,
+				 format_b(p->rchar),
+				 format_b(p->wchar),
+				 p->syscr,
+				 p->syscw,
+				 format_b(p->read_bytes),
+				 format_b(p->write_bytes),
+				 format_b(p->cancelled_write_bytes),
+				 p->name);
 	}
 
 	return (fmt);
@@ -1051,7 +1049,6 @@ format_next_replication(caddr_t handle)
 #define ORDERKEY_WRITES  if ((result = p1->write_bytes - p2->write_bytes) == 0)
 #define ORDERKEY_XTIME   if ((result = p2->xtime - p1->xtime) == 0)
 
-
 /* compare_cmd - the comparison function for sorting by command name */
 
 static int
@@ -1059,7 +1056,7 @@ compare_cmd(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_NAME
 		ORDERKEY_PCTCPU
@@ -1078,7 +1075,8 @@ compare_cpu(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
+
 	ORDERKEY_PCTCPU
 		ORDERKEY_STATE
 		ORDERKEY_RSSIZE
@@ -1093,7 +1091,7 @@ compare_cwrites(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_CWRITES
 		ORDERKEY_RCHAR
@@ -1113,7 +1111,7 @@ compare_lag_flush(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_LAG_FLUSH
 		ORDERKEY_PCTCPU
@@ -1130,7 +1128,7 @@ compare_lag_replay(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_LAG_REPLAY
 		ORDERKEY_PCTCPU
@@ -1147,7 +1145,7 @@ compare_lag_sent(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_LAG_SENT
 		ORDERKEY_PCTCPU
@@ -1164,7 +1162,7 @@ compare_lag_write(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_LAG_WRITE
 		ORDERKEY_PCTCPU
@@ -1185,7 +1183,7 @@ compare_locks(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_LOCKS
 		ORDERKEY_QTIME
@@ -1205,7 +1203,7 @@ compare_qtime(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_QTIME
 		ORDERKEY_PCTCPU
@@ -1222,7 +1220,7 @@ compare_rchar(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_RCHAR
 		ORDERKEY_WCHAR
@@ -1242,7 +1240,7 @@ compare_reads(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_READS
 		ORDERKEY_RCHAR
@@ -1264,7 +1262,7 @@ compare_res(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_RSSIZE
 		ORDERKEY_MEM
@@ -1282,7 +1280,7 @@ compare_size(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_MEM
 		ORDERKEY_RSSIZE
@@ -1298,7 +1296,7 @@ compare_syscr(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_SYSCR
 		ORDERKEY_RCHAR
@@ -1318,7 +1316,7 @@ compare_syscw(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_SYSCW
 		ORDERKEY_RCHAR
@@ -1340,7 +1338,7 @@ compare_xtime(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_XTIME
 		ORDERKEY_PCTCPU
@@ -1357,7 +1355,7 @@ compare_wchar(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_WCHAR
 		ORDERKEY_RCHAR
@@ -1377,7 +1375,7 @@ compare_writes(const void *v1, const void *v2)
 {
 	struct top_proc *p1 = (struct top_proc *) v1;
 	struct top_proc *p2 = (struct top_proc *) v2;
-	int result;
+	int			result;
 
 	ORDERKEY_WRITES
 		ORDERKEY_RCHAR

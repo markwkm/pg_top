@@ -9,4 +9,4 @@
 void		new_message(int type, char *msgfmt,...);
 void		clear_message();
 
-#endif   /* _MESSAGE_H_ */
+#endif							/* _MESSAGE_H_ */

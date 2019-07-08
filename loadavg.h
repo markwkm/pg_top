@@ -56,7 +56,7 @@ typedef double pctcpu;
 typedef __uint32_t load_avg;
 #else
 typedef fixpt_t load_avg;
-#endif /* __FreeBSD__ == 9 */
+#endif							/* __FreeBSD__ == 9 */
 
 #define loaddouble(la) ((double)(la) / FIXED_LOADAVG)
 #define intload(i) ((int)((i) * FIXED_LOADAVG))
@@ -67,4 +67,4 @@ typedef double load_avg;
 #define intload(i) ((double)(i))
 #endif
 
-#endif   /* _LOADAVG_H_ */
+#endif							/* _LOADAVG_H_ */

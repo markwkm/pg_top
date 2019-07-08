@@ -69,14 +69,14 @@
 		"WHERE procpid = %d\n" \
 		"  AND procpid = pid;"
 
-int pg_version(PGconn *);
+int			pg_version(PGconn *);
 
 void
 connect_to_db(struct pg_conninfo_ctx *conninfo)
 {
-	int i;
+	int			i;
 	const char *keywords[6] = {"host", "port", "user", "password", "dbname",
-			NULL};
+	NULL};
 
 	if (conninfo->persistent && PQsocket(conninfo->connection) >= 0)
 		return;
@@ -85,7 +85,7 @@ connect_to_db(struct pg_conninfo_ctx *conninfo)
 	if (PQstatus(conninfo->connection) != CONNECTION_OK)
 	{
 		new_message(MT_standout | MT_delayed, " %s",
-				PQerrorMessage(conninfo->connection));
+					PQerrorMessage(conninfo->connection));
 
 		PQfinish(conninfo->connection);
 		conninfo->connection = NULL;
@@ -93,7 +93,7 @@ connect_to_db(struct pg_conninfo_ctx *conninfo)
 	}
 
 	if (conninfo->persistent)
-		for (i = 0; i <5; i++)
+		for (i = 0; i < 5; i++)
 			if (conninfo->values[i] != NULL)
 				free((void *) conninfo->values[i]);
 }
@@ -109,8 +109,8 @@ disconnect_from_db(struct pg_conninfo_ctx *conninfo)
 PGresult *
 pg_locks(PGconn *pgconn, int procpid)
 {
-	char *sql;
-	PGresult *pgresult;
+	char	   *sql;
+	PGresult   *pgresult;
 
 	if (pg_version(pgconn) >= 902)
 	{
@@ -130,7 +130,8 @@ pg_locks(PGconn *pgconn, int procpid)
 PGresult *
 pg_processes(PGconn *pgconn)
 {
-	PGresult *pgresult;
+	PGresult   *pgresult;
+
 	PQexec(pgconn, "BEGIN;");
 	PQexec(pgconn, "SET statement_timeout = '2s';");
 	if (pg_version(pgconn) >= 902)
@@ -148,7 +149,8 @@ pg_processes(PGconn *pgconn)
 PGresult *
 pg_replication(PGconn *pgconn)
 {
-	PGresult *pgresult;
+	PGresult   *pgresult;
+
 	PQexec(pgconn, "BEGIN;");
 	PQexec(pgconn, "SET statement_timeout = '2s';");
 	pgresult = PQexec(pgconn, REPLICATION);
@@ -159,8 +161,8 @@ pg_replication(PGconn *pgconn)
 PGresult *
 pg_query(PGconn *pgconn, int procpid)
 {
-	char *sql;
-	PGresult *pgresult;
+	char	   *sql;
+	PGresult   *pgresult;
 
 	if (pg_version(pgconn) >= 902)
 	{

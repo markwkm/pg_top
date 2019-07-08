@@ -168,7 +168,7 @@ extern void quit();
 extern int	nlist();
 
 int
-machine_init(struct statics * statics)
+machine_init(struct statics *statics)
 {
 	static struct var v;
 
@@ -250,16 +250,16 @@ format_header(char *uname_field)
 }
 
 void
-get_system_info(struct system_info * si)
+get_system_info(struct system_info *si)
 {
 	long		avenrun[3];
 	struct sysinfo sysinfo;
-	static struct sysinfo *mpinfo = NULL;		/* array, per-processor
-												 * sysinfo structures. */
+	static struct sysinfo *mpinfo = NULL;	/* array, per-processor sysinfo
+											 * structures. */
 	struct vmtotal total;
 	struct anoninfo anoninfo;
 	static long cp_old[CPUSTATES];
-	static long cp_diff[CPUSTATES];		/* for cpu state percentages */
+	static long cp_diff[CPUSTATES]; /* for cpu state percentages */
 	static int	num_cpus;
 	static int	fd_cpu = 0;
 	register int i;
@@ -333,8 +333,8 @@ static struct handle handle;
 
 caddr_t
 get_process_info(
-				 struct system_info * si,
-				 struct process_select * sel,
+				 struct system_info *si,
+				 struct process_select *sel,
 				 int x)
 {
 	register int i;
@@ -451,7 +451,7 @@ format_next_process(
  *		number of symbols NOT found.
  */
 int
-check_nlist(register struct nlist * nlst)
+check_nlist(register struct nlist *nlst)
 {
 	register int i;
 	struct stat stat_buf;
@@ -564,8 +564,8 @@ unsigned char sorted_state[] =
 
 int
 proc_compare(
-			 struct prpsinfo ** pp1,
-			 struct prpsinfo ** pp2)
+			 struct prpsinfo **pp1,
+			 struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -605,7 +605,7 @@ proc_compare(
 get process table
 */
 void
-getptable(struct prpsinfo * baseptr)
+getptable(struct prpsinfo *baseptr)
 {
 	struct prpsinfo *currproc;	/* pointer to current proc structure	*/
 	int			numprocs = 0;
@@ -688,6 +688,7 @@ setpriority(int dummy, int who, int niceval)
 read_sysinfos(num_cpus, buf)
 int			num_cpus;
 struct sysinfo *buf;
+
 {
 
 	static int	fd1 = 0;		/* file descriptor for /stats/sysinfo */
@@ -716,6 +717,7 @@ sysinfo_data(num_cpus, global_si, percpu_si)
 int			num_cpus;
 struct sysinfo *global_si;
 struct sysinfo *percpu_si;
+
 {
 	struct sysinfo *percpu_p;
 	int			cpu,
@@ -742,7 +744,7 @@ struct sysinfo *percpu_si;
 		 */
 		for (i = 0; i < sizeof(struct sysinfo) / sizeof(int); i++)
 		{
-			*global   +++=*src++;
+			*global +++= *src++;
 		}
 		percpu_p++;
 	}

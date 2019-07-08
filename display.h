@@ -11,18 +11,18 @@
 #define  MT_delayed   2
 
 int			display_resize();
-int			display_init(struct statics * statics);
+int			display_init(struct statics *statics);
 void		i_loadave(int mpid, double *avenrun);
 void		u_loadave(int mpid, double *avenrun);
 void		i_minibar(int (*) (char *, int));
 void		u_minibar(int (*) (char *, int));
-void		i_uptime(time_t * bt, time_t * tod);
-void		u_uptime(time_t * bt, time_t * tod);
-void		i_timeofday(time_t * tod);
+void		i_uptime(time_t *bt, time_t *tod);
+void		u_uptime(time_t *bt, time_t *tod);
+void		i_timeofday(time_t *tod);
 void		i_procstates(int total, int *brkdn);
 void		u_procstates(int total, int *brkdn);
-void		i_cpustates(int64_t *states);
-void		u_cpustates(int64_t *states);
+void		i_cpustates(int64_t * states);
+void		u_cpustates(int64_t * states);
 void		z_cpustates();
 void		i_memory(long *stats);
 void		u_memory(long *stats);
@@ -44,4 +44,4 @@ void		display_pagerstart();
 void		display_pagerend();
 void		display_pager(char *data);
 
-#endif /* _DISPLAY_H */
+#endif							/* _DISPLAY_H */

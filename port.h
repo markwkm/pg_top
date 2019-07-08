@@ -27,4 +27,4 @@
 /* Portable prompt handling */
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
-#endif   /* _PORT_H_ */
+#endif							/* _PORT_H_ */

@@ -45,25 +45,25 @@ extern char *copyright;
 /* imported from screen.c */
 extern int	overstrike;
 
-extern int max_topn;
+extern int	max_topn;
 
 #define BEGIN "BEGIN;"
 #define ROLLBACK "ROLLBACK;"
 
-struct cmd cmd_map[] = {
-    {'\014', cmd_redraw},
+struct cmd	cmd_map[] = {
+	{'\014', cmd_redraw},
 	{'#', cmd_number},
-    {' ', cmd_update},
-    {'?', cmd_help},
+	{' ', cmd_update},
+	{'?', cmd_help},
 	{'A', cmd_explain_analyze},
 	{'a', cmd_activity},
 	{'c', cmd_cmdline},
 #ifdef ENABLE_COLOR
 	{'C', cmd_color},
-#endif /* ENABLE_COLOR */
+#endif							/* ENABLE_COLOR */
 	{'d', cmd_displays},
 	{'E', cmd_explain},
-    {'h', cmd_help},
+	{'h', cmd_help},
 	{'i', cmd_idletog},
 	{'I', cmd_io},
 	{'L', cmd_locks},
@@ -75,7 +75,7 @@ struct cmd cmd_map[] = {
 	{'s', cmd_delay},
 	{'t', cmd_toggle},
 	{'u', cmd_user},
-    {'\0', NULL},
+	{'\0', NULL},
 };
 
 int
@@ -83,7 +83,7 @@ cmd_activity(struct pg_top_context *pgtctx)
 {
 	pgtctx->mode = MODE_PROCESSES;
 	pgtctx->header_text =
-			pgtctx->header_options[pgtctx->mode_remote][pgtctx->mode];
+		pgtctx->header_options[pgtctx->mode_remote][pgtctx->mode];
 	reset_display(pgtctx);
 	return No;
 }
@@ -96,7 +96,7 @@ cmd_color(struct pg_top_context *pgtctx)
 	if (pgtctx->color_on)
 	{
 		pgtctx->color_on = 0;
-		display_resize(); /* To realloc screenbuf */
+		display_resize();		/* To realloc screenbuf */
 		new_message(MT_standout | MT_delayed, " Color off");
 	}
 	else
@@ -114,7 +114,7 @@ cmd_color(struct pg_top_context *pgtctx)
 	}
 	return No;
 }
-#endif /* ENABLE_COLOR */
+#endif							/* ENABLE_COLOR */
 
 int
 cmd_cmdline(struct pg_top_context *pgtctx)
@@ -122,18 +122,19 @@ cmd_cmdline(struct pg_top_context *pgtctx)
 	if (pgtctx->statics.flags.fullcmds)
 	{
 		pgtctx->ps.fullcmd = (pgtctx->ps.fullcmd + 1) % 3;
-		switch (pgtctx->ps.fullcmd) {
-		case 2:
-			new_message(MT_standout | MT_delayed, " Displaying current query.");
-			break;
-		case 1:
-			new_message(MT_standout | MT_delayed,
-					" Displaying full command lines.");
-			break;
-		case 0:
-		default:
-			new_message(MT_standout | MT_delayed,
-			" Not displaying full command lines.");
+		switch (pgtctx->ps.fullcmd)
+		{
+			case 2:
+				new_message(MT_standout | MT_delayed, " Displaying current query.");
+				break;
+			case 1:
+				new_message(MT_standout | MT_delayed,
+							" Displaying full command lines.");
+				break;
+			case 0:
+			default:
+				new_message(MT_standout | MT_delayed,
+							" Not displaying full command lines.");
 		}
 	}
 	else
@@ -148,8 +149,8 @@ cmd_cmdline(struct pg_top_context *pgtctx)
 int
 cmd_current_query(struct pg_top_context *pgtctx)
 {
-	int newval;
-	char tempbuf1[50];
+	int			newval;
+	char		tempbuf1[50];
 
 	new_message(MT_standout, "Current query of process: ");
 	newval = readline(tempbuf1, 8, Yes);
@@ -163,8 +164,8 @@ cmd_current_query(struct pg_top_context *pgtctx)
 int
 cmd_delay(struct pg_top_context *pgtctx)
 {
-	int i;
-	char tempbuf[50];
+	int			i;
+	char		tempbuf[50];
 
 	new_message(MT_standout, "Seconds to delay: ");
 	if ((i = readline(tempbuf, 8, Yes)) > -1)
@@ -181,11 +182,11 @@ cmd_delay(struct pg_top_context *pgtctx)
 int
 cmd_displays(struct pg_top_context *pgtctx)
 {
-	int i;
-	char tempbuf[50];
+	int			i;
+	char		tempbuf[50];
 
 	new_message(MT_standout, "Displays to show (currently %s): ",
-			pgtctx->displays == -1 ? "infinite" : itoa(pgtctx->displays));
+				pgtctx->displays == -1 ? "infinite" : itoa(pgtctx->displays));
 	if ((i = readline(tempbuf, 10, Yes)) > 0)
 	{
 		pgtctx->displays = i;
@@ -201,8 +202,8 @@ cmd_displays(struct pg_top_context *pgtctx)
 int
 cmd_explain(struct pg_top_context *pgtctx)
 {
-	int newval;
-	char tempbuf1[50];
+	int			newval;
+	char		tempbuf1[50];
 
 	new_message(MT_standout, "Re-determine execution plan: ");
 	newval = readline(tempbuf1, 8, Yes);
@@ -216,8 +217,8 @@ cmd_explain(struct pg_top_context *pgtctx)
 int
 cmd_explain_analyze(struct pg_top_context *pgtctx)
 {
-	int newval;
-	char tempbuf1[50];
+	int			newval;
+	char		tempbuf1[50];
 
 	new_message(MT_standout, "Re-run SQL for analysis: ");
 	newval = readline(tempbuf1, 8, Yes);
@@ -243,7 +244,7 @@ cmd_idletog(struct pg_top_context *pgtctx)
 {
 	pgtctx->ps.idle = !pgtctx->ps.idle;
 	new_message(MT_standout | MT_delayed, " %sisplaying idle processes.",
-			pgtctx->ps.idle ? "D" : "Not d");
+				pgtctx->ps.idle ? "D" : "Not d");
 	putchar('\r');
 	return No;
 }
@@ -253,7 +254,7 @@ cmd_io(struct pg_top_context *pgtctx)
 {
 	pgtctx->mode = MODE_IO_STATS;
 	pgtctx->header_text =
-			pgtctx->header_options[pgtctx->mode_remote][pgtctx->mode];
+		pgtctx->header_options[pgtctx->mode_remote][pgtctx->mode];
 	reset_display(pgtctx);
 	return No;
 }
@@ -261,8 +262,8 @@ cmd_io(struct pg_top_context *pgtctx)
 int
 cmd_locks(struct pg_top_context *pgtctx)
 {
-	int newval;
-	char tempbuf1[50];
+	int			newval;
+	char		tempbuf1[50];
 
 	new_message(MT_standout, "Show locks held by process: ");
 	newval = readline(tempbuf1, 8, Yes);
@@ -276,8 +277,8 @@ cmd_locks(struct pg_top_context *pgtctx)
 int
 cmd_number(struct pg_top_context *pgtctx)
 {
-	int newval;
-	char tempbuf[50];
+	int			newval;
+	char		tempbuf[50];
 
 	new_message(MT_standout, "Number of processes to show: ");
 	newval = readline(tempbuf, 8, Yes);
@@ -320,7 +321,7 @@ cmd_replication(struct pg_top_context *pgtctx)
 {
 	pgtctx->mode = MODE_REPLICATION;
 	pgtctx->header_text =
-			pgtctx->header_options[pgtctx->mode_remote][pgtctx->mode];
+		pgtctx->header_options[pgtctx->mode_remote][pgtctx->mode];
 	reset_display(pgtctx);
 	return No;
 }
@@ -328,9 +329,9 @@ cmd_replication(struct pg_top_context *pgtctx)
 int
 cmd_order(struct pg_top_context *pgtctx)
 {
-	int i;
-	int no_command = No;
-	char tempbuf[50];
+	int			i;
+	int			no_command = No;
+	char		tempbuf[50];
 
 	if (pgtctx->statics.order_names == NULL)
 	{
@@ -347,7 +348,7 @@ cmd_order(struct pg_top_context *pgtctx)
 			if (i == -1)
 			{
 				new_message(MT_standout, " %s: unrecognized sorting order",
-						tempbuf);
+							tempbuf);
 				no_command = Yes;
 			}
 			else
@@ -367,7 +368,7 @@ cmd_order(struct pg_top_context *pgtctx)
 int
 cmd_order_cpu(struct pg_top_context *pgtctx)
 {
-	int i;
+	int			i;
 
 	if ((i = string_index("cpu", pgtctx->statics.order_names)) == -1)
 	{
@@ -385,7 +386,7 @@ cmd_order_cpu(struct pg_top_context *pgtctx)
 int
 cmd_order_mem(struct pg_top_context *pgtctx)
 {
-	int i;
+	int			i;
 
 	if ((i = string_index("size", pgtctx->statics.order_names)) == -1)
 	{
@@ -455,13 +456,14 @@ int
 execute_command(struct pg_top_context *pgtctx, char ch)
 {
 	struct cmd *cmap;
+
 	cmap = cmd_map;
 
 	while (cmap->func != NULL)
 	{
 		if (cmap->ch == ch)
 		{
-			return (cmap->func)(pgtctx);
+			return (cmap->func) (pgtctx);
 		}
 		++cmap;
 	}
@@ -475,7 +477,6 @@ execute_command(struct pg_top_context *pgtctx, char ch)
 
 int
 str_adderr(char *str, int len, int err)
-
 {
 	register char *msg;
 	register int msglen;
@@ -499,7 +500,6 @@ str_adderr(char *str, int len, int err)
 
 int
 str_addarg(char *str, int len, char *arg, int first)
-
 {
 	register int arglen;
 
@@ -526,8 +526,7 @@ str_addarg(char *str, int len, char *arg, int first)
  */
 
 void
-show_help(struct statics * stp)
-
+show_help(struct statics *stp)
 {
 	static char *fullhelp;
 	char	   *p = NULL;
@@ -561,8 +560,6 @@ show_help(struct statics * stp)
 
 char *
 next_field(char *str)
-
-
 {
 	if ((str = strchr(str, ' ')) == NULL)
 	{
@@ -578,7 +575,6 @@ next_field(char *str)
 
 int
 scanint(char *str, int *intp)
-
 {
 	register int val = 0;
 	register char ch;

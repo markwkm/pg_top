@@ -27,14 +27,14 @@
 #ifndef HAVE_STRCHR
 #define strchr(a, b)		index((a), (b))
 #define strrchr(a, b)		rindex((a), (b))
-#endif   /* HAVE_STRCHR */
+#endif							/* HAVE_STRCHR */
 #ifdef HAVE_MEMCPY
 #define memzero(a, b)		memset((a), 0, (b))
 #else
 #define memcpy(a, b, c)		bcopy((b), (a), (c))
 #define memzero(a, b)		bzero((a), (b))
 #define memcmp(a, b, c)		bcmp((a), (b), (c))
-#endif   /* HAVE_MEMCPY */
+#endif							/* HAVE_MEMCPY */
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #else
@@ -43,10 +43,12 @@
 #endif
 #endif
 char	   *getenv();
-#if !defined (__macosx) 
-caddr_t		malloc(); */
-#endif 
-#endif   /* STDC_HEADERS */
+#if !defined (__macosx)
+caddr_t		malloc();
+
+*/
+#endif
+#endif							/* STDC_HEADERS */
 
 /* we must have both sighold and sigrelse to use them */
 #if defined(HAVE_SIGHOLD) && !defined(HAVE_SIGRELSE)
@@ -63,4 +65,4 @@ caddr_t		malloc(); */
 #include <unistd.h>
 #endif
 
-#endif   /* _OS_H_ */
+#endif							/* _OS_H_ */

@@ -70,14 +70,14 @@
 #include "display.h"
 #include "loadavg.h"
 
-void percentages64 __P((int, int *, u_int64_t *, u_int64_t *, u_int64_t *));
+void		percentages64 __P((int, int *, u_int64_t *, u_int64_t *, u_int64_t *));
 
 
 /* get_process_info passes back a handle.  This is what it looks like: */
 
 struct handle
 {
-	struct kinfo_proc2 **next_proc;		/* points to next valid proc pointer */
+	struct kinfo_proc2 **next_proc; /* points to next valid proc pointer */
 	int			remaining;		/* number of pointers remaining */
 };
 
@@ -112,7 +112,7 @@ const char *state_abbrev[] = {
 	"", "START", "RUN", "SLEEP", "STOP", "ZOMB", "DEAD", "CPU"
 };
 
-static kvm_t *kd;
+static kvm_t * kd;
 
 /* these are retrieved from the kernel in _init */
 
@@ -170,23 +170,23 @@ char	   *ordernames[] = {
 };
 
 /* forward definitions for comparison functions */
-static int compare_cpu __P((struct proc **, struct proc **));
-static int compare_prio __P((struct proc **, struct proc **));
-static int compare_res __P((struct proc **, struct proc **));
-static int compare_size __P((struct proc **, struct proc **));
-static int compare_state __P((struct proc **, struct proc **));
-static int compare_time __P((struct proc **, struct proc **));
+static int	compare_cpu __P((struct proc **, struct proc **));
+static int	compare_prio __P((struct proc **, struct proc **));
+static int	compare_res __P((struct proc **, struct proc **));
+static int	compare_size __P((struct proc **, struct proc **));
+static int	compare_state __P((struct proc **, struct proc **));
+static int	compare_time __P((struct proc **, struct proc **));
 
 int			(*proc_compares[])
 __P((struct proc **, struct proc **)) =
 {
 	compare_cpu,
-	compare_prio,
-	compare_res,
-	compare_size,
-	compare_state,
-	compare_time,
-	NULL
+		compare_prio,
+		compare_res,
+		compare_size,
+		compare_state,
+		compare_time,
+		NULL
 };
 
 
@@ -216,8 +216,9 @@ static int	pageshift;			/* log base 2 of the pagesize */
 #endif
 
 int
-machine_init(statics)
+			machine_init(statics)
 struct statics *statics;
+
 {
 	int			pagesize;
 	int			mib[2];
@@ -278,9 +279,9 @@ struct statics *statics;
 	return (0);
 }
 
-char *
-format_header(uname_field)
+char	   *format_header(uname_field)
 char	   *uname_field;
+
 {
 	char	   *ptr;
 
@@ -294,8 +295,9 @@ char	   *uname_field;
 }
 
 void
-get_system_info(si)
+			get_system_info(si)
 struct system_info *si;
+
 {
 	size_t		ssize;
 	int			mib[2];
@@ -417,6 +419,7 @@ get_process_info(si, sel, compare_index)
 struct system_info *si;
 struct process_select *sel;
 int			compare_index;
+
 {
 	int			i;
 	int			total_procs;
@@ -436,7 +439,7 @@ int			compare_index;
 	pbase = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc2), &nproc);
 	if (nproc > onproc)
 		pref = (struct kinfo_proc2 **) realloc(pref,
-							sizeof(struct kinfo_proc2 *) * (onproc = nproc));
+											   sizeof(struct kinfo_proc2 *) * (onproc = nproc));
 	if (pref == NULL || pbase == NULL)
 	{
 		(void) fprintf(stderr, "pg_top: Out of memory.\n");
@@ -494,10 +497,10 @@ int			compare_index;
 }
 
 
-char *
-format_next_process(handle, get_userid)
-caddr_t		handle;
+char	   *format_next_process(handle, get_userid)
+			caddr_t handle;
 char	   *(*get_userid) __P((int));
+
 {
 	struct kinfo_proc2 *pp;
 	long		cputime;
@@ -655,9 +658,10 @@ static int	sorted_state[] = {
 /* compare_cpu - the comparison function for sorting by cpu percentage */
 
 static int
-compare_cpu(pp1, pp2)
+			compare_cpu(pp1, pp2)
 struct proc **pp1,
 		  **pp2;
+
 {
 	struct kinfo_proc2 *p1;
 	struct kinfo_proc2 *p2;
@@ -682,9 +686,10 @@ struct proc **pp1,
 /* compare_prio - the comparison function for sorting by process priority */
 
 static int
-compare_prio(pp1, pp2)
+			compare_prio(pp1, pp2)
 struct proc **pp1,
 		  **pp2;
+
 {
 	struct kinfo_proc2 *p1;
 	struct kinfo_proc2 *p2;
@@ -709,9 +714,10 @@ struct proc **pp1,
 /* compare_res - the comparison function for sorting by resident set size */
 
 static int
-compare_res(pp1, pp2)
+			compare_res(pp1, pp2)
 struct proc **pp1,
 		  **pp2;
+
 {
 	struct kinfo_proc2 *p1;
 	struct kinfo_proc2 *p2;
@@ -736,9 +742,10 @@ struct proc **pp1,
 /* compare_size - the comparison function for sorting by total memory usage */
 
 static int
-compare_size(pp1, pp2)
+			compare_size(pp1, pp2)
 struct proc **pp1,
 		  **pp2;
+
 {
 	struct kinfo_proc2 *p1;
 	struct kinfo_proc2 *p2;
@@ -763,9 +770,10 @@ struct proc **pp1,
 /* compare_state - the comparison function for sorting by process state */
 
 static int
-compare_state(pp1, pp2)
+			compare_state(pp1, pp2)
 struct proc **pp1,
 		  **pp2;
+
 {
 	struct kinfo_proc2 *p1;
 	struct kinfo_proc2 *p2;
@@ -790,9 +798,10 @@ struct proc **pp1,
 /* compare_time - the comparison function for sorting by total cpu time */
 
 static int
-compare_time(pp1, pp2)
+			compare_time(pp1, pp2)
 struct proc **pp1,
 		  **pp2;
+
 {
 	struct kinfo_proc2 *p1;
 	struct kinfo_proc2 *p2;
@@ -826,8 +835,9 @@ struct proc **pp1,
  */
 
 int
-proc_owner(pid)
+			proc_owner(pid)
 int			pid;
+
 {
 	int			cnt;
 	struct kinfo_proc2 **prefp;
@@ -854,12 +864,13 @@ int			pid;
  */
 
 void
-percentages64(cnt, out, new, old, diffs)
+			percentages64(cnt, out, new, old, diffs)
 int			cnt;
 int		   *out;
 u_int64_t  *new;
 u_int64_t  *old;
 u_int64_t  *diffs;
+
 {
 	int			i;
 	u_int64_t	change;

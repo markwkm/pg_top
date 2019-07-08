@@ -39,4 +39,4 @@ void		xdprintf(char *fmt,...);
 #define dprintf if (0)
 #endif
 
-#endif   /* _UTILS_H_ */
+#endif							/* _UTILS_H_ */

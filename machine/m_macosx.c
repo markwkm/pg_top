@@ -92,6 +92,7 @@ static int	onproc = -1;
 static int	pref_len;
 static int	maxmem;
 static char fmt[MAX_COLS];
+
 /* static double logcpu = 1.0; */
 
 /* process array stuff */
@@ -133,7 +134,7 @@ host_cpu_load_info_data_t cpuload;
 static int64_t cp_time[CPU_STATE_MAX];
 static int64_t cp_old[CPU_STATE_MAX];
 static int64_t cp_diff[CPU_STATE_MAX];
-static int64_t	cpu_states[CPU_STATE_MAX];
+static int64_t cpu_states[CPU_STATE_MAX];
 
 /*
  * types
@@ -155,7 +156,7 @@ struct macos_proc
 	struct task_basic_info task_info;
 	unsigned int thread_count;
 	struct thread_basic_info thread_summary;
-	char fullcmd[FULLCMDLEN + 1];
+	char		fullcmd[FULLCMDLEN + 1];
 };
 
 static int	show_fullcmd;
@@ -177,7 +178,7 @@ static char header[] =
 
 
 int			proc_compare(const void *, const void *);
-int 		get_fullcmd(int, char *);
+int			get_fullcmd(int, char *);
 
 /*
  * puke()
@@ -210,7 +211,7 @@ puke(const char *fmt,...)
  */
 
 int
-load_thread_info(struct macos_proc * mp)
+load_thread_info(struct macos_proc *mp)
 {
 	register kern_return_t rc = 0;
 	register int i = 0;
@@ -251,7 +252,7 @@ load_thread_info(struct macos_proc * mp)
 		if (rc != KERN_SUCCESS)
 		{
 			puke("error: unable to load thread info for task (%s); rc = %d",
-					strerror(errno), rc);
+				 strerror(errno), rc);
 			return (rc);
 		}
 
@@ -280,7 +281,7 @@ load_thread_info(struct macos_proc * mp)
  * prototypes for functions which pg_top needs
  */
 
-char *printable();
+char	   *printable();
 
 /*
  * definitions for offsets
@@ -376,8 +377,8 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
 	register long cputime;
 	register double pct;
 	struct handle *hp;
-	char *command; /* text outputted to describe the command */
-	int show_cmd_local = show_fullcmd;
+	char	   *command;		/* text outputted to describe the command */
+	int			show_cmd_local = show_fullcmd;
 
 	/*
 	 * we need to keep track of the next proc structure.
@@ -394,7 +395,7 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
 	if ((MPP(pp, p_flag) & P_INMEM) == 0)
 	{
 		/* we want to print swapped processes as <pname> */
-		char *comm = MPP(pp, p_comm);
+		char	   *comm = MPP(pp, p_comm);
 
 #define COMSIZ	sizeof(MPP(pp, p_comm))
 		char		buf[COMSIZ];
@@ -431,7 +432,7 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
 
 	/* get the process's command name in to "cmd" */
 	if (show_fullcmd)
- 		if (get_fullcmd(MPP(pp, p_pid), pp->fullcmd) < 0)
+		if (get_fullcmd(MPP(pp, p_pid), pp->fullcmd) < 0)
 			show_cmd_local = 0; /* Don't show if full command not found. */
 
 	/*
@@ -466,20 +467,26 @@ format_next_process(caddr_t handle, char *(*getuserid) ())
 int
 get_fullcmd(int pid, char *fullcmd)
 {
-	char *args, *namePtr, *stringPtr, *cp;
+	char	   *args,
+			   *namePtr,
+			   *stringPtr,
+			   *cp;
 
-	size_t size = 0;
-	int mib[4], maxarg, numArgs, c = 0;
+	size_t		size = 0;
+	int			mib[4],
+				maxarg,
+				numArgs,
+				c = 0;
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_ARGMAX;
 
 	size = sizeof(maxarg);
-	if ( sysctl(mib, 2, &maxarg, &size, NULL, 0) == -1 )
+	if (sysctl(mib, 2, &maxarg, &size, NULL, 0) == -1)
 		return -1;
 
-	args = (char *) malloc( maxarg );
-	if ( args == NULL )
+	args = (char *) malloc(maxarg);
+	if (args == NULL)
 		return -2;
 
 	mib[0] = CTL_KERN;
@@ -490,7 +497,7 @@ get_fullcmd(int pid, char *fullcmd)
 		return -3;
 
 	size = (size_t) maxarg;
-	if ( sysctl(mib, 3, args, &size, NULL, 0) == -1 )
+	if (sysctl(mib, 3, args, &size, NULL, 0) == -1)
 		return -4;
 
 	memcpy(&numArgs, args, sizeof(numArgs));
@@ -512,19 +519,24 @@ get_fullcmd(int pid, char *fullcmd)
 	stringPtr = cp;
 
 	/* Convert all '\0' to ' ' in the process arguments portion. */
-	for (namePtr = NULL; c < numArgs && cp < &args[size]; cp++) {
-		if (*cp == '\0') {
+	for (namePtr = NULL; c < numArgs && cp < &args[size]; cp++)
+	{
+		if (*cp == '\0')
+		{
 			c++;
 			if (namePtr != NULL)
-			    *namePtr = ' ';
+				*namePtr = ' ';
 			namePtr = cp;
 		}
 	}
 
 	/* Convert all '\0' to ' ' in the process environment settings portion. */
-	for (; cp < &args[size]; cp++) {
-		if (*cp == '\0') {
-			if (namePtr != NULL) {
+	for (; cp < &args[size]; cp++)
+	{
+		if (*cp == '\0')
+		{
+			if (namePtr != NULL)
+			{
 				if (&namePtr[1] == cp)
 					break;
 				*namePtr = ' ';
@@ -553,8 +565,8 @@ get_fullcmd(int pid, char *fullcmd)
  */
 
 caddr_t
-get_process_info(struct system_info * si, struct process_select * sel, int x,
-		const char *values[])
+get_process_info(struct system_info *si, struct process_select *sel, int x,
+				 const char *values[])
 {
 	register int i;
 	register int total_procs;
@@ -574,8 +586,8 @@ get_process_info(struct system_info * si, struct process_select * sel, int x,
 
 	/* begin mucking */
 	/* kproc_list = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nproc); */
-	PGconn *pgconn;
-	PGresult *pgresult = NULL;
+	PGconn	   *pgconn;
+	PGresult   *pgresult = NULL;
 
 	nproc = 0;
 	pgconn = connect_to_db(values);
@@ -587,22 +599,27 @@ get_process_info(struct system_info * si, struct process_select * sel, int x,
 	}
 	PQfinish(pgconn);
 
-	int mib[4];
+	int			mib[4];
+
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_PROC;
 	mib[2] = KERN_PROC_PID;
 
-	size_t len = nproc;
+	size_t		len = nproc;
 
 	struct kinfo_proc *buffer;
-	buffer = (struct kinfo_proc *) malloc( len * sizeof(struct kinfo_proc) );
 
-	for (i = 0; i < nproc ; i++) {
-		size_t size = sizeof(struct kinfo_proc);	
+	buffer = (struct kinfo_proc *) malloc(len * sizeof(struct kinfo_proc));
+
+	for (i = 0; i < nproc; i++)
+	{
+		size_t		size = sizeof(struct kinfo_proc);
+
 		mib[3] = atoi(PQgetvalue(pgresult, i, 0));
-		
-		if (sysctl(mib, sizeof(mib)/sizeof(int), &buffer[i], &size, NULL,
-				0) == -1) {
+
+		if (sysctl(mib, sizeof(mib) / sizeof(int), &buffer[i], &size, NULL,
+				   0) == -1)
+		{
 			perror("sysctl atoi loop");
 			return "1";
 		}
@@ -616,9 +633,9 @@ get_process_info(struct system_info * si, struct process_select * sel, int x,
 	if (nproc > onproc)
 	{
 		proc_list = (struct macos_proc *) realloc(proc_list,
-				sizeof(struct macos_proc) * nproc);
+												  sizeof(struct macos_proc) * nproc);
 		proc_ref = (struct macos_proc **) realloc(proc_ref,
-				sizeof(struct macos_proc *) * (onproc = nproc));
+												  sizeof(struct macos_proc *) * (onproc = nproc));
 	}
 
 	if (proc_ref == NULL || proc_list == NULL || kproc_list == NULL)
@@ -676,14 +693,14 @@ get_process_info(struct system_info * si, struct process_select * sel, int x,
 		 * ignored unless show_sysprocs is set.
 		 */
 		if (MPP(pp, p_stat) != 0 &&
-				(show_system || ((MPP(pp, p_flag) & P_SYSTEM) == 0)))
+			(show_system || ((MPP(pp, p_flag) & P_SYSTEM) == 0)))
 		{
 			total_procs++;
 			process_states[(unsigned char) MPP(pp, p_stat)]++;
 			if ((MPP(pp, p_stat) != SZOMB) &&
-					(show_idle || (MPP(pp, p_pctcpu) != 0) ||
-					(MPP(pp, p_stat) == SRUN)) &&
-					(!show_uid || MEP(pp, e_pcred.p_ruid) == (uid_t) sel->uid))
+				(show_idle || (MPP(pp, p_pctcpu) != 0) ||
+				 (MPP(pp, p_stat) == SRUN)) &&
+				(!show_uid || MEP(pp, e_pcred.p_ruid) == (uid_t) sel->uid))
 			{
 				*prefp++ = pp;
 				active_procs++;
@@ -696,7 +713,7 @@ get_process_info(struct system_info * si, struct process_select * sel, int x,
 	 */
 
 	qsort((char *) proc_ref, active_procs, sizeof(struct macos_proc *),
-			proc_compare);
+		  proc_compare);
 
 	/* remember active and total counts */
 	si->p_total = total_procs;
@@ -716,15 +733,15 @@ get_process_info(struct system_info * si, struct process_select * sel, int x,
  */
 
 void
-get_system_info(struct system_info * si)
+get_system_info(struct system_info *si)
 {
 	register long total;
 	register int i;
 	unsigned int count = HOST_CPU_LOAD_INFO_COUNT;
-	double avg[3];
+	double		avg[3];
 
 	if (host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO,
-			(host_info_t) & cpuload, &count) == KERN_SUCCESS)
+						(host_info_t) & cpuload, &count) == KERN_SUCCESS)
 	{
 		for (i = 0; i < CPU_STATE_MAX; i++)
 		{
@@ -741,7 +758,7 @@ get_system_info(struct system_info * si)
 	for (i = 0; i < CPU_STATE_MAX; i++)
 		printf("cp_time[%d] = %d\n", i, cp_time[i]);
 	fflush(stdout);
-#endif /* MAX_VERBOSE */
+#endif							/* MAX_VERBOSE */
 
 	/*
 	 * get the load averages
@@ -753,11 +770,11 @@ get_system_info(struct system_info * si)
 
 #ifdef MAX_VERBOSE
 	printf("%-30s%03.2f, %03.2f, %03.2f\n",
-			"load averages:",
-			si->load_avg[0],
-			si->load_avg[1],
-			si->load_avg[2]);
-#endif /* MAX_VERBOSE */
+		   "load averages:",
+		   si->load_avg[0],
+		   si->load_avg[1],
+		   si->load_avg[2]);
+#endif							/* MAX_VERBOSE */
 
 	total = percentages(CPU_STATE_MAX, cpu_states, cp_time, cp_old, cp_diff);
 
@@ -770,7 +787,7 @@ get_system_info(struct system_info * si)
 
 		count = HOST_VM_INFO_COUNT;
 		status = host_statistics(mach_host_self(), HOST_VM_INFO,
-				(host_info_t) & vm_stats, &count);
+								 (host_info_t) & vm_stats, &count);
 
 		if (status != KERN_SUCCESS)
 		{
@@ -783,7 +800,7 @@ get_system_info(struct system_info * si)
 		 * right format.
 		 */
 
-		pagesize = 1; /* temporary fix to div by 0 errors */
+		pagesize = 1;			/* temporary fix to div by 0 errors */
 		memory_stats[0] = pagetok(maxmem / pagesize);
 		memory_stats[1] = pagetok(vm_stats.free_count);
 		memory_stats[2] = pagetok(vm_stats.active_count);
@@ -819,7 +836,7 @@ get_system_info(struct system_info * si)
  */
 
 int
-machine_init(struct statics * stat)
+machine_init(struct statics *stat)
 {
 	size_t		size;
 
@@ -831,7 +848,7 @@ machine_init(struct statics * stat)
 
 #ifdef MAX_VERBOSE
 	printf("%-30s%10d\n", "total system memory:", maxmem);
-#endif /* MAX_VERBOSE */
+#endif							/* MAX_VERBOSE */
 
 	/*
 	 * calculate the pageshift from the system page size

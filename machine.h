@@ -34,7 +34,7 @@ enum DisplayMode
 	MODE_PROCESSES,
 	MODE_IO_STATS,
 	MODE_REPLICATION,
-	MODE_TYPES /* number of modes */
+	MODE_TYPES					/* number of modes */
 };
 
 /* Display modes for table and index statistics. */
@@ -65,7 +65,7 @@ struct statics
 	char	  **order_names;	/* optional */
 	char	  **color_names;	/* optional */
 	time_t		boottime;		/* optional */
-	int		    ncpus;
+	int			ncpus;
 	struct
 	{
 		unsigned int fullcmds:1;
@@ -91,7 +91,7 @@ struct system_info
 	int			p_total;
 	int			P_ACTIVE;		/* number of procs considered "active" */
 	int		   *procstates;
-	int64_t		   *cpustates;
+	int64_t    *cpustates;
 	long	   *memory;
 	long	   *swap;
 };
@@ -117,17 +117,17 @@ struct process_select
 int			machine_init(struct statics *);
 void		get_system_info(struct system_info *);
 #ifdef __linux__
-caddr_t get_process_info(struct system_info *, struct process_select *, int,
-				 struct pg_conninfo_ctx *, int);
+caddr_t		get_process_info(struct system_info *, struct process_select *, int,
+							 struct pg_conninfo_ctx *, int);
 #else
-caddr_t get_process_info(struct system_info *, struct process_select *, int,
-				 char *);
-#endif /* __linux__ */
+caddr_t		get_process_info(struct system_info *, struct process_select *, int,
+							 char *);
+#endif							/* __linux__ */
 char	   *format_header(char *);
 char	   *format_next_io(caddr_t);
 char	   *format_next_process(caddr_t);
 char	   *format_next_replication(caddr_t);
-uid_t			proc_owner(pid_t);
+uid_t		proc_owner(pid_t);
 void		update_state(int *pgstate, char *state);
 void		update_str(char **, char *);
 
@@ -138,4 +138,4 @@ extern char *procstatenames[];
 extern char fmt_header_io[];
 extern char fmt_header_replication[];
 
-#endif   /* _MACHINE_H_ */
+#endif							/* _MACHINE_H_ */

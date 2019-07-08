@@ -13,7 +13,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif /* HAVE_CONFIG_H */
+#endif							/* HAVE_CONFIG_H */
 
 #ifndef HAVE_GETOPT
 
@@ -42,7 +42,6 @@ char	   *optarg;
 
 int
 getopt(int argc, char **argv, char *opts)
-
 {
 	static int	sp = 1;
 	register int c;
@@ -96,4 +95,4 @@ getopt(int argc, char **argv, char *opts)
 	return (c);
 }
 
-#endif   /* HAVE_GETOPT */
+#endif							/* HAVE_GETOPT */

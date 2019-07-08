@@ -181,11 +181,11 @@ int			compare_time();
 int			(*proc_compares[]) () =
 {
 	proc_compare,				/* state, pri, time, size */
-	compare_cpu,				/* cpu, time, state, pri, size */
-	compare_size,				/* size, cpu, time, state pri  */
-	compare_time,				/* time, cpu, state, pri, size */
+		compare_cpu,			/* cpu, time, state, pri, size */
+		compare_size,			/* size, cpu, time, state pri  */
+		compare_time,			/* time, cpu, state, pri, size */
 /* compare_res,		/* res,  cpu, time, state pri  */
-	NULL
+		NULL
 };
 
 /* these are names given to allowed sorting orders -- first is default */
@@ -201,7 +201,7 @@ long		time();
 long		percentages();
 
 int
-machine_init(struct statics * statics)
+machine_init(struct statics *statics)
 
 {
 	ulong		ptr;
@@ -344,7 +344,7 @@ static unsigned char shareable[RT_VM86 + 1];	/* 1 if shareable */
  */
 /* #define TREAT_SHAREABLE_PAGES 1 */
 static long
-proc_residentsize(struct proc * pp)
+proc_residentsize(struct proc *pp)
 {
 	struct pregion *prp;
 	struct region *rp;
@@ -366,7 +366,7 @@ proc_residentsize(struct proc * pp)
 		 prp->p_reg && (rp = get_region((void *) (prp->p_reg)));
 		 prp = prp->p_next)
 	{
-		if (shareable[rp->r_type])		/* account for shared pgs separately */
+		if (shareable[rp->r_type])	/* account for shared pgs separately */
 		{
 			stot += (rp->r_nvalid / rp->r_refcnt);
 			s1tot += rp->r_nvalid;
@@ -387,7 +387,7 @@ proc_residentsize(struct proc * pp)
 }
 
 void
-get_system_info(struct system_info * si)
+get_system_info(struct system_info *si)
 
 {
 	long		total;
@@ -421,7 +421,7 @@ get_system_info(struct system_info * si)
 	memory_stats[2] = bytetok(ctob(memory_stats[2]));	/* clicks -> bytes */
 	memory_stats[3] = bytetok(memory_stats[3] * NBPP);	/* # bytes per page */
 	memory_stats[4] = bytetok(memory_stats[4] * NBPP);	/* # bytes per page */
-	memory_stats[5] = bytetok(memory_stats[5] * NBPSCTR);		/* # bytes per sector */
+	memory_stats[5] = bytetok(memory_stats[5] * NBPSCTR);	/* # bytes per sector */
 
 	/* set arrays and strings */
 
@@ -440,8 +440,8 @@ get_system_info(struct system_info * si)
 static struct handle handle;
 
 caddr_t
-get_process_info(struct system_info * si,
-				 struct process_select * sel,
+get_process_info(struct system_info *si,
+				 struct process_select *sel,
 				 int idx)
 
 {
@@ -481,7 +481,7 @@ get_process_info(struct system_info * si,
 			total_procs++;
 			process_states[pp->p_stat]++;
 			if ((pp->p_stat != SZOMB) &&
-			(show_idle || (pp->p_stat == SRUN) || (pp->p_stat == SONPROC)) &&
+				(show_idle || (pp->p_stat == SRUN) || (pp->p_stat == SONPROC)) &&
 				(!show_uid || pp->p_uid == (ushort) sel->uid))
 			{
 				*prefp++ = pp;
@@ -589,7 +589,7 @@ format_next_process(caddr_t handle, char *(*get_userid) ())
 			(*get_userid) (pp->p_uid),
 			pp->p_pri - PZERO,
 			pp->p_nice - NZERO,
-			format_k(PROCSIZE(&u)),		/* same as	pp->p_size * 4 */
+			format_k(PROCSIZE(&u)), /* same as	pp->p_size * 4 */
 			proc_residentsize(pp),
 			state_abbrev[pp->p_stat],
 			format_time(cputime / Hz),
@@ -606,7 +606,7 @@ format_next_process(caddr_t handle, char *(*get_userid) ())
  */
 
 int
-check_nlist(register struct nlist * nlst)
+check_nlist(register struct nlist *nlst)
 
 {
 	register int i = 0;
@@ -686,7 +686,7 @@ static unsigned char sorted_state[] =
 };
 
 int
-proc_compare(struct proc ** pp1, struct proc ** pp2)
+proc_compare(struct proc **pp1, struct proc **pp2)
 
 {
 	register struct proc *p1;
@@ -785,7 +785,7 @@ sigsetmask(sigset_t mask)
 
 
 int
-compare_cpu(struct proc ** pp1, struct proc ** pp2)
+compare_cpu(struct proc **pp1, struct proc **pp2)
 {
 	register struct proc *p1;
 	register struct proc *p2;
@@ -810,7 +810,7 @@ compare_cpu(struct proc ** pp1, struct proc ** pp2)
 
 /* compare_size - the comparison function for sorting by process size */
 int
-compare_size(struct proc ** pp1, struct proc ** pp2)
+compare_size(struct proc **pp1, struct proc **pp2)
 {
 	register struct proc *p1;
 	register struct proc *p2;
@@ -844,7 +844,7 @@ compare_size(struct proc ** pp1, struct proc ** pp2)
  * in comparison rtns
  */
 int
-compare_time(struct proc ** pp1, struct proc ** pp2)
+compare_time(struct proc **pp1, struct proc **pp2)
 {
 	register struct proc *p1;
 	register struct proc *p2;

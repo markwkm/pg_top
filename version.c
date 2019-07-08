@@ -14,7 +14,6 @@
 
 char *
 version_string()
-
 {
 	return (PACKAGE_VERSION);
 }

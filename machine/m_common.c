@@ -13,12 +13,12 @@
 
 #include "machine.h"
 
-char *backendstatenames[] =
+char	   *backendstatenames[] =
 {
 	"", "idle", "active", "idltxn", "fast", "abort", "disabl", NULL
 };
 
-char *procstatenames[] =
+char	   *procstatenames[] =
 {
 	"", " idle, ", " active, ", " idle txn, ", " fastpath, ", " aborted, ",
 	" disabled, ", NULL

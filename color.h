@@ -11,7 +11,7 @@ int			color_env_parse(char *env);
 int			color_tag(char *tag);
 int			color_test(int tagidx, int value);
 char	   *color_set(int color);
-void		color_dump(FILE * f);
+void		color_dump(FILE *f);
 
 
 /*
@@ -53,4 +53,4 @@ void		color_dump(FILE * f);
  * 47	White
  */
 
-#endif   /* _COLOR_H_ */
+#endif							/* _COLOR_H_ */

@@ -158,11 +158,11 @@ int			compare_cpu(), compare_size(), compare_res(), compare_time(),
 int			(*proc_compares[]) () =
 {
 	compare_cpu,
-	compare_size,
-	compare_res,
-	compare_time,
-	compare_prio,
-	NULL
+		compare_size,
+		compare_res,
+		compare_time,
+		compare_prio,
+		NULL
 };
 
 /* useful externals */
@@ -209,7 +209,7 @@ unsigned long curtime;
 /*
  * Initialize globals, get kernel offsets and stuff...
  */
-machine_init(struct statics * statics)
+machine_init(struct statics *statics)
 
 {
 	time_t		uptime,
@@ -286,7 +286,7 @@ format_header(char *uname_field)
 
 
 void
-get_system_info(struct system_info * si)
+get_system_info(struct system_info *si)
 
 {
 	int			load_avg[3];
@@ -343,7 +343,7 @@ get_system_info(struct system_info * si)
 static struct handle handle;
 
 caddr_t
-get_process_info(struct system_info * si, struct process_select * sel, int compare_index)
+get_process_info(struct system_info *si, struct process_select *sel, int compare_index)
 
 {
 	int			i,
@@ -486,11 +486,11 @@ format_next_process(caddr_t handle, char *(*get_userid) ())
 			proc_ress,			/* resident */
 			ress_unit,			/* K or M */
 			state_abbrev[p->p_stat],	/* process state */
-			format_time(cpu_time),		/* time used */
+			format_time(cpu_time),	/* time used */
 			weighted_cpu(pi),	/* WCPU */
 			100.0 * double_pctcpu(p),	/* CPU */
-			printable(pi->pi_comm),		/* COMM */
-			(pi->pi_flags & SKPROC) == 0 ? "" : " (sys)"		/* kernel process? */
+			printable(pi->pi_comm), /* COMM */
+			(pi->pi_flags & SKPROC) == 0 ? "" : " (sys)"	/* kernel process? */
 		);
 	return (fmt);
 }
@@ -588,7 +588,7 @@ static unsigned char sorted_state[] =
 /* compare_cpu - the comparison function for sorting by cpu percentage */
 
 int
-compare_cpu(struct procsinfo ** ppi1, struct procsinfo ** ppi2)
+compare_cpu(struct procsinfo **ppi1, struct procsinfo **ppi2)
 
 {
 	register struct procsinfo *pi1 = *ppi1,
@@ -616,7 +616,7 @@ compare_cpu(struct procsinfo ** ppi1, struct procsinfo ** ppi2)
 /* compare_size - the comparison function for sorting by total memory usage */
 
 int
-compare_size(struct procsinfo ** ppi1, struct procsinfo ** ppi2)
+compare_size(struct procsinfo **ppi1, struct procsinfo **ppi2)
 
 {
 	register struct procsinfo *pi1 = *ppi1,
@@ -644,7 +644,7 @@ compare_size(struct procsinfo ** ppi1, struct procsinfo ** ppi2)
 /* compare_res - the comparison function for sorting by resident set size */
 
 int
-compare_res(struct procsinfo ** ppi1, struct procsinfo ** ppi2)
+compare_res(struct procsinfo **ppi1, struct procsinfo **ppi2)
 
 {
 	register struct procsinfo *pi1 = *ppi1,
@@ -672,7 +672,7 @@ compare_res(struct procsinfo ** ppi1, struct procsinfo ** ppi2)
 /* compare_time - the comparison function for sorting by total cpu time */
 
 int
-compare_time(struct procsinfo ** ppi1, struct procsinfo ** ppi2)
+compare_time(struct procsinfo **ppi1, struct procsinfo **ppi2)
 
 {
 	register struct procsinfo *pi1 = *ppi1,
@@ -700,7 +700,7 @@ compare_time(struct procsinfo ** ppi1, struct procsinfo ** ppi2)
 /* compare_prio - the comparison function for sorting by cpu percentage */
 
 int
-compare_prio(struct procsinfo ** ppi1, struct procsinfo ** ppi2)
+compare_prio(struct procsinfo **ppi1, struct procsinfo **ppi2)
 
 {
 	register struct procsinfo *pi1 = *ppi1,

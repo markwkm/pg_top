@@ -6,4 +6,4 @@
 #define  Yes	1
 #define  Maybe	2				/* tri-state boolean, actually */
 
-#endif   /* _BOOLEAN_H_ */
+#endif							/* _BOOLEAN_H_ */

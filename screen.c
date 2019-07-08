@@ -97,14 +97,12 @@ static int	new_lword;
 
 int
 putstdout(int ch)
-
 {
 	return putchar((unsigned int) ch);
 }
 
 void
 get_screensize()
-
 {
 
 #ifdef TIOCGWINSZ
@@ -138,15 +136,16 @@ get_screensize()
 			screen_width = ts.ts_cols - 1;
 		}
 	}
-#endif   /* TIOCGSIZE */
-#endif   /* TIOCGWINSZ */
+#endif							/* TIOCGSIZE */
+#endif							/* TIOCGWINSZ */
 
-	char *lower_left_motion = "";
-	// get_screensize() can be called from main() without cursor_motion
-	// having been set, so we protect against that possibility.
+	char	   *lower_left_motion = "";
+
+	/* get_screensize() can be called from main() without cursor_motion */
+	/* having been set, so we protect against that possibility. */
 	if (smart_terminal == Yes)
 	{
-		// We need to account for the fact that tgoto() might return NULL.
+		/* We need to account for the fact that tgoto() might return NULL. */
 		lower_left_motion = tgoto(cursor_motion, 0, screen_length - 1);
 		if (lower_left_motion == NULL)
 		{
@@ -159,7 +158,6 @@ get_screensize()
 
 void
 init_termcap(int interactive)
-
 {
 	char	   *bufptr;
 	char	   *PCptr;
@@ -265,8 +263,9 @@ init_termcap(int interactive)
 	PC = (PCptr = tgetstr("pc", &bufptr)) ? *PCptr : 0;
 
 	/* set convenience strings */
-	// We need to account for the fact that tgoto() might return NULL.
-	char *home_motion = tgoto(cursor_motion, 0, 0);
+	/* We need to account for the fact that tgoto() might return NULL. */
+	char	   *home_motion = tgoto(cursor_motion, 0, 0);
+
 	if (home_motion == NULL)
 	{
 		home_motion = "";
@@ -306,7 +305,6 @@ init_termcap(int interactive)
 
 void
 init_screen()
-
 {
 	/* get the old settings for safe keeping */
 #ifdef SGTTY
@@ -397,7 +395,6 @@ init_screen()
 
 void
 end_screen()
-
 {
 	/* move to the lower left, clear the line and send "te" */
 	if (smart_terminal)
@@ -428,7 +425,6 @@ end_screen()
 
 void
 reinit_screen()
-
 {
 	/* install our settings if it is a terminal */
 	if (is_a_terminal)
@@ -456,7 +452,6 @@ reinit_screen()
 
 void
 standout(char *msg)
-
 {
 	if (smart_terminal)
 	{
@@ -472,7 +467,6 @@ standout(char *msg)
 
 void
 clear()
-
 {
 	if (smart_terminal)
 	{
@@ -482,7 +476,6 @@ clear()
 
 int
 clear_eol(int len)
-
 {
 	if (smart_terminal && !overstrike && len > 0)
 	{
@@ -505,7 +498,6 @@ clear_eol(int len)
 
 void
 go_home()
-
 {
 	if (smart_terminal)
 	{

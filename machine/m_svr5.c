@@ -164,15 +164,15 @@ int			compare_ruid();
 int			(*proc_compares[]) () =
 {
 	proc_compare,
-	compare_cpu,
-	compare_size,
-	compare_res,
-	compare_time,
-	compare_pid,
-	compare_uid,
-	compare_rpid,
-	compare_ruid,
-	NULL
+		compare_cpu,
+		compare_size,
+		compare_res,
+		compare_time,
+		compare_pid,
+		compare_uid,
+		compare_rpid,
+		compare_ruid,
+		NULL
 };
 
 
@@ -201,7 +201,7 @@ static int	get_cpustates(int *new);
 
 
 int
-machine_init(struct statics * statics)
+machine_init(struct statics *statics)
 {
 	static struct var v;
 	int			i;
@@ -288,7 +288,7 @@ format_header(char *uname_field)
 }
 
 void
-get_system_info(struct system_info * si)
+get_system_info(struct system_info *si)
 {
 	long		avenrun[3];
 	long		mem;
@@ -329,7 +329,7 @@ get_system_info(struct system_info * si)
 	memory_stats[2] = pagetok(mem);
 
 	/* mem = sysconf(_SC_GENERAL_MEMORY);	 */
-	memory_stats[1] = memory_stats[0] - memory_stats[2];		/* active */
+	memory_stats[1] = memory_stats[0] - memory_stats[2];	/* active */
 
 	get_swapinfo(&swap_total, &swap_free);
 	memory_stats[3] = pagetok(swap_total - swap_free);
@@ -345,8 +345,8 @@ static struct handle handle;
 
 caddr_t
 get_process_info(
-				 struct system_info * si,
-				 struct process_select * sel,
+				 struct system_info *si,
+				 struct process_select *sel,
 				 int idx)
 {
 	register int i;
@@ -402,7 +402,7 @@ get_process_info(
 				active_procs++;
 			}
 			if (ZOMBIE(pp))
-				process_states[sZOMB]++;		/* invented */
+				process_states[sZOMB]++;	/* invented */
 
 		}
 	}
@@ -427,7 +427,7 @@ get_process_info(
  * i.e percent of cpu utilised when on cpu
  */
 static double
-percent_cpu(struct prpsinfo * pp)
+percent_cpu(struct prpsinfo *pp)
 {
 	static time_t tim = 0L;
 	time_t		starttime;
@@ -499,7 +499,7 @@ format_next_process(
 				   (ZOMBIE(pp)) ? state_abbrev[sZOMB]
 				   : state_abbrev[pp->pr_state],
 				   format_time(cputime),
-					/* 100.0 * */ pctcpu,
+				    /* 100.0 * */ pctcpu,
 				   printable(pp->pr_fname));
 
 	/* return the result */
@@ -513,7 +513,7 @@ format_next_process(
  *		number of symbols NOT found.
  */
 int
-check_nlist(register struct nlist * nlst)
+check_nlist(register struct nlist *nlst)
 {
 	register int i;
 
@@ -625,8 +625,8 @@ unsigned char sorted_state[] =
  /* default comparison rtn */
 int
 original_proc_compare(
-					  struct prpsinfo ** pp1,
-					  struct prpsinfo ** pp2)
+					  struct prpsinfo **pp1,
+					  struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -665,13 +665,13 @@ original_proc_compare(
 	}
 	return (result);
 }
-#endif   /* original comparison rtn */
+#endif							/* original comparison rtn */
 
 /* compare_state - comparison function for sorting by state,pri,time,size */
 int
 proc_compare(
-			 struct prpsinfo ** pp1,
-			 struct prpsinfo ** pp2)
+			 struct prpsinfo **pp1,
+			 struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -697,8 +697,8 @@ proc_compare(
 /* compare_cpu - the comparison function for sorting by cpu % (deflt) */
 int
 compare_cpu(
-			struct prpsinfo ** pp1,
-			struct prpsinfo ** pp2)
+			struct prpsinfo **pp1,
+			struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -723,8 +723,8 @@ compare_cpu(
 /* compare_size - the comparison function for sorting by total memory usage */
 int
 compare_size(
-			 struct prpsinfo ** pp1,
-			 struct prpsinfo ** pp2)
+			 struct prpsinfo **pp1,
+			 struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -749,8 +749,8 @@ compare_size(
 /* compare_res - the comparison function for sorting by resident set size */
 int
 compare_res(
-			struct prpsinfo ** pp1,
-			struct prpsinfo ** pp2)
+			struct prpsinfo **pp1,
+			struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -775,8 +775,8 @@ compare_res(
 /* compare_time - the comparison function for sorting by total cpu time */
 int
 compare_time(
-			 struct prpsinfo ** pp1,
-			 struct prpsinfo ** pp2)
+			 struct prpsinfo **pp1,
+			 struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -801,8 +801,8 @@ compare_time(
 /* compare_pid - the comparison function for sorting by pid */
 int
 compare_pid(
-			struct prpsinfo ** pp1,
-			struct prpsinfo ** pp2)
+			struct prpsinfo **pp1,
+			struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -828,8 +828,8 @@ compare_pid(
 /* compare_uid - the comparison function for sorting by user ID */
 int
 compare_uid(
-			struct prpsinfo ** pp1,
-			struct prpsinfo ** pp2)
+			struct prpsinfo **pp1,
+			struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -855,8 +855,8 @@ compare_uid(
 /* compare_rpid - the comparison function for sorting by pid ascending */
 int
 compare_rpid(
-			 struct prpsinfo ** pp1,
-			 struct prpsinfo ** pp2)
+			 struct prpsinfo **pp1,
+			 struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -882,8 +882,8 @@ compare_rpid(
 /* compare_uid - the comparison function for sorting by user ID ascending */
 int
 compare_ruid(
-			 struct prpsinfo ** pp1,
-			 struct prpsinfo ** pp2)
+			 struct prpsinfo **pp1,
+			 struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -913,7 +913,7 @@ compare_ruid(
  * get process table
  */
 void
-getptable(struct prpsinfo * baseptr)
+getptable(struct prpsinfo *baseptr)
 {
 	struct prpsinfo *currproc;	/* pointer to current proc structure	*/
 	int			numprocs = 0;
@@ -1107,9 +1107,9 @@ static uint32 ncpu;				/* number of processors in system */
 /* fwd dcls */
 static uint32 kmet_get_cpu(int type, char *desc);
 static void kmet_verify(
-			uint32 md, metid_t id, units_t units, type_t mettype,
-			uint32 metsz, uint32 nobj, uint32 nlocs, resource_t res_id,
-			uint32 ressz);
+						uint32 md, metid_t id, units_t units, type_t mettype,
+						uint32 metsz, uint32 nobj, uint32 nlocs, resource_t res_id,
+						uint32 ressz);
 
 
 static int

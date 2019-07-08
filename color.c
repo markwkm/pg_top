@@ -37,14 +37,14 @@ typedef struct color_entry
 	char	   *tag;
 	int			min;
 	int			max;
-	char		color;
+	char color;
 	struct color_entry *next;
 	struct color_entry *tagnext;
-}	color_entry;
+}			color_entry;
 
-static color_entry *entries = NULL;
+static color_entry * entries = NULL;
 
-static color_entry **bytag = NULL;
+static color_entry * *bytag = NULL;
 static char **bytag_names = NULL;
 static int	totaltags = 0;
 static int	tagcnt = 0;
@@ -57,7 +57,6 @@ static int	max_color_ansi = 0;
 
 static int
 color_slot(char *str)
-
 {
 	int			i;
 
@@ -89,7 +88,6 @@ color_slot(char *str)
 
 int
 color_env_parse(char *env)
-
 {
 	char	   *p;
 	char	   *min;
@@ -154,7 +152,6 @@ color_env_parse(char *env)
 
 int
 color_tag(char *tag)
-
 {
 	color_entry *entryp;
 	color_entry *tp;
@@ -167,14 +164,14 @@ color_tag(char *tag)
 	if (bytag == NULL)
 	{
 		totaltags = 10;
-		bytag = (color_entry **) malloc(totaltags * sizeof(color_entry *));
+		bytag = (color_entry * *) malloc(totaltags * sizeof(color_entry *));
 		bytag_names = (char **) malloc(totaltags * sizeof(char *));
 	}
 
 	if (tagcnt >= totaltags)
 	{
 		totaltags *= 2;
-		bytag = (color_entry **) realloc(bytag, totaltags * sizeof(color_entry *));
+		bytag = (color_entry * *) realloc(bytag, totaltags * sizeof(color_entry *));
 		bytag_names = (char **) realloc(bytag_names, totaltags * sizeof(char *));
 	}
 
@@ -206,7 +203,6 @@ color_tag(char *tag)
 
 int
 color_test(int tagidx, int value)
-
 {
 	color_entry *ce;
 
@@ -239,12 +235,11 @@ color_test(int tagidx, int value)
 
 char *
 color_set(int color)
-
 {
 	static char v[32];
 
 	v[0] = '\0';
-	if (color >= 0 && color < num_color_ansi)
+	if (color >=0 && color <num_color_ansi)
 	{
 		snprintf(v, sizeof(v), "\033[%sm", color_ansi[color]);
 	}
@@ -252,8 +247,7 @@ color_set(int color)
 }
 
 void
-color_dump(FILE * f)
-
+color_dump(FILE *f)
 {
 	color_entry *ep;
 	int			i;
@@ -296,8 +290,7 @@ color_dump(FILE * f)
 }
 
 void
-color_debug(FILE * f)
-
+color_debug(FILE *f)
 {
 	color_entry *ep;
 	int			i;
@@ -307,7 +300,7 @@ color_debug(FILE * f)
 	while (ep != NULL)
 	{
 		printf("%s(%d,%d): slot %d, ansi %s, %sSample Text",
-		   ep->tag, ep->min, ep->max, ep->color, color_ansi[(int) ep->color],
+			   ep->tag, ep->min, ep->max, ep->color, color_ansi[(int) ep->color],
 			   color_set(ep->color));
 		printf("%s\n", color_set(0));
 		ep = ep->next;

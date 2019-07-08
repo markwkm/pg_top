@@ -30,4 +30,4 @@ u       - display processes for only one user (+ selects all users)\n\
 Not all commands are available on all systems.\n\
 ";
 
-#endif   /* _HELP_H_ */
+#endif							/* _HELP_H_ */

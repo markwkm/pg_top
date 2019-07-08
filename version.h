@@ -14,4 +14,4 @@
 
 char	   *version_string();
 
-#endif   /* _VERSION_H_ */
+#endif							/* _VERSION_H_ */

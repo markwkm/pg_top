@@ -25,7 +25,6 @@
 
 static int
 alldigits(char *s)
-
 {
 	int			ch;
 
@@ -41,7 +40,6 @@ alldigits(char *s)
 
 int
 atoiwi(char *str)
-
 {
 	register int len;
 
@@ -79,7 +77,6 @@ atoiwi(char *str)
 
 char *
 itoa(int val)
-
 {
 	register char *ptr;
 	static char buffer[16];		/* result is built here */
@@ -112,7 +109,6 @@ itoa(int val)
 
 char *
 itoa7(uid_t val)
-
 {
 	register char *ptr;
 	static char buffer[16];		/* result is built here */
@@ -149,7 +145,6 @@ itoa7(uid_t val)
 
 int
 digits(int val)
-
 {
 	register int cnt = 0;
 
@@ -174,7 +169,6 @@ digits(int val)
 
 char *
 printable(char *str)
-
 {
 	register char *ptr;
 	register char ch;
@@ -198,7 +192,6 @@ printable(char *str)
 
 char *
 strecpy(char *to, char *from)
-
 {
 	while ((*to++ = *from++) != '\0');
 	return (--to);
@@ -214,7 +207,6 @@ strecpy(char *to, char *from)
 
 char *
 homogenize(char *str)
-
 {
 	char	   *ans;
 	char	   *fr;
@@ -240,7 +232,6 @@ homogenize(char *str)
 
 int
 string_index(char *string, char **array)
-
 {
 	register int i = 0;
 
@@ -266,7 +257,6 @@ string_index(char *string, char **array)
 
 char *
 string_list(char **strings)
-
 {
 	int			cnt = 0;
 	char	  **pp;
@@ -306,7 +296,6 @@ string_list(char **strings)
 
 char	  **
 argparse(char *line, int *cntp)
-
 {
 	register char *from;
 	register char *to;
@@ -392,13 +381,13 @@ argparse(char *line, int *cntp)
  */
 
 long
-percentages(int cnt, int64_t *out, int64_t *new, int64_t *old, int64_t *diffs)
-
+percentages(int cnt, int64_t * out, int64_t * new, int64_t * old,
+		int64_t * diffs)
 {
 	register int i;
 	register int64_t change;
 	register int64_t total_change;
-	register int64_t *dp;
+	register int64_t * dp;
 	int64_t		half_total;
 
 	/* initialization */
@@ -411,7 +400,7 @@ percentages(int cnt, int64_t *out, int64_t *new, int64_t *old, int64_t *diffs)
 		if ((change = *new - *old) < 0)
 		{
 			/* this only happens when the counter wraps */
-			change = (int64_t) ((int64_t) *new - (int64_t) *old);
+			change = (int64_t) ((int64_t) * new - (int64_t) * old);
 		}
 		total_change += (*dp++ = change);
 		*old++ = *new++;
@@ -457,7 +446,6 @@ extern int	sys_nerr;
 
 char *
 errmsg(int errnum)
-
 {
 #ifdef HAVE_STRERROR
 	char	   *msg = strerror(errnum);
@@ -484,7 +472,6 @@ errmsg(int errnum)
 
 char *
 format_percent(double v)
-
 {
 	static char result[10];
 
@@ -524,7 +511,6 @@ format_percent(double v)
 
 char *
 format_time(long seconds)
-
 {
 	static char result[10];
 
@@ -567,7 +553,6 @@ format_time(long seconds)
 
 char *
 format_b(long long amt)
-
 {
 	static char retarray[NUM_STRINGS][16];
 	static int	index = 0;
@@ -623,7 +608,6 @@ format_b(long long amt)
 
 char *
 format_k(long amt)
-
 {
 	static char retarray[NUM_STRINGS][16];
 	static int	index = 0;
@@ -657,7 +641,6 @@ FILE	   *debugfile;
 
 void
 debug_set(int i)
-
 {
 	debug_on = i;
 #ifdef DEBUG
@@ -668,7 +651,6 @@ debug_set(int i)
 #ifdef DEBUG
 void
 xdprintf(char *fmt,...)
-
 {
 	va_list		argp;
 

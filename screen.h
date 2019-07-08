@@ -49,4 +49,4 @@ void		clear();
 int			clear_eol(int len);
 void		go_home();
 
-#endif   /* _SCREEN_H_ */
+#endif							/* _SCREEN_H_ */

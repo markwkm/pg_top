@@ -118,7 +118,7 @@ static int	cpustate_total_length;
 static enum
 {
 	OFF, ON, ERASE
-}	header_status = ON;
+}			header_status = ON;
 
 #ifdef ENABLE_COLOR
 static int	load_cidx[3];
@@ -128,7 +128,6 @@ static int *memory_cidx;
 static int *swap_cidx;
 #endif
 static int	header_color = 0;
-
 
 /* internal support routines */
 
@@ -142,7 +141,6 @@ static int	header_color = 0;
 
 static int
 string_count(char **pp)
-
 {
 	register int cnt = 0;
 
@@ -158,11 +156,10 @@ string_count(char **pp)
 
 void
 display_clear()
-
 {
 #ifdef DEBUG
 	dprintf("display_clear\n");
-#endif   /* DEBUG */
+#endif							/* DEBUG */
 	clear();
 	memzero(screenbuf, bufsize);
 	memzero(colorbuf, bufsize);
@@ -180,18 +177,17 @@ display_clear()
 
 void
 display_move(int x, int y)
-
 {
 	char		buff[128];
 	char	   *p;
 	char	   *bufp;
 	char	   *colorp;
 	int			cnt = 0;
-	int			color = curr_color;
+	int color = curr_color;
 
 #ifdef DEBUG
 	dprintf("display_move(%d, %d): curr_x %d, curr_y %d\n", x, y, curr_x, curr_y);
-#endif   /* DEBUG */
+#endif							/* DEBUG */
 
 	/* are we in a position to do this without cursor addressing? */
 	if (curr_y < y || (curr_y == y && curr_x <= x))
@@ -206,7 +202,7 @@ display_move(int x, int y)
 		/* one newline for every line */
 		while (cnt > 0 && curr_y < y)
 		{
-			if (color != 0)
+			if (color !=0)
 			{
 				p = strecpy(p, color_set(0));
 				color = 0;
@@ -224,7 +220,7 @@ display_move(int x, int y)
 		colorp = &colorbuf[lineindex(curr_y) + curr_x];
 		while (cnt > 0 && curr_x < x)
 		{
-			if (color != *colorp)
+			if (color !=*colorp)
 			{
 				color = *colorp;
 
@@ -279,7 +275,6 @@ display_move(int x, int y)
 
 void
 display_write(int x, int y, int newcolor, int eol, char *new)
-
 {
 	char	   *bufp;
 	char	   *colorp;
@@ -289,7 +284,7 @@ display_write(int x, int y, int newcolor, int eol, char *new)
 #ifdef DEBUG
 	dprintf("display_write(%d, %d, %d, %d, \"%s\")\n",
 			x, y, newcolor, eol, new);
-#endif   /* DEBUG */
+#endif							/* DEBUG */
 
 	/* dumb terminal handling here */
 	if (!smart_terminal)
@@ -376,7 +371,7 @@ display_write(int x, int y, int newcolor, int eol, char *new)
 	{
 #ifdef DEBUG
 		dprintf("display_write: clear-eol (bufp = \"%s\")\n", bufp);
-#endif   /* DEBUG */
+#endif							/* DEBUG */
 		/* make sure we are color 0 */
 		if (curr_color != 0)
 		{
@@ -407,7 +402,6 @@ display_write(int x, int y, int newcolor, int eol, char *new)
 
 void
 display_fmt(int x, int y, int newcolor, int eol, char *fmt,...)
-
 {
 	va_list		argp;
 
@@ -419,7 +413,6 @@ display_fmt(int x, int y, int newcolor, int eol, char *fmt,...)
 
 void
 display_cte()
-
 {
 	int			len;
 	int			y;
@@ -450,7 +443,7 @@ display_cte()
 	{
 #ifdef DEBUG
 		dprintf("display_cte: clearing\n");
-#endif   /* DEBUG */
+#endif							/* DEBUG */
 
 		/* different method when there's no clear_to_end */
 		if (clear_to_end)
@@ -486,7 +479,6 @@ display_cte()
 
 static void
 summary_format(int x, int y, int *numbers, char **names)
-
 {
 	register int num;
 	register char *thisname;
@@ -538,7 +530,6 @@ summary_format(int x, int y, int *numbers, char **names)
 
 static void
 summary_format_memory(int x, int y, long *numbers, char **names, int *cidx)
-
 {
 	register long num;
 	register int color;
@@ -618,7 +609,6 @@ summary_format_memory(int x, int y, long *numbers, char **names, int *cidx)
 
 int
 display_resize()
-
 {
 	register int lines;
 	register int newsize;
@@ -688,8 +678,7 @@ display_resize()
  */
 
 int
-display_init(struct statics * statics)
-
+display_init(struct statics *statics)
 {
 	register int lines;
 	register char **pp;
@@ -792,9 +781,8 @@ display_init(struct statics * statics)
 
 static void
 pr_loadavg(double avg, int i)
-
 {
-	int			color = 0;
+	int color = 0;
 
 #ifdef ENABLE_COLOR
 	color = color_test(load_cidx[i], (int) (avg * 100));
@@ -806,7 +794,6 @@ pr_loadavg(double avg, int i)
 
 void
 i_loadave(int mpid, double *avenrun)
-
 {
 	register int i;
 
@@ -835,7 +822,6 @@ i_loadave(int mpid, double *avenrun)
 
 void
 u_loadave(int mpid, double *avenrun)
-
 {
 	register int i;
 
@@ -883,8 +869,7 @@ static int	uptime_mins;
 static int	uptime_secs;
 
 void
-i_uptime(time_t * bt, time_t * tod)
-
+i_uptime(time_t *bt, time_t *tod)
 {
 	time_t		uptime;
 
@@ -910,16 +895,13 @@ i_uptime(time_t * bt, time_t * tod)
 }
 
 void
-u_uptime(time_t * bt, time_t * tod)
-
+u_uptime(time_t *bt, time_t *tod)
 {
 	i_uptime(bt, tod);
 }
 
-
 void
-i_timeofday(time_t * tod)
-
+i_timeofday(time_t *tod)
 {
 	/*
 	 * Display the current time. "ctime" always returns a string that looks
@@ -940,10 +922,8 @@ static int	ltotal = 0;
  *	*_procstates(total, brkdn, names) - print the process summary line
  */
 
-
 void
 i_procstates(int total, int *brkdn)
-
 {
 	/* write current number of processes and remember the value */
 	display_fmt(0, y_procstate, 0, 0,
@@ -962,7 +942,6 @@ i_procstates(int total, int *brkdn)
 
 void
 u_procstates(int total, int *brkdn)
-
 {
 	/* update number of processes only if it has changed */
 	if (ltotal != total)
@@ -998,7 +977,6 @@ u_procstates(int total, int *brkdn)
 
 char *
 cpustates_tag()
-
 {
 	register char *use;
 
@@ -1024,14 +1002,13 @@ cpustates_tag()
 }
 
 void
-i_cpustates(int64_t *states)
-
+i_cpustates(int64_t * states)
 {
 	int			value;
 	char	  **names;
 	char	   *thisname;
 	int		   *colp;
-	int			color = 0;
+	int color = 0;
 
 #ifdef ENABLE_COLOR
 	int		   *cidx = cpustate_cidx;
@@ -1076,15 +1053,14 @@ i_cpustates(int64_t *states)
 }
 
 void
-u_cpustates(int64_t *states)
-
+u_cpustates(int64_t * states)
 {
 	int			value;
 	char	  **names = cpustate_names;
 	char	   *thisname;
 	int		   *lp;
 	int		   *colp;
-	int			color = 0;
+	int color = 0;
 
 #ifdef ENABLE_COLOR
 	int		   *cidx = cpustate_cidx;
@@ -1132,7 +1108,6 @@ u_cpustates(int64_t *states)
 
 void
 z_cpustates()
-
 {
 	register int i = 0;
 	register char **names = cpustate_names;
@@ -1168,7 +1143,6 @@ z_cpustates()
 
 void
 i_memory(long *stats)
-
 {
 	display_write(0, y_mem, 0, 0, "Memory: ");
 
@@ -1178,7 +1152,6 @@ i_memory(long *stats)
 
 void
 u_memory(long *stats)
-
 {
 	/* format the new line */
 	summary_format_memory(x_mem, y_mem, stats, memory_names, memory_cidx);
@@ -1194,7 +1167,6 @@ u_memory(long *stats)
 
 void
 i_swap(long *stats)
-
 {
 	if (num_swap > 0)
 	{
@@ -1208,7 +1180,6 @@ i_swap(long *stats)
 
 void
 u_swap(long *stats)
-
 {
 	if (num_swap > 0)
 	{
@@ -1239,7 +1210,6 @@ static int	msglen = 0;
 
 void
 i_message()
-
 {
 	if (smart_terminal)
 	{
@@ -1261,7 +1231,6 @@ i_message()
 
 void
 u_message()
-
 {
 	i_message();
 }
@@ -1276,7 +1245,6 @@ static int	header_length;
 
 void
 i_header(char *text)
-
 {
 	header_length = strlen(text);
 	if (header_status == ON)
@@ -1292,7 +1260,6 @@ i_header(char *text)
 /*ARGSUSED*/
 void
 u_header(char *text)
-
 {
 	if (header_status == ERASE)
 	{
@@ -1309,7 +1276,6 @@ u_header(char *text)
 
 void
 i_process(int line, char *thisline)
-
 {
 	/* truncate the line to conform to our current screen width */
 	thisline[display_width] = '\0';
@@ -1320,14 +1286,12 @@ i_process(int line, char *thisline)
 
 void
 u_process(int line, char *newline)
-
 {
 	i_process(line, newline);
 }
 
 void
 u_endscreen(int hi)
-
 {
 	if (smart_terminal)
 	{
@@ -1347,7 +1311,6 @@ u_endscreen(int hi)
 
 void
 display_header(int t)
-
 {
 	if (t)
 	{
@@ -1361,7 +1324,6 @@ display_header(int t)
 
 void
 new_message_v(int type, char *msgfmt, va_list ap)
-
 {
 	register int i;
 
@@ -1403,7 +1365,6 @@ new_message_v(int type, char *msgfmt, va_list ap)
 
 void
 new_message(int type, char *msgfmt,...)
-
 {
 	va_list		ap;
 
@@ -1414,7 +1375,6 @@ new_message(int type, char *msgfmt,...)
 
 void
 display_error_message(char *msgfmt,...)
-
 {
 	va_list		ap;
 
@@ -1425,11 +1385,10 @@ display_error_message(char *msgfmt,...)
 
 void
 clear_message()
-
 {
 #ifdef DEBUG
 	dprintf("clear_message: msglen = %d, x = %d, y = %d\n", msglen, curr_x, curr_y);
-#endif   /* DEBUG */
+#endif							/* DEBUG */
 	if (clear_eol(msglen) == 1)
 	{
 		putchar('\r');
@@ -1438,7 +1397,6 @@ clear_message()
 
 int
 readline(char *buffer, int size, int numeric)
-
 {
 	register char *ptr = buffer;
 	register char ch;
@@ -1487,7 +1445,7 @@ readline(char *buffer, int size, int numeric)
 			}
 		}
 		/* check for character validity and buffer overflow */
-		else if (cnt == size || (numeric && !isdigit(ch)) ||
+		else if (cnt == size || (numeric &&!isdigit(ch)) ||
 				 !isprint(ch))
 		{
 			/* not legal */
@@ -1520,14 +1478,12 @@ readline(char *buffer, int size, int numeric)
 
 void
 display_pagerstart()
-
 {
 	display_clear();
 }
 
 void
 display_pagerend()
-
 {
 	char		ch;
 
@@ -1538,7 +1494,6 @@ display_pagerend()
 
 void
 display_pager(char *data)
-
 {
 	int			ch;
 	char		readch;

@@ -162,11 +162,11 @@ int			compare_cpu(), compare_size(), compare_res(), compare_time(),
 int			(*proc_compares[]) () =
 {
 	compare_cpu,
-	compare_size,
-	compare_res,
-	compare_time,
-	compare_prio,
-	NULL
+		compare_size,
+		compare_res,
+		compare_time,
+		compare_prio,
+		NULL
 };
 
 /* useful externals */
@@ -231,8 +231,9 @@ xmalloc(long size)
  * Initialize globals, get kernel offsets and stuff...
  */
 int
-machine_init(statics)
+			machine_init(statics)
 struct statics *statics;
+
 {
 #ifdef OLD
 	if ((kmem = open(KMEM, O_RDONLY)) == -1)
@@ -283,9 +284,9 @@ struct statics *statics;
 	return (0);
 }
 
-char *
-format_header(uname_field)
+char	   *format_header(uname_field)
 register char *uname_field;
+
 {
 	register char *ptr;
 
@@ -302,8 +303,9 @@ register char *uname_field;
 
 
 void
-get_system_info(si)
+			get_system_info(si)
 struct system_info *si;
+
 {
 #ifdef OLD
 	long long	load_avg[3];
@@ -411,6 +413,7 @@ get_process_info(si, sel, compare_index)
 struct system_info *si;
 struct process_select *sel;
 int			compare_index;
+
 {
 	int			i,
 				nproc;
@@ -542,10 +545,10 @@ char		fmt[128];			/* static area where result is built */
 #define weighted_cpu(pp) (PROCTIME(pp) == 0 ? 0.0 : \
 						(((PROCTIME(pp)*100.0)/(curtime-pi->pi_start))))
 
-char *
-format_next_process(handle, get_userid)
-caddr_t		handle;
+char	   *format_next_process(handle, get_userid)
+			caddr_t handle;
 char	   *(*get_userid) ();
+
 {
 	register struct handle *hp;
 	register struct procentry64 *pi;
@@ -588,11 +591,11 @@ char	   *(*get_userid) ();
 			proc_ress,			/* resident */
 			ress_unit,			/* K or M */
 			state_abbrev[pi->pi_state], /* process state */
-			format_time(cpu_time),		/* time used */
+			format_time(cpu_time),	/* time used */
 			weighted_cpu(pi),	/* WCPU */
 			pi->pi_cpu / 100.0, /* CPU */
-			printable(pi->pi_comm),		/* COMM */
-			(pi->pi_flags & SKPROC) == 0 ? "" : " (sys)"		/* kernel process? */
+			printable(pi->pi_comm), /* COMM */
+			(pi->pi_flags & SKPROC) == 0 ? "" : " (sys)"	/* kernel process? */
 		);
 	return (fmt);
 }
@@ -610,11 +613,12 @@ char	   *(*get_userid) ();
  *
  */
 int
-getkval(offset, ptr, size, refstr)
+			getkval(offset, ptr, size, refstr)
 unsigned long offset;
 caddr_t		ptr;
 int			size;
 char	   *refstr;
+
 {
 	int			upper_2gb = 0;
 
@@ -690,9 +694,10 @@ static unsigned char sorted_state[] =
 /* compare_cpu - the comparison function for sorting by cpu percentage */
 
 int
-compare_cpu(ppi1, ppi2)
+			compare_cpu(ppi1, ppi2)
 struct procentry64 **ppi1;
 struct procentry64 **ppi2;
+
 {
 	register struct procentry64 *pi1 = *ppi1,
 			   *pi2 = *ppi2;
@@ -713,9 +718,10 @@ struct procentry64 **ppi2;
 /* compare_size - the comparison function for sorting by total memory usage */
 
 int
-compare_size(ppi1, ppi2)
+			compare_size(ppi1, ppi2)
 struct procentry64 **ppi1;
 struct procentry64 **ppi2;
+
 {
 	register struct procentry64 *pi1 = *ppi1,
 			   *pi2 = *ppi2;
@@ -736,9 +742,10 @@ struct procentry64 **ppi2;
 /* compare_res - the comparison function for sorting by resident set size */
 
 int
-compare_res(ppi1, ppi2)
+			compare_res(ppi1, ppi2)
 struct procentry64 **ppi1;
 struct procentry64 **ppi2;
+
 {
 	register struct procentry64 *pi1 = *ppi1,
 			   *pi2 = *ppi2;
@@ -759,9 +766,10 @@ struct procentry64 **ppi2;
 /* compare_time - the comparison function for sorting by total cpu time */
 
 int
-compare_time(ppi1, ppi2)
+			compare_time(ppi1, ppi2)
 struct procentry64 **ppi1;
 struct procentry64 **ppi2;
+
 {
 	register struct procentry64 *pi1 = *ppi1,
 			   *pi2 = *ppi2;
@@ -782,9 +790,10 @@ struct procentry64 **ppi2;
 /* compare_prio - the comparison function for sorting by cpu percentage */
 
 int
-compare_prio(ppi1, ppi2)
+			compare_prio(ppi1, ppi2)
 struct procentry64 **ppi1;
 struct procentry64 **ppi2;
+
 {
 	register struct procentry64 *pi1 = *ppi1,
 			   *pi2 = *ppi2;
@@ -803,8 +812,9 @@ struct procentry64 **ppi2;
 
 
 int
-proc_owner(pid)
+			proc_owner(pid)
 int			pid;
+
 {
 	register struct procentry64 **prefp = pref;
 	register int cnt = pref_len;

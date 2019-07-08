@@ -132,7 +132,7 @@
 #ifndef FSCALE
 #define FSHIFT	8				/* bits to right of fixed binary point */
 #define FSCALE	(1<<FSHIFT)
-#endif   /* FSCALE */
+#endif							/* FSCALE */
 
 #define loaddouble(la) ((double)(la) / FSCALE)
 #define dbl_align(x)	(((unsigned long)(x)+(sizeof(double)-1)) & \
@@ -185,7 +185,7 @@ static unsigned long avenrun_offset;
 static unsigned long mpid_offset;
 
 #ifdef USE_KSTAT
-static kstat_ctl_t *kc = NULL;
+static kstat_ctl_t * kc = NULL;
 static kid_t kcid = 0;
 #else
 static unsigned long *cpu_offset;
@@ -262,7 +262,7 @@ char	   *procstatenames[] =
 	NULL
 };
 
-int64_t			cpu_states[CPUSTATES];
+int64_t		cpu_states[CPUSTATES];
 char	   *cpustatenames[] =
 {"idle", "user", "kernel", "iowait", "swap", NULL};
 
@@ -293,10 +293,10 @@ int			compare_time();
 int			(*proc_compares[]) () =
 {
 	compare_cpu,
-	compare_size,
-	compare_res,
-	compare_time,
-	NULL
+		compare_size,
+		compare_res,
+		compare_time,
+		NULL
 };
 
 kvm_t	   *kd;
@@ -371,13 +371,13 @@ getkval(unsigned long offset,
 {
 #ifdef DEBUG
 	dprintf("getkval(%08x, %08x, %d, %s)\n", offset, ptr, size, refstr);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 
 	if (kvm_read(kd, offset, (char *) ptr, size) != size)
 	{
 #ifdef DEBUG
 		dprintf("getkval: read failed\n");
-#endif /* DEBUG */
+#endif							/* DEBUG */
 		if (*refstr == '!')
 		{
 			return (0);
@@ -391,14 +391,14 @@ getkval(unsigned long offset,
 
 #ifdef DEBUG
 	dprintf("getkval read %d (%08x)\n", *ptr);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 
 	return (1);
 
 }
 
 int
-machine_init(struct statics * statics)
+machine_init(struct statics *statics)
 {
 	struct utmpx ut;
 	struct utmpx *up;
@@ -427,7 +427,7 @@ machine_init(struct statics * statics)
 	}
 #ifdef DEBUG
 	dprintf("kvm_open: fd %d\n", kd);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 
 	/*
 	 * turn off super group/user privs - but beware; we might want the privs
@@ -447,7 +447,7 @@ machine_init(struct statics * statics)
 	kcid = kc->kc_chain_id;
 #ifdef DEBUG
 	dprintf("kstat_open: chain %d\n", kcid);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 #endif
 
 	/* fill in the statics information */
@@ -595,7 +595,7 @@ kstat_data_value_l(kstat_named_t * kn)
 }
 
 int
-kstat_safe_retrieve(kstat_t ** ksp,
+kstat_safe_retrieve(kstat_t * *ksp,
 					char *module, int instance, char *name, void *buf)
 
 {
@@ -606,7 +606,7 @@ kstat_safe_retrieve(kstat_t ** ksp,
 #ifdef DEBUG
 	dprintf("kstat_safe_retrieve(%08x -> %08x, %s, %d, %s, %08x)\n",
 			ksp, *ksp, module, instance, name, buf);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 
 	ks = *ksp;
 	do
@@ -635,7 +635,7 @@ kstat_safe_retrieve(kstat_t ** ksp,
 #ifdef DEBUG
 			dprintf("kstat_safe_retrieve: chain changed to %d...updating\n",
 					new_kcid);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 			changed = 1;
 			kcid = kstat_chain_update(kc);
 		}
@@ -656,7 +656,7 @@ kstat_safe_retrieve(kstat_t ** ksp,
  */
 
 int
-kstat_safe_namematch(int num, kstat_t ** ksparg, char *name, void *buf, int size)
+kstat_safe_namematch(int num, kstat_t * *ksparg, char *name, void *buf, int size)
 
 {
 	kstat_t    *ks;
@@ -670,7 +670,7 @@ kstat_safe_namematch(int num, kstat_t ** ksparg, char *name, void *buf, int size
 #ifdef DEBUG
 	dprintf("kstat_safe_namematch(%d, %08x, %s, %08x, %d)\n",
 			num, ksp, name, buf, size);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 
 	namelen = strlen(name);
 
@@ -699,7 +699,7 @@ kstat_safe_namematch(int num, kstat_t ** ksparg, char *name, void *buf, int size
 #ifdef DEBUG
 						dprintf("kstat_safe_namematch: chain changed to %d...updating\n",
 								new_kcid);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 						changed = 1;
 						kcid = kstat_chain_update(kc);
 
@@ -718,13 +718,13 @@ kstat_safe_namematch(int num, kstat_t ** ksparg, char *name, void *buf, int size
 
 #ifdef DEBUG
 	dprintf("kstat_safe_namematch returns %d\n", count);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 
 	return count;
 }
 
-static kstat_t *ks_system_misc = NULL;
-#endif   /* USE_KSTAT */
+static kstat_t * ks_system_misc = NULL;
+#endif							/* USE_KSTAT */
 
 
 int
@@ -737,7 +737,7 @@ get_avenrun(int avenrun[3])
 
 #ifdef DEBUG
 	dprintf("get_avenrun(%08x)\n", avenrun);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 
 	if ((status = kstat_safe_retrieve(&ks_system_misc,
 									  "unix", 0, "system_misc", NULL)) == 0)
@@ -757,14 +757,14 @@ get_avenrun(int avenrun[3])
 	}
 #ifdef DEBUG
 	dprintf("get_avenrun returns %d\n", status);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 	return (status);
 #else							/* !USE_KSTAT */
 
 	(void) getkval(avenrun_offset, (int *) avenrun, sizeof(int[3]), "avenrun");
 
 	return 0;
-#endif   /* USE_KSTAT */
+#endif							/* USE_KSTAT */
 }
 
 int
@@ -812,22 +812,22 @@ get_nproc()
 }
 
 int64_t
-			(*
-	  get_cpustats(int *cnt, int64_t (*cp_stats)[CPUSTATES]))[CPUSTATES]
+(*get_cpustats(int *cnt, int64_t(*cp_stats)[CPUSTATES]))[CPUSTATES]
 
 {
 #ifdef USE_KSTAT
-	static kstat_t **cpu_ks = NULL;
-	static cpu_stat_t *cpu_stat = NULL;
+	static kstat_t * *cpu_ks = NULL;
+	static cpu_stat_t * cpu_stat = NULL;
 	static unsigned int nelems = 0;
 	cpu_stat_t *cpu_stat_p;
 	int			i,
 				cpu_num;
-	int64_t (*cp_stats_p)[CPUSTATES];
+
+	int64_t(*cp_stats_p)[CPUSTATES];
 
 #ifdef DEBUG
 	dprintf("get_cpustats(%d -> %d, %08x)\n", cnt, *cnt, cp_stats);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 
 	while (nelems > 0 ?
 		   (cpu_num = kstat_safe_namematch(nelems,
@@ -840,13 +840,13 @@ int64_t
 		/* reallocate the arrays */
 #ifdef DEBUG
 		dprintf("realloc from %d to %d\n", nelems, cpu_num);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 		nelems = cpu_num;
 		if (cpu_ks != NULL)
 		{
 			free(cpu_ks);
 		}
-		cpu_ks = (kstat_t **) calloc(nelems, sizeof(kstat_t *));
+		cpu_ks = (kstat_t * *) calloc(nelems, sizeof(kstat_t *));
 		if (cpu_stat != NULL)
 		{
 			free(cpu_stat);
@@ -860,10 +860,10 @@ int64_t
 		/* yes, so realloc their array, too */
 #ifdef DEBUG
 		dprintf("realloc array from %d to %d\n", *cnt, cpu_num);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 		*cnt = cpu_num;
-		cp_stats = (int64_t (*)[CPUSTATES]) realloc(cp_stats,
-								 cpu_num * sizeof(int64_t) * CPUSTATES);
+		cp_stats = (int64_t(*)[CPUSTATES]) realloc(cp_stats,
+												   cpu_num * sizeof(int64_t) * CPUSTATES);
 	}
 
 	cpu_stat_p = cpu_stat;
@@ -875,7 +875,7 @@ int64_t
 				cpu_stat_p->cpu_sysinfo.cpu[0],
 				cpu_stat_p->cpu_sysinfo.cpu[1],
 				cpu_stat_p->cpu_sysinfo.syscall);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 
 		(*cp_stats_p)[CPU_IDLE] = (int64_t) cpu_stat_p->cpu_sysinfo.cpu[CPU_IDLE];
 		(*cp_stats_p)[CPU_USER] = (int64_t) cpu_stat_p->cpu_sysinfo.cpu[CPU_USER];
@@ -891,13 +891,14 @@ int64_t
 
 #ifdef DEBUG
 	dprintf("get_cpustats sees %d cpus and returns %08x\n", cpucount, cp_stats);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 
 	return (cp_stats);
 #else							/* !USE_KSTAT */
 	int			i;
 	struct cpu	cpu;
-	int64_t (*cp_stats_p)[CPUSTATES];
+
+	int64_t(*cp_stats_p)[CPUSTATES];
 
 	/* do we have more cpus than our caller? */
 	if (cpucount > *cnt)
@@ -905,10 +906,10 @@ int64_t
 		/* yes, so realloc their array, too */
 #ifdef DEBUG
 		dprintf("realloc array from %d to %d\n", *cnt, cpucount);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 		*cnt = cpucount;
-		cp_stats = (int64_t (*)[CPUSTATES]) realloc(cp_stats,
-								cpucount * sizeof(int64_t) * CPUSTATES);
+		cp_stats = (int64_t(*)[CPUSTATES]) realloc(cp_stats,
+												   cpucount * sizeof(int64_t) * CPUSTATES);
 	}
 
 	cp_stats_p = cp_stats;
@@ -930,7 +931,7 @@ int64_t
 	}
 
 	return (cp_stats);
-#endif   /* USE_KSTAT */
+#endif							/* USE_KSTAT */
 }
 
 /*
@@ -946,7 +947,7 @@ get_meminfo(long *total, long *fr)
 
 {
 	long		freemem;
-	static kstat_t *ks = NULL;
+	static kstat_t * ks = NULL;
 	kstat_named_t *kn;
 
 	/* total comes from sysconf */
@@ -1074,14 +1075,14 @@ get_swapinfo(long *total, long *fr)
 }
 
 void
-get_system_info(struct system_info * si)
+get_system_info(struct system_info *si)
 {
 	int			avenrun[3];
 
 	static int64_t cp_time[CPUSTATES];
 	static int64_t cp_old[CPUSTATES];
 	static int64_t cp_diff[CPUSTATES];
-	static int64_t (*cp_stats)[CPUSTATES] = NULL;
+	static int64_t(*cp_stats)[CPUSTATES] = NULL;
 	static int	cpus;
 	register int j,
 				i;
@@ -1140,7 +1141,7 @@ get_system_info(struct system_info * si)
 
 #ifdef DEBUG
 	dprintf("get_system_info returns\n");
-#endif /* DEBUG */
+#endif							/* DEBUG */
 }
 
 static struct handle handle;
@@ -1148,8 +1149,8 @@ static int	show_fullcmd;
 
 caddr_t
 get_process_info(
-				 struct system_info * si,
-				 struct process_select * sel,
+				 struct system_info *si,
+				 struct process_select *sel,
 				 int compare_index,
 				 const char *values[],
 				 int mode)
@@ -1306,7 +1307,7 @@ format_next_process(
  *		number of symbols NOT found.
  */
 int
-check_nlist(register struct nlist * nlst)
+check_nlist(register struct nlist *nlst)
 {
 	register int i;
 
@@ -1376,8 +1377,8 @@ unsigned char sorted_state[] =
 
 int
 compare_cpu(
-			struct prpsinfo ** pp1,
-			struct prpsinfo ** pp2)
+			struct prpsinfo **pp1,
+			struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -1403,8 +1404,8 @@ compare_cpu(
 
 int
 compare_size(
-			 struct prpsinfo ** pp1,
-			 struct prpsinfo ** pp2)
+			 struct prpsinfo **pp1,
+			 struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -1430,8 +1431,8 @@ compare_size(
 
 int
 compare_res(
-			struct prpsinfo ** pp1,
-			struct prpsinfo ** pp2)
+			struct prpsinfo **pp1,
+			struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -1457,8 +1458,8 @@ compare_res(
 
 int
 compare_time(
-			 struct prpsinfo ** pp1,
-			 struct prpsinfo ** pp2)
+			 struct prpsinfo **pp1,
+			 struct prpsinfo **pp2)
 {
 	register struct prpsinfo *p1;
 	register struct prpsinfo *p2;
@@ -1487,7 +1488,7 @@ get process table
  table
 */
 void
-getptable(struct prpsinfo * baseptr, PGresult * pgresult)
+getptable(struct prpsinfo *baseptr, PGresult *pgresult)
 {
 	struct prpsinfo *currproc;	/* pointer to current proc structure	*/
 
@@ -1598,7 +1599,7 @@ getptable(struct prpsinfo * baseptr, PGresult * pgresult)
 		op = oldbase + HASH(currproc->pr_pid);
 		while (1)
 		{
-			if (op->oldpid == -1)		/* not there */
+			if (op->oldpid == -1)	/* not there */
 				break;
 			if (op->oldpid == currproc->pr_pid)
 			{					/* found old data */
@@ -1672,7 +1673,7 @@ getptable(struct prpsinfo * baseptr, PGresult * pgresult)
 		op->oldpid = -1;
 	for (i = 0, currproc = baseptr;
 		 i < nproc;
-	  i++, currproc = (struct prpsinfo *) ((char *) currproc + PRPSINFOSIZE))
+		 i++, currproc = (struct prpsinfo *) ((char *) currproc + PRPSINFOSIZE))
 	{
 		/* find an empty spot */
 		op = oldbase + HASH(currproc->pr_pid);
@@ -1765,7 +1766,7 @@ reallocproc(int n)
 
 #ifdef DEBUG
 	dprintf("reallocproc(%d): reallocating from %d\n", n, maxprocs);
-#endif /* DEBUG */
+#endif							/* DEBUG */
 
 	maxprocs = n;
 
@@ -1775,7 +1776,7 @@ reallocproc(int n)
 	pref = (struct prpsinfo **) realloc(pref,
 										maxprocs * sizeof(struct prpsinfo *));
 	oldbase = (struct oldproc *) realloc(oldbase,
-									  2 * maxprocs * sizeof(struct oldproc));
+										 2 * maxprocs * sizeof(struct oldproc));
 
 	/* Just in case ... */
 	if (pbase == (struct prpsinfo *) NULL || pref == (struct prpsinfo **) NULL

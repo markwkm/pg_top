@@ -80,7 +80,7 @@ typedef char bool;
 #ifndef false
 #define false	((bool) 0)
 #endif
-#endif   /* not C++ */
+#endif							/* not C++ */
 
 typedef bool *BoolPtr;
 
@@ -95,4 +95,4 @@ typedef bool *BoolPtr;
 /* /port compatibility functions */
 #include "port.h"
 
-#endif   /* C_H */
+#endif							/* C_H */

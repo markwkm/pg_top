@@ -36,4 +36,4 @@
 #define  Y_IDLECURSOR	4
 #define  Y_PROCS	6
 
-#endif   /* _LAYOUT_H_ */
+#endif							/* _LAYOUT_H_ */

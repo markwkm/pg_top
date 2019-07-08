@@ -85,30 +85,31 @@ enum pgparams
 struct pg_top_context
 {
 #ifdef ENABLE_COLOR
-	int color_on;
+	int			color_on;
 #endif
-	int delay;
-	int displays;
-	void (*d_header)(char *);
-	char do_unames;
-	char dostates;
-	char *header_options[2][MODE_TYPES];
-	char *header_text;
-	char interactive;
-	int mode;
-	int mode_remote; /* Mode for monitoring a remote database system. */
-	int order_index;
-	char *order_name;
+	int			delay;
+	int			displays;
+	void		(*d_header) (char *);
+	char		do_unames;
+	char		dostates;
+	char	   *header_options[2][MODE_TYPES];
+	char	   *header_text;
+	char		interactive;
+	int			mode;
+	int			mode_remote;	/* Mode for monitoring a remote database
+								 * system. */
+	int			order_index;
+	char	   *order_name;
 	struct process_select ps;
-	char show_tags;
+	char		show_tags;
 	struct statics statics;
 	struct system_info system_info;
 	struct timeval timeout;
-	int topn;
+	int			topn;
 	struct pg_conninfo_ctx conninfo;
 };
 
 void		quit(int);
 void		reset_display(struct pg_top_context *);
 
-#endif   /* _PG_TOP_H_ */
+#endif							/* _PG_TOP_H_ */

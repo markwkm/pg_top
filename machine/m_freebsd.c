@@ -55,20 +55,20 @@
 
 #define GETSYSCTL(name, var) getsysctl(name, &(var), sizeof(var))
 
-static int getkval __P((unsigned long, int *, int, char *));
+static int	getkval __P((unsigned long, int *, int, char *));
 extern char *printable __P((char *));
 static void getsysctl(const char *name, void *ptr, size_t len);
-int swapmode __P((int *retavail, int *retfree));
+int			swapmode __P((int *retavail, int *retfree));
 
-static int maxcpu;
+static int	maxcpu;
 static int	maxid;
-static int ncpus;
+static int	ncpus;
 static u_long cpumask;
 static long *times;
 static long *pcpu_cp_time;
 static long *pcpu_cp_old;
 static long *pcpu_cp_diff;
-static int64_t *pcpu_cpu_states;
+static int64_t * pcpu_cpu_states;
 
 static int	smpmode;
 static int	namelength;
@@ -79,7 +79,7 @@ static int	cmdlength;
 
 struct handle
 {
-	struct kinfo_proc **next_proc;		/* points to next valid proc pointer */
+	struct kinfo_proc **next_proc;	/* points to next valid proc pointer */
 	int			remaining;		/* number of pointers remaining */
 };
 
@@ -182,7 +182,7 @@ char	   *state_abbrev[] =
 };
 
 
-static kvm_t *kd;
+static kvm_t * kd;
 
 /* values that we stash away in _init and use in later routines */
 
@@ -197,7 +197,7 @@ static load_avg ccpu;
 static unsigned long cp_time_offset;
 static unsigned long avenrun_offset;
 static unsigned long lastpid_offset;
-static int lastpid;
+static int	lastpid;
 static unsigned long cnt_offset;
 static unsigned long bufspace_offset;
 
@@ -218,7 +218,7 @@ char	   *procstatenames[] = {
 
 /* these are for detailing the cpu states */
 
-int64_t			cpu_states[CPUSTATES];
+int64_t		cpu_states[CPUSTATES];
 char	   *cpustatenames[] = {
 	"user", "nice", "system", "interrupt", "idle", NULL
 };
@@ -267,26 +267,28 @@ int			proc_compare(), compare_size(), compare_res(), compare_time(), compare_pri
 int			(*proc_compares[]) () =
 {
 	proc_compare,
-	compare_size,
-	compare_res,
-	compare_time,
-	compare_prio,
-	NULL
+		compare_size,
+		compare_res,
+		compare_time,
+		compare_prio,
+		NULL
 };
 
 int
-machine_init(struct statics * statics)
+machine_init(struct statics *statics)
 
 {
 	register int pagesize;
 	size_t		size;
 	struct passwd *pw;
-	int i, j, empty;
+	int			i,
+				j,
+				empty;
 
 	size = sizeof(smpmode);
 	if ((sysctlbyname("machdep.smp_active", &smpmode, &size, NULL, 0) != 0 &&
-			sysctlbyname("smp.smp_active", &smpmode, &size, NULL, 0) != 0) ||
-			size != sizeof(smpmode))
+		 sysctlbyname("smp.smp_active", &smpmode, &size, NULL, 0) != 0) ||
+		size != sizeof(smpmode))
 		smpmode = 0;
 
 	while ((pw = getpwent()) != NULL)
@@ -358,13 +360,16 @@ machine_init(struct statics * statics)
 		err(1, "sysctlbyname kern.cp_times");
 	pcpu_cp_time = calloc(1, size);
 	maxid = (size / CPUSTATES / sizeof(long)) - 1;
-	for (i = 0; i <= maxid; i++) {
+	for (i = 0; i <= maxid; i++)
+	{
 		empty = 1;
-		for (j = 0; empty && j < CPUSTATES; j++) {
+		for (j = 0; empty && j < CPUSTATES; j++)
+		{
 			if (times[i * CPUSTATES + j] != 0)
 				empty = 0;
 		}
-		if (!empty) {
+		if (!empty)
+		{
 			cpumask |= (1ul << i);
 			ncpus++;
 		}
@@ -398,12 +403,13 @@ static int	swappgsout = -1;
 extern struct timeval timeout;
 
 void
-get_system_info(struct system_info * si)
+get_system_info(struct system_info *si)
 
 {
 	struct loadavg sysload;
 	size_t		size;
-	int			i, j;
+	int			i,
+				j;
 
 	/* get the CPU stats */
 	size = (maxid + 1) * CPUSTATES * sizeof(long);
@@ -415,16 +421,17 @@ get_system_info(struct system_info * si)
 
 	/* convert load averages to doubles */
 	for (i = 0; i < 3; i++)
-		si->load_avg[i] = (double)sysload.ldavg[i] / sysload.fscale;
+		si->load_avg[i] = (double) sysload.ldavg[i] / sysload.fscale;
 
 	/* convert cp_time counts to percentages */
-	for (i = j = 0; i <= maxid; i++) {
+	for (i = j = 0; i <= maxid; i++)
+	{
 		if ((cpumask & (1ul << i)) == 0)
 			continue;
 		percentages(CPUSTATES, &pcpu_cpu_states[j * CPUSTATES],
-				&pcpu_cp_time[j * CPUSTATES],
-				&pcpu_cp_old[j * CPUSTATES],
-				&pcpu_cp_diff[j * CPUSTATES]);
+					&pcpu_cp_time[j * CPUSTATES],
+					&pcpu_cp_old[j * CPUSTATES],
+					&pcpu_cp_diff[j * CPUSTATES]);
 		j++;
 	}
 	percentages(CPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
@@ -435,13 +442,14 @@ get_system_info(struct system_info * si)
 		static int	swapavail = 0;
 		static int	swapfree = 0;
 		static int	bufspace = 0;
-		static int nspgsin, nspgsout;
+		static int	nspgsin,
+					nspgsout;
 
 		/*
 		 * Use this temporary int array because we use longs for the other
 		 * patforms.
 		 */
-		int tmp_memory_stats[7];
+		int			tmp_memory_stats[7];
 
 		GETSYSCTL("vfs.bufspace", bufspace);
 		GETSYSCTL("vm.stats.vm.v_active_count", tmp_memory_stats[0]);
@@ -510,8 +518,8 @@ static struct handle handle;
 static int	show_fullcmd;
 
 caddr_t
-get_process_info(struct system_info * si,
-				 struct process_select * sel,
+get_process_info(struct system_info *si,
+				 struct process_select *sel,
 				 int compare_index,
 				 const char *values[])
 
@@ -539,7 +547,7 @@ get_process_info(struct system_info * si,
 		nproc = PQntuples(pgresult);
 		if (nproc > onproc)
 			pbase = (struct kinfo_proc *)
-					realloc(pbase, sizeof(struct kinfo_proc) * nproc);
+				realloc(pbase, sizeof(struct kinfo_proc) * nproc);
 	}
 	PQfinish(pgconn);
 
@@ -856,7 +864,7 @@ static unsigned char sorted_state[] =
 /* compare_cpu - the comparison function for sorting by cpu percentage */
 
 int
-proc_compare(struct proc ** pp1, struct proc ** pp2)
+proc_compare(struct proc **pp1, struct proc **pp2)
 
 {
 	register struct kinfo_proc *p1;
@@ -882,7 +890,7 @@ proc_compare(struct proc ** pp1, struct proc ** pp2)
 /* compare_size - the comparison function for sorting by total memory usage */
 
 int
-compare_size(struct proc ** pp1, struct proc ** pp2)
+compare_size(struct proc **pp1, struct proc **pp2)
 
 {
 	register struct kinfo_proc *p1;
@@ -908,7 +916,7 @@ compare_size(struct proc ** pp1, struct proc ** pp2)
 /* compare_res - the comparison function for sorting by resident set size */
 
 int
-compare_res(struct proc ** pp1, struct proc ** pp2)
+compare_res(struct proc **pp1, struct proc **pp2)
 
 {
 	register struct kinfo_proc *p1;
@@ -934,7 +942,7 @@ compare_res(struct proc ** pp1, struct proc ** pp2)
 /* compare_time - the comparison function for sorting by total cpu time */
 
 int
-compare_time(struct proc ** pp1, struct proc ** pp2)
+compare_time(struct proc **pp1, struct proc **pp2)
 
 {
 	register struct kinfo_proc *p1;
@@ -960,7 +968,7 @@ compare_time(struct proc ** pp1, struct proc ** pp2)
 /* compare_prio - the comparison function for sorting by cpu percentage */
 
 int
-compare_prio(struct proc ** pp1, struct proc ** pp2)
+compare_prio(struct proc **pp1, struct proc **pp2)
 
 {
 	register struct kinfo_proc *p1;
@@ -1018,16 +1026,18 @@ proc_owner(pid_t pid)
 static void
 getsysctl(const char *name, void *ptr, size_t len)
 {
-	size_t nlen = len;
+	size_t		nlen = len;
 
-	if (sysctlbyname(name, ptr, &nlen, NULL, 0) == -1) {
+	if (sysctlbyname(name, ptr, &nlen, NULL, 0) == -1)
+	{
 		fprintf(stderr, "pg_top: sysctl(%s...) failed: %s\n", name,
 				strerror(errno));
 		quit(23);
 	}
-	if (nlen != len) {
+	if (nlen != len)
+	{
 		fprintf(stderr, "pg_top: sysctl(%s...) expected %lu, got %lu\n",
-				name, (unsigned long)len, (unsigned long)nlen);
+				name, (unsigned long) len, (unsigned long) nlen);
 		quit(23);
 	}
 }

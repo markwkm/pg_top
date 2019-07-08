@@ -79,7 +79,7 @@ extern char *optarg;
 extern int	overstrike;
 
 /* values which need to be accessed by signal handlers */
-int	max_topn;			/* maximum displayable processes */
+int			max_topn;			/* maximum displayable processes */
 
 /* miscellaneous things */
 char	   *myname = "pg_top";
@@ -88,7 +88,7 @@ jmp_buf		jmp_int;
 /* internal variables */
 static const char *progname = "pg_top";
 
-void process_commands(struct pg_top_context *);
+void		process_commands(struct pg_top_context *);
 static void usage(const char *progname);
 
 /* List of all the options available */
@@ -107,11 +107,11 @@ static struct option long_options[] = {
 	{"set-display", required_argument, NULL, 'x'},
 	{"show-username", required_argument, NULL, 'z'},
 	{"help", no_argument, NULL, '?'},
-	{"dbname",  required_argument, NULL, 'd'},
+	{"dbname", required_argument, NULL, 'd'},
 	{"host", required_argument, NULL, 'h'},
 	{"port", required_argument, NULL, 'p'},
 	{"username", required_argument, NULL, 'U'},
-	{"password",  no_argument, NULL, 'W'},
+	{"password", no_argument, NULL, 'W'},
 	{NULL, 0, NULL, 0}
 };
 
@@ -181,8 +181,8 @@ do_display(struct pg_top_context *pgtctx)
 	register int i = 0;
 	register int active_procs;
 
-	caddr_t processes;
-	time_t curr_time;
+	caddr_t		processes;
+	time_t		curr_time;
 	static struct ext_decl exts = {NULL, NULL};
 
 	/* get the current stats and processes */
@@ -191,17 +191,17 @@ do_display(struct pg_top_context *pgtctx)
 		get_system_info(&pgtctx->system_info);
 #ifdef __linux__
 		processes = get_process_info(&pgtctx->system_info, &pgtctx->ps,
-				pgtctx->order_index, &pgtctx->conninfo, pgtctx->mode);
+									 pgtctx->order_index, &pgtctx->conninfo, pgtctx->mode);
 #else
 		processes = get_process_info(&pgtctx->system_info, &pgtctx->ps,
-				pgtctx->order_index, &pgtctx->conninfo);
-#endif /* __linux__ */
+									 pgtctx->order_index, &pgtctx->conninfo);
+#endif							/* __linux__ */
 	}
 	else
 	{
 		get_system_info_r(&pgtctx->system_info, &pgtctx->conninfo);
 		processes = get_process_info_r(&pgtctx->system_info, &pgtctx->ps,
-				pgtctx->order_index, &pgtctx->conninfo, pgtctx->mode);
+									   pgtctx->order_index, &pgtctx->conninfo, pgtctx->mode);
 	}
 
 	/* display the load averages */
@@ -227,7 +227,7 @@ do_display(struct pg_top_context *pgtctx)
 	(*d_procstates) (pgtctx->system_info.p_total, pgtctx->system_info.procstates);
 
 	/* display the cpu state percentage breakdown */
-	if (pgtctx->dostates)			/* but not the first time */
+	if (pgtctx->dostates)		/* but not the first time */
 	{
 		(*d_cpustates) (pgtctx->system_info.cpustates);
 	}
@@ -258,8 +258,8 @@ do_display(struct pg_top_context *pgtctx)
 		/* determine number of processes to actually display */
 
 		/*
-		 * this number will be the smallest of:  active processes, number
-		 * user requested, number current screen accomodates
+		 * this number will be the smallest of:  active processes, number user
+		 * requested, number current screen accomodates
 		 */
 		active_procs = pgtctx->system_info.P_ACTIVE;
 		if (active_procs > pgtctx->topn)
@@ -275,34 +275,34 @@ do_display(struct pg_top_context *pgtctx)
 		switch (pgtctx->mode)
 		{
 #ifdef __linux__
-		case MODE_IO_STATS:
-			for (i = 0; i < active_procs; i++)
-			{
-				if (pgtctx->mode_remote == 0)
-					(*d_process) (i, format_next_io(processes));
-				else
-					(*d_process) (i, format_next_io_r(processes));
-			}
-			break;
-#endif /* __linux__ */
-		case MODE_REPLICATION:
-			for (i = 0; i < active_procs; i++)
-			{
-				if (pgtctx->mode_remote == 0)
-					(*d_process) (i, format_next_replication(processes));
-				else
-					(*d_process) (i, format_next_replication_r(processes));
-			}
-			break;
-		case MODE_PROCESSES:
-		default:
-			for (i = 0; i < active_procs; i++)
-			{
-				if (pgtctx->mode_remote == 0)
-					(*d_process) (i, format_next_process(processes));
-				else
-					(*d_process) (i, format_next_process_r(processes));
-			}
+			case MODE_IO_STATS:
+				for (i = 0; i < active_procs; i++)
+				{
+					if (pgtctx->mode_remote == 0)
+						(*d_process) (i, format_next_io(processes));
+					else
+						(*d_process) (i, format_next_io_r(processes));
+				}
+				break;
+#endif							/* __linux__ */
+			case MODE_REPLICATION:
+				for (i = 0; i < active_procs; i++)
+				{
+					if (pgtctx->mode_remote == 0)
+						(*d_process) (i, format_next_replication(processes));
+					else
+						(*d_process) (i, format_next_replication_r(processes));
+				}
+				break;
+			case MODE_PROCESSES:
+			default:
+				for (i = 0; i < active_procs; i++)
+				{
+					if (pgtctx->mode_remote == 0)
+						(*d_process) (i, format_next_process(processes));
+					else
+						(*d_process) (i, format_next_process_r(processes));
+				}
 		}
 	}
 	else
@@ -364,126 +364,126 @@ do_display(struct pg_top_context *pgtctx)
 void
 process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 {
-	int i;
-	int option_index;
+	int			i;
+	int			option_index;
 
 	while ((i = getopt_long(ac, av, "CDITbcinRrVh:s:d:U:o:Wp:Xx:z:",
-			long_options, &option_index)) != EOF)
+							long_options, &option_index)) != EOF)
 	{
 		switch (i)
 		{
 #ifdef ENABLE_COLOR
-		case 'C':
-			pgtctx->color_on = !pgtctx->color_on;
-			break;
+			case 'C':
+				pgtctx->color_on = !pgtctx->color_on;
+				break;
 #endif
 
-		case 'D':
-			debug_set(1);
-			break;
+			case 'D':
+				debug_set(1);
+				break;
 
-		case 'V':		/* show version number */
-			printf("pg_top %s\n", version_string());
-			exit(0);
-			break;
+			case 'V':			/* show version number */
+				printf("pg_top %s\n", version_string());
+				exit(0);
+				break;
 
-		case 'z':		/* display only username's processes */
-			strncpy(pgtctx->ps.usename, optarg, NAMEDATALEN);
-			break;
+			case 'z':			/* display only username's processes */
+				strncpy(pgtctx->ps.usename, optarg, NAMEDATALEN);
+				break;
 
-		case 'I':		/* show idle processes */
-			pgtctx->ps.idle = !pgtctx->ps.idle;
-			break;
+			case 'I':			/* show idle processes */
+				pgtctx->ps.idle = !pgtctx->ps.idle;
+				break;
 
-		case 'T':		/* show color tags */
-			pgtctx->show_tags = 1;
-			break;
+			case 'T':			/* show color tags */
+				pgtctx->show_tags = 1;
+				break;
 
-		case 'i':		/* go interactive regardless */
-			pgtctx->interactive = Yes;
-			break;
+			case 'i':			/* go interactive regardless */
+				pgtctx->interactive = Yes;
+				break;
 
-		case 'c':
-			pgtctx->ps.fullcmd = No;
-			break;
+			case 'c':
+				pgtctx->ps.fullcmd = No;
+				break;
 
-		case 'n':		/* batch, or non-interactive */
-		case 'b':
-			pgtctx->interactive = No;
-			break;
+			case 'n':			/* batch, or non-interactive */
+			case 'b':
+				pgtctx->interactive = No;
+				break;
 
-		case 'x':		/* number of displays to show */
-			if ((i = atoiwi(optarg)) == Invalid || i == 0)
-			{
-				new_message(MT_standout | MT_delayed,
-							" Bad display count (ignored)");
-			}
-			else
-			{
-				pgtctx->displays = i;
-			}
-			break;
+			case 'x':			/* number of displays to show */
+				if ((i = atoiwi(optarg)) == Invalid || i == 0)
+				{
+					new_message(MT_standout | MT_delayed,
+								" Bad display count (ignored)");
+				}
+				else
+				{
+					pgtctx->displays = i;
+				}
+				break;
 
-		case 's':
-			if ((pgtctx->delay = atoi(optarg)) < 0 ||
+			case 's':
+				if ((pgtctx->delay = atoi(optarg)) < 0 ||
 					(pgtctx->delay == 0 && getuid() != 0))
-			{
-				new_message(MT_standout | MT_delayed,
-							" Bad seconds delay (ignored)");
-				pgtctx->delay = Default_DELAY;
-			}
-			break;
+				{
+					new_message(MT_standout | MT_delayed,
+								" Bad seconds delay (ignored)");
+					pgtctx->delay = Default_DELAY;
+				}
+				break;
 
-		case 'o':		/* select sort order */
-			pgtctx->order_name = optarg;
-			break;
+			case 'o':			/* select sort order */
+				pgtctx->order_name = optarg;
+				break;
 
-		case 'p':		/* database port */
-			if ((i = atoiwi(optarg)) == Invalid || i == 0)
-			{
-				new_message(MT_standout | MT_delayed,
-							" Bad port number (ignored)");
-			}
-			else
-			{
-				pgtctx->conninfo.values[PG_PORT] = strdup(optarg);
-			}
-			break;
+			case 'p':			/* database port */
+				if ((i = atoiwi(optarg)) == Invalid || i == 0)
+				{
+					new_message(MT_standout | MT_delayed,
+								" Bad port number (ignored)");
+				}
+				else
+				{
+					pgtctx->conninfo.values[PG_PORT] = strdup(optarg);
+				}
+				break;
 
-		case 'W':		/* prompt for database password */
-			pgtctx->conninfo.persistent = 1;
-			pgtctx->conninfo.values[PG_PASSWORD] =
+			case 'W':			/* prompt for database password */
+				pgtctx->conninfo.persistent = 1;
+				pgtctx->conninfo.values[PG_PASSWORD] =
 					simple_prompt("Password: ", 1000, 0);
-			break;
+				break;
 
-		case 'U':		/* database user name */
-			pgtctx->conninfo.values[PG_USER] = strdup(optarg);
-			break;
+			case 'U':			/* database user name */
+				pgtctx->conninfo.values[PG_USER] = strdup(optarg);
+				break;
 
-		case 'd':		/* database name */
-			pgtctx->conninfo.values[PG_DBNAME] = strdup(optarg);
-			break;
+			case 'd':			/* database name */
+				pgtctx->conninfo.values[PG_DBNAME] = strdup(optarg);
+				break;
 
-		case 'h':		/* socket location */
-			pgtctx->conninfo.values[PG_HOST] = strdup(optarg);
-			break;
+			case 'h':			/* socket location */
+				pgtctx->conninfo.values[PG_HOST] = strdup(optarg);
+				break;
 
-		case 'R':		/* replication mode */
-			pgtctx->mode = MODE_REPLICATION;
-			break;
+			case 'R':			/* replication mode */
+				pgtctx->mode = MODE_REPLICATION;
+				break;
 
-		case 'r':		/* remote mode */
-			pgtctx->mode_remote = 1;
-			break;
+			case 'r':			/* remote mode */
+				pgtctx->mode_remote = 1;
+				break;
 
-		case 'X':		/* i/O mode */
-			pgtctx->mode = MODE_IO_STATS;
-			break;
+			case 'X':			/* i/O mode */
+				pgtctx->mode = MODE_IO_STATS;
+				break;
 
-		default:
-			fprintf(stderr, "Try \"%s --help\" for more information.\n",
-					progname);
-			exit(1);
+			default:
+				fprintf(stderr, "Try \"%s --help\" for more information.\n",
+						progname);
+				exit(1);
 		}
 	}
 }
@@ -491,9 +491,9 @@ process_arguments(struct pg_top_context *pgtctx, int ac, char **av)
 void
 process_commands(struct pg_top_context *pgtctx)
 {
-	int no_command;
-	fd_set readfds;
-	char ch;
+	int			no_command;
+	fd_set		readfds;
+	char		ch;
 
 	do
 	{
@@ -501,13 +501,13 @@ process_commands(struct pg_top_context *pgtctx)
 
 		/* set up arguments for select with timeout */
 		FD_ZERO(&readfds);
-		FD_SET(0, &readfds);		/* for standard input */
+		FD_SET(0, &readfds);	/* for standard input */
 		pgtctx->timeout.tv_sec = pgtctx->delay;
 		pgtctx->timeout.tv_usec = 0;
 
 		/* wait for either input or the end of the delay period */
 		if (select(32, &readfds, (fd_set *) NULL, (fd_set *) NULL,
-				&pgtctx->timeout) > 0)
+				   &pgtctx->timeout) > 0)
 		{
 			/* something to read -- clear the message area first */
 			clear_message();
@@ -566,13 +566,12 @@ set_signal(int sig, RETSIGTYPE(*handler) (int))
 	action.sa_flags = 0;
 	(void) sigaction(sig, &action, NULL);
 #else
-				(void) signal(sig, handler);
+	(void) signal(sig, handler);
 #endif
 }
 
 RETSIGTYPE
 leave(int i)					/* exit under normal conditions -- INT handler */
-
 {
 	end_screen();
 	exit(0);
@@ -580,7 +579,6 @@ leave(int i)					/* exit under normal conditions -- INT handler */
 
 RETSIGTYPE
 tstop(int i)					/* SIGTSTP handler */
-
 {
 #ifdef HAVE_SIGACTION
 	sigset_t	set;
@@ -626,7 +624,6 @@ tstop(int i)					/* SIGTSTP handler */
 #ifdef SIGWINCH
 RETSIGTYPE
 winch(int i)					/* SIGWINCH handler */
-
 {
 	/* reascertain the screen dimensions */
 	get_screensize();
@@ -646,7 +643,6 @@ winch(int i)					/* SIGWINCH handler */
 
 void
 quit(int status)				/* exit under duress */
-
 {
 	end_screen();
 	exit(status);
@@ -661,7 +657,7 @@ main(int argc, char *argv[])
 
 #ifdef BSD_SIGNALS
 	int			old_sigmask;	/* only used for BSD-style signals */
-#endif   /* BSD_SIGNALS */
+#endif							/* BSD_SIGNALS */
 	char	   *uname_field = "USERNAME";
 	char	   *env_top;
 	char	  **preset_argv;
@@ -688,7 +684,7 @@ main(int argc, char *argv[])
 #endif
 	pgtctx.d_header = i_header;
 	pgtctx.delay = Default_DELAY;
-	pgtctx.displays = 0; /* indicates unspecified */
+	pgtctx.displays = 0;		/* indicates unspecified */
 	pgtctx.dostates = No;
 	pgtctx.do_unames = Yes;
 	pgtctx.interactive = Maybe;
@@ -705,7 +701,7 @@ main(int argc, char *argv[])
 	pgtctx.conninfo.persistent = 0;
 
 	/* Show help or version number if necessary */
-    if (argc > 1)
+	if (argc > 1)
 	{
 		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
 		{
@@ -721,12 +717,12 @@ main(int argc, char *argv[])
 
 	/* set the buffer for stdout */
 #ifdef HAVE_SETVBUF
-    setvbuf(stdout, stdoutbuf, _IOFBF, BUFFERSIZE);
+	setvbuf(stdout, stdoutbuf, _IOFBF, BUFFERSIZE);
 #else
 #ifdef HAVE_SETBUFFER
 	setbuffer(stdout, stdoutbuf, Buffersize);
-#endif /* HAVE_SETBUFFER */
-#endif /* HAVE_SETVBUF */
+#endif							/* HAVE_SETBUFFER */
+#endif							/* HAVE_SETVBUF */
 
 	/* get our name */
 	if (argc > 0)
@@ -833,7 +829,7 @@ main(int argc, char *argv[])
 						" This platform does not support arbitrary ordering");
 		}
 		else if ((pgtctx.order_index = string_index(pgtctx.order_name,
-				pgtctx.statics.order_names)) == -1)
+													pgtctx.statics.order_names)) == -1)
 		{
 			char	  **pp;
 
@@ -871,7 +867,7 @@ main(int argc, char *argv[])
 	/* get the string to use for the process area header */
 
 	pgtctx.header_text =
-			pgtctx.header_options[pgtctx.mode_remote][pgtctx.mode];
+		pgtctx.header_options[pgtctx.mode_remote][pgtctx.mode];
 
 #ifdef ENABLE_COLOR
 	/* Disable colours on non-smart terminals */
@@ -1003,17 +999,17 @@ main(int argc, char *argv[])
 			get_system_info(&pgtctx.system_info);
 #ifdef __linux__
 			(void) get_process_info(&pgtctx.system_info, &pgtctx.ps, -1,
-					&pgtctx.conninfo, pgtctx.mode);
+									&pgtctx.conninfo, pgtctx.mode);
 #else
 			(void) get_process_info(&pgtctx.system_info, &pgtctx.ps, -1,
-					&pgtctx.conninfo);
-#endif /* __linux__ */
+									&pgtctx.conninfo);
+#endif							/* __linux__ */
 		}
 		else
 		{
 			get_system_info_r(&pgtctx.system_info, &pgtctx.conninfo);
 			(void) get_process_info_r(&pgtctx.system_info, &pgtctx.ps, -1,
-					&pgtctx.conninfo, -1);
+									  &pgtctx.conninfo, -1);
 		}
 
 		pgtctx.timeout.tv_sec = 1;
