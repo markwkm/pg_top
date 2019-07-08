@@ -10,6 +10,8 @@ pg_top.1
 sigdesc.h
 tags
 
+*.BAK
+
 # cmake
 
 /_builds
