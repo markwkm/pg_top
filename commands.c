@@ -674,7 +674,7 @@ show_explain(struct pg_conninfo_ctx *conninfo, int procpid, int analyze)
 		/* Execute the EXPLAIN. */
 		if (analyze == EXPLAIN_ANALYZE)
 		{
-			sprintf(sql, "EXPLAIN ANALYZE\n%s",
+			sprintf(sql, "EXPLAIN (ANALYZE, VERBOSE, BUFFERS)\n%s",
 					PQgetvalue(pgresult_query, i, 0));
 		}
 		else
