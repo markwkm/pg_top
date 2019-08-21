@@ -230,6 +230,11 @@ if(LIBINTL)
     target_link_libraries(${PROJECT_NAME} ${LIBINTL})
 endif(LIBINTL)
 
+find_library(LIBTINFO tinfo)
+if(LIBTINFO)
+    target_link_libraries(${PROJECT_NAME} ${LIBTINFO})
+endif(LIBTINFO)
+
 find_library(LIBTERMCAP termcap)
 if(LIBTERMCAP)
     target_link_libraries(${PROJECT_NAME} ${LIBTERMCAP})
