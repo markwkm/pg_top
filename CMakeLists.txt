@@ -364,6 +364,8 @@ add_custom_target(appimage
     COMMAND cp -aL ${CMAKE_SOURCE_DIR}/AppRun AppDir
     COMMAND cp -aL ${CMAKE_SOURCE_DIR}/pg_top.desktop AppDir
     COMMAND cp -aL ${CMAKE_SOURCE_DIR}/pg_top.png AppDir
+    COMMAND mkdir -p AppDir/usr/share/metainfo
+    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/pg_top.appdata.xml AppDir/usr/share/metainfo
     COMMAND mkdir -p AppDir/usr/lib
     COMMAND cp -aL
             `ldd pg_top | grep libpq.so | cut -d \" \" -f 3` AppDir/usr/lib
