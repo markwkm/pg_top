@@ -1,5 +1,8 @@
 #!/bin/sh
 
 export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${LD_LIBRARY_PATH}"
+if [ "x$PGHOST" = "x" ]; then
+	export PGHOST="/tmp,/var/run/postgresql"
+fi
 
 ${APPDIR}/usr/bin/pg_top $@
