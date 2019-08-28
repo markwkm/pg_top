@@ -34,7 +34,7 @@ Project home page:
 
 If you have git, you can download the source code:
 
-    git clone git://git.postgresql.org/git/pg_top.git
+    git clone git@gitlab.com:pg_top/pg_top.git
 
 
 LOGO
