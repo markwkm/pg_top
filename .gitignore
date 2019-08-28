@@ -12,6 +12,10 @@ tags
 
 *.BAK
 
+cscope.in.out
+cscope.out
+cscope.po.out
+
 # cmake
 
 /_builds
