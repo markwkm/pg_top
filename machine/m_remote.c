@@ -35,6 +35,7 @@
 		"(\n" \
 		"     SELECT pid, count(*) AS lock_count\n" \
 		"     FROM pg_locks\n" \
+		"     WHERE relation IS NOT NULL\n" \
 		"     GROUP BY pid\n" \
 		")\n" \
 		"SELECT a.pid, comm, fullcomm, a.state, utime, stime,\n" \

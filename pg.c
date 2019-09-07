@@ -13,6 +13,7 @@
 		"(\n" \
 		"     SELECT pid, count(*) AS lock_count\n" \
 		"     FROM pg_locks\n" \
+		"     WHERE relation IS NOT NULL\n" \
 		"     GROUP BY pid\n" \
 		")\n" \
 		"SELECT a.pid, query, state, usename,\n" \
@@ -59,7 +60,8 @@
 		"LEFT OUTER JOIN pg_class\n" \
 		"ON relation = pg_class.oid\n"\
 		"WHERE pg_stat_activity.pid = %d\n" \
-		"  AND pg_stat_activity.pid = pg_locks.pid;"
+		"  AND pg_stat_activity.pid = pg_locks.pid\n" \
+		"  AND relation IS NOT NULL;"
 
 #define GET_LOCKS_9_1 \
 		"SELECT datname, relname, mode, granted\n" \
@@ -67,7 +69,8 @@
 		"LEFT OUTER JOIN pg_class\n" \
 		"ON relation = pg_class.oid\n"\
 		"WHERE procpid = %d\n" \
-		"  AND procpid = pid;"
+		"  AND procpid = pid\n" \
+		"  AND relation IS NOT NULL;"
 
 int			pg_version(PGconn *);
 
