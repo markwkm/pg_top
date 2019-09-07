@@ -96,6 +96,10 @@ connect_to_db(struct pg_conninfo_ctx *conninfo)
 		for (i = 0; i < 5; i++)
 			if (conninfo->values[i] != NULL)
 				free((void *) conninfo->values[i]);
+
+	PQexec(conninfo->connection,
+			"SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL " \
+			"READ UNCOMMITTED;");
 }
 
 void
