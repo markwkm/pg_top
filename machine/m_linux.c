@@ -165,7 +165,7 @@ char		fmt_header_io[] =
 "  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
 
 char		fmt_header_replication[] =
-"  PID USERNAME APPLICATION          CLIENT STATE     PRIMARY    SENT       WRITE      FLUSH      REPLAY      SLAG  WLAG  FLAG  RLAG";
+"  PID USERNAME APPLICATION          CLIENT STATE     PRIMARY     SENT        WRITE       FLUSH       REPLAY       SLAG  WLAG  FLAG  RLAG";
 
 /* these are names given to allowed sorting orders -- first is default */
 static char *ordernames[] =
@@ -988,7 +988,7 @@ format_next_replication(caddr_t handle)
 	struct top_proc *p = &pgtable[proc_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			 "%5d %-8.8s %-11.11s %15s %-9.9s %9s %9s %9s %9s %9s %5s %5s %5s %5s",
+			 "%5d %-8.8s %-11.11s %15s %-9.9s %10s %10s %10s %10s %10s %5s %5s %5s %5s",
 			 p->pid,
 			 p->usename,
 			 p->application_name,
