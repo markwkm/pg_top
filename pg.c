@@ -41,6 +41,21 @@
 
 #define REPLICATION \
 		"SELECT pid, usename, application_name, client_addr, state,\n" \
+		"       pg_current_wal_insert_lsn() AS primary,\n" \
+		"       sent_lsn, write_lsn, flush_lsn,\n" \
+		"       replay_lsn, \n" \
+		"       pg_wal_lsn_diff(pg_current_wal_insert_lsn(),\n" \
+		"                       sent_lsn) as sent_lag,\n" \
+		"       pg_wal_lsn_diff(pg_current_wal_insert_lsn(),\n" \
+		"                       write_lsn) as write_lag,\n" \
+		"       pg_wal_lsn_diff(pg_current_wal_insert_lsn(),\n" \
+		"                       flush_lsn) as flush_lag,\n" \
+		"       pg_wal_lsn_diff(pg_current_wal_insert_lsn(),\n" \
+		"                       replay_lsn) as replay_lag\n" \
+		"       FROM pg_stat_replication;"
+
+#define REPLICATION_9_6 \
+		"SELECT pid, usename, application_name, client_addr, state,\n" \
 		"       pg_current_xlog_insert_location() AS primary,\n" \
 		"       sent_location, write_location, flush_location,\n" \
 		"       replay_location, \n" \
@@ -160,7 +175,11 @@ pg_replication(PGconn *pgconn)
 
 	PQexec(pgconn, "BEGIN;");
 	PQexec(pgconn, "SET statement_timeout = '2s';");
-	pgresult = PQexec(pgconn, REPLICATION);
+	if (pg_version(pgconn) >= 1000) {
+		pgresult = PQexec(pgconn, REPLICATION);
+	} else {
+		pgresult = PQexec(pgconn, REPLICATION_9_6);
+	}
 	PQexec(pgconn, "ROLLBACK;");
 	return pgresult;
 }
