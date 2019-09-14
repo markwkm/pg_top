@@ -20,13 +20,17 @@ char	   *backendstatenames[] =
 
 char	   *procstatenames[] =
 {
-	"", " idle, ", " active, ", " idle txn, ", " fastpath, ", " aborted, ",
-	" disabled, ", NULL
+	" other background task(s), ", " idle, ", " active, ", " idle txn, ",
+	" fastpath, ", " aborted, ", " disabled, ", NULL
 };
 
 void
 update_state(int *pgstate, char *state)
 {
+	/*
+	 * pgstate is always cleared to 0 when the node is created, so it will be
+	 * to STATE_UNDEFINED if there is no match when comparing the state
+	 */
 	if (strcmp(state, "idle") == 0)
 		*pgstate = STATE_IDLE;
 	else if (strcmp(state, "active") == 0)
@@ -39,8 +43,6 @@ update_state(int *pgstate, char *state)
 		*pgstate = STATE_IDLEINTRANSACTION_ABORTED;
 	else if (strcmp(state, "disabled") == 0)
 		*pgstate = STATE_DISABLED;
-	else
-		*pgstate = STATE_UNDEFINED;
 }
 
 void
