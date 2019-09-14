@@ -1039,14 +1039,16 @@ format_next_replication(caddr_t handle)
 #define ORDERKEY_NAME    if ((result = strcmp(p1->name, p2->name)) == 0)
 #define ORDERKEY_PCTCPU  if ((result = (int)(p2->pcpu - p1->pcpu)) == 0)
 #define ORDERKEY_QTIME   if ((result = p2->qtime - p1->qtime) == 0)
-#define ORDERKEY_RCHAR   if ((result = p2->rchar - p1->rchar) == 0)
-#define ORDERKEY_READS   if ((result = p2->read_bytes - p1->read_bytes) == 0)
+#define ORDERKEY_RCHAR   if ((result = p2->diff_rchar - p1->diff_rchar) == 0)
+#define ORDERKEY_READS   if ((result = p2->diff_read_bytes - \
+			                           p1->diff_read_bytes) == 0)
 #define ORDERKEY_RSSIZE  if ((result = p2->rss - p1->rss) == 0)
 #define ORDERKEY_STATE   if ((result = p1->pgstate < p2->pgstate))
-#define ORDERKEY_SYSCR   if ((result = p2->syscr - p1->syscr) == 0)
-#define ORDERKEY_SYSCW   if ((result = p2->syscw - p1->syscw) == 0)
-#define ORDERKEY_WCHAR   if ((result = p2->wchar - p1->wchar) == 0)
-#define ORDERKEY_WRITES  if ((result = p2->write_bytes - p1->write_bytes) == 0)
+#define ORDERKEY_SYSCR   if ((result = p2->diff_syscr - p1->diff_syscr) == 0)
+#define ORDERKEY_SYSCW   if ((result = p2->diff_syscw - p1->diff_syscw) == 0)
+#define ORDERKEY_WCHAR   if ((result = p2->diff_wchar - p1->diff_wchar) == 0)
+#define ORDERKEY_WRITES  if ((result = p2->diff_write_bytes - \
+			                           p1->diff_write_bytes) == 0)
 #define ORDERKEY_XTIME   if ((result = p2->xtime - p1->xtime) == 0)
 
 /* compare_cmd - the comparison function for sorting by command name */
