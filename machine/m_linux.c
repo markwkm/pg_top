@@ -532,10 +532,60 @@ get_system_info(struct system_info *info)
 		close(fd);
 	}
 
+	/* get swap activity */
+	if ((fd = open("vmstat", O_RDONLY)) != -1)
+	{
+		unsigned long swpin = -1;
+		unsigned long swpout = -1;
+
+		if ((len = read(fd, buffer, sizeof(buffer) - 1)) > 0)
+		{
+			buffer[len] = '\0';
+			p = buffer - 1;
+			while (p != NULL)
+			{
+				p++;
+
+				if (swpin == -1 && strncmp(p, "pswpin", 6) == 0)
+				{
+					p = skip_token(p);
+					swpin = strtoul(p, &p, 10);
+				}
+				else if (swpout == -1 && strncmp(p, "pswpout", 7) == 0)
+				{
+					p = skip_token(p);
+					swpout = strtoul(p, &p, 10);
+				}
+
+				if (swpin != -1 && swpout != -1)
+				{
+					info->swap.swapin = pagetok(swpin -
+							info->swap.prev_swapin) ;
+					info->swap.swapout = pagetok(swpout -
+							info->swap.prev_swapout);
+
+					info->swap.prev_swapin = swpin;
+					info->swap.prev_swapout = swpout;
+
+					break;
+				}
+
+				/* move to the next line */
+				p = strchr(p, '\n');
+			}
+		}
+		close(fd);
+	}
+	else
+	{
+				info->swap.swapin = -1;
+				info->swap.swapout = -1;
+	}
+
 	/* set arrays and strings */
 	info->cpustates = cpu_states;
 	info->memory = memory_stats;
-	info->swap = swap_stats;
+	info->swap.swap = swap_stats;
 }
 
 static void

@@ -123,7 +123,7 @@ void		(*d_uptime) (time_t *, time_t *) = i_uptime;
 void		(*d_procstates) (int, int *) = i_procstates;
 void		(*d_cpustates) (int64_t *) = i_cpustates;
 void		(*d_memory) (long *) = i_memory;
-void		(*d_swap) (long *) = i_swap;
+void		(*d_swap) (struct swap_t *) = i_swap;
 void		(*d_message) () = i_message;
 void		(*d_process) (int, char *) = i_process;
 
@@ -245,7 +245,7 @@ do_display(struct pg_top_context *pgtctx)
 	(*d_memory) (pgtctx->system_info.memory);
 
 	/* display swap stats */
-	(*d_swap) (pgtctx->system_info.swap);
+	(*d_swap) (&pgtctx->system_info.swap);
 
 	/* handle message area */
 	(*d_message) ();

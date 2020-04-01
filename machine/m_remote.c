@@ -848,7 +848,7 @@ get_system_info_r(struct system_info *info, struct pg_conninfo_ctx *conninfo)
 
 	info->cpustates = cpu_states;
 	info->memory = memory_stats;
-	info->swap = swap_stats;
+	info->swap.swap = swap_stats;
 
 	if (pgresult != NULL)
 		PQclear(pgresult);
