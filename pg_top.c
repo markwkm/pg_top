@@ -135,8 +135,8 @@ usage(const char *progname)
 {
 	printf("%s monitors a PostgreSQL database cluster.\n\n", progname);
 	printf("Usage:\n");
-	printf("  %s [OPTION]... [NUMBER]\n", progname);
-	printf("\nOptions:\n");
+	printf("  %s [OPTION]... [COUNT]\n", progname);
+	printf("\nGeneral options:\n");
 	printf("  -b, --batch               use batch mode\n");
 	printf("  -c, --show-command        display command name of each process\n");
 	printf("  -C, --color-mode          turn off color mode\n");
@@ -770,7 +770,7 @@ main(int argc, char *argv[])
 			}
 			else
 			{
-				pgtctx.topn = i;
+				pgtctx.displays = i;
 			}
 		}
 

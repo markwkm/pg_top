@@ -18,6 +18,8 @@ Release 4.0.0
      * Show swapping activity
      * Simplify top I/O display
      * Remove toggle for display raw I/O statistics
+     * Fix bug for specifing number of displays to show on the command line
+       without -x flag
 
 Release 3.7.0
 
