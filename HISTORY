@@ -16,6 +16,7 @@ Release 4.0.0
      * Add 'a' command to switch to top 'activity' processes, the default,
        while removing the 'I' for the top I/O display as a toggle
      * Show swapping activity
+     * Simplify top I/O display
 
 Release 3.7.0
 

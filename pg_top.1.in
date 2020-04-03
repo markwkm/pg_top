@@ -333,26 +333,20 @@ Name of the command that the process is currently running.
 .B PID
 The process id.
 .TP
-.B RCHAR
-Number of bytes read from cache or storage.
+.B IOPS
+Count the number of read and write I/O operations per second.
 .TP
-.B WCHAR
-Number of bytes written to cache or storage.
+.B IORPS
+Count the number of read I/O operations per second.
 .TP
-.B SYSCR
-Count the number of read I/O operations.
-.TP
-.B SYSCW
-Count the number of write I/O operations.
+.B IOWPS
+Count the number of write I/O operations per second.
 .TP
 .B READS
 Number of bytes read from storage.
 .TP
 .B WRITES
-Number of bytes wriiten to storage.
-.TP
-.B CWRITES
-The number of bytes which this process caused to not happen.
+Number of bytes written to storage.
 .TP
 .B COMMAND
 Name of the command that the process is currently running.
