@@ -685,30 +685,17 @@ format_next_io_r(caddr_t handler)
 	static char fmt[MAX_COLS];	/* static area where result is built */
 	struct top_proc_r *p = &pgrtable[proc_r_index++];
 
-	if (mode_stats == STATS_DIFF)
-		snprintf(fmt, sizeof(fmt),
-				 "%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
-				 (int) p->pid,
-				 format_b(p->rchar_diff),
-				 format_b(p->wchar_diff),
-				 p->syscr_diff,
-				 p->syscw_diff,
-				 format_b(p->read_bytes_diff),
-				 format_b(p->write_bytes_diff),
-				 format_b(p->cancelled_write_bytes_diff),
-				 p->name);
-	else
-		snprintf(fmt, sizeof(fmt),
-				 "%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
-				 (int) p->pid,
-				 format_b(p->rchar),
-				 format_b(p->wchar),
-				 p->syscr,
-				 p->syscw,
-				 format_b(p->read_bytes),
-				 format_b(p->write_bytes),
-				 format_b(p->cancelled_write_bytes),
-				 p->name);
+	snprintf(fmt, sizeof(fmt),
+			"%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
+			(int) p->pid,
+			format_b(p->rchar_diff),
+			format_b(p->wchar_diff),
+			p->syscr_diff,
+			p->syscw_diff,
+			format_b(p->read_bytes_diff),
+			format_b(p->write_bytes_diff),
+			format_b(p->cancelled_write_bytes_diff),
+			p->name);
 
 	return (fmt);
 }

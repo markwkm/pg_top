@@ -39,7 +39,6 @@ int			cmd_replication(struct pg_top_context *);
 int			cmd_order(struct pg_top_context *);
 int			cmd_redraw(struct pg_top_context *);
 int			cmd_statements(struct pg_top_context *);
-int			cmd_toggle(struct pg_top_context *);
 int			cmd_update(struct pg_top_context *);
 int			cmd_user(struct pg_top_context *);
 

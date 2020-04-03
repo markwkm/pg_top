@@ -128,12 +128,6 @@ void		(*d_message) () = i_message;
 void		(*d_process) (int, char *) = i_process;
 
 /*
- * Mode for display cumulutive or differential stats when displaying table or
- * index statistics.
- */
-int			mode_stats = STATS_DIFF;
-
-/*
  *	usage - print help message with details about commands
  */
 static void

@@ -957,30 +957,15 @@ format_next_io(caddr_t handle)
 	static char fmt[MAX_COLS];	/* static area where result is built */
 	struct top_proc *p = &pgtable[proc_index++];
 
-	if (mode_stats == STATS_DIFF)
-	{
-		snprintf(fmt, sizeof(fmt),
-				 "%5d %7.0f %7.0f %7.0f %5s %6s %s",
-				 p->pid,
-				 diff_stat(p->iops, p->index) / timediff,
-				 diff_stat(p->syscr, p->index) / timediff,
-				 diff_stat(p->syscw, p->index) / timediff,
-				 format_b(diff_stat(p->read_bytes, p->index) / timediff),
-				 format_b(diff_stat(p->write_bytes, p->index) / timediff),
-				 p->name);
-	}
-	else
-	{
-		snprintf(fmt, sizeof(fmt),
-				 "%5d %7lld %7lld %7lld %5s %6s %s",
-				 p->pid,
-				 p->iops[p->index],
-				 p->syscr[p->index],
-				 p->syscw[p->index],
-				 format_b(p->read_bytes[p->index]),
-				 format_b(p->write_bytes[p->index]),
-				 p->name);
-	}
+	snprintf(fmt, sizeof(fmt),
+			"%5d %7.0f %7.0f %7.0f %5s %6s %s",
+			p->pid,
+			diff_stat(p->iops, p->index) / timediff,
+			diff_stat(p->syscr, p->index) / timediff,
+			diff_stat(p->syscw, p->index) / timediff,
+			format_b(diff_stat(p->read_bytes, p->index) / timediff),
+			format_b(diff_stat(p->write_bytes, p->index) / timediff),
+			p->name);
 
 	return (fmt);
 }

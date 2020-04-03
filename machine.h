@@ -37,10 +37,6 @@ enum DisplayMode
 	MODE_TYPES					/* number of modes */
 };
 
-/* Display modes for table and index statistics. */
-#define STATS_DIFF 0
-#define STATS_CUMULATIVE 1
-
 /* Maximum number of columns allowed for display */
 #define MAX_COLS	255
 

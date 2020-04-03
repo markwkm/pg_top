@@ -73,7 +73,6 @@ struct cmd	cmd_map[] = {
 	{'R', cmd_replication},
 	{'Q', cmd_current_query},
 	{'s', cmd_delay},
-	{'t', cmd_toggle},
 	{'u', cmd_user},
 	{'\0', NULL},
 };
@@ -405,26 +404,6 @@ int
 cmd_redraw(struct pg_top_context *pgtctx)
 {
 	reset_display(pgtctx);
-	return No;
-}
-
-int
-cmd_toggle(struct pg_top_context *pgtctx)
-{
-	if (mode_stats == STATS_DIFF)
-	{
-		mode_stats = STATS_CUMULATIVE;
-		new_message(MT_standout | MT_delayed,
-					" Displaying cumulative statistics.");
-		putchar('\r');
-	}
-	else
-	{
-		mode_stats = STATS_DIFF;
-		new_message(MT_standout | MT_delayed,
-					" Displaying differential statistics.");
-		putchar('\r');
-	}
 	return No;
 }
 

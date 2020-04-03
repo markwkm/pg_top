@@ -17,6 +17,7 @@ Release 4.0.0
        while removing the 'I' for the top I/O display as a toggle
      * Show swapping activity
      * Simplify top I/O display
+     * Remove toggle for display raw I/O statistics
 
 Release 3.7.0
 
