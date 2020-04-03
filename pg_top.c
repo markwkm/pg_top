@@ -145,11 +145,13 @@ usage(const char *progname)
 	printf("  -n, --non-interactive     use non-interactive mode\n");
 	printf("  -o, --order-field=FIELD   select sort order\n");
 	printf("  -r, --remote-mode         activate remote mode\n");
+	printf("  -R                        display replication stats\n");
 	printf("  -s, --set-delay=SECOND    set delay between screen updates\n");
 	printf("  -T, --show-tags           show color tags\n");
 	printf("  -V, --version             output version information, then exit\n");
 	printf("  -x, --set-display=COUNT   set maximum number of displays\n");
 	printf("                            exit once this number is reached\n");
+	printf("  -X                        display i/o stats\n");
 	printf("  -z, --show-username=NAME  display only processes owned by given\n");
 	printf("                            username\n");
 	printf("  -?, --help                show this help, then exit\n");
