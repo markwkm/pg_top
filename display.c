@@ -1037,10 +1037,11 @@ i_cpustates(int64_t * states)
 			/* if percentage is >= 1000, print it as 100% */
 			display_fmt(x_cpustates + *colp, y_cpustates,
 						color, 0,
-						(value >= 1000 ? "%4.0f%% %s%s" : "%4.1f%% %s%s"),
+						(value >= 1000 ? "%4.0f%% %s" : "%4.1f%% %s"),
 						((float) value) / 10.,
-						thisname,
-						*names != NULL ? ", " : "");
+						thisname);
+			if (*names != NULL)
+				display_write(-1, -1, 0, 0, ",");
 
 		}
 		/* increment */
@@ -1087,9 +1088,13 @@ u_cpustates(int64_t * states)
 #endif
 
 				/* if percentage is >= 1000, print it as 100% */
-				display_fmt(x_cpustates + *colp, y_cpustates, color, 0,
-							(value >= 1000 ? "%4.0f" : "%4.1f"),
-							((double) value) / 10.);
+				display_fmt(x_cpustates + *colp, y_cpustates,
+							color, 0,
+							(value >= 1000 ? "%4.0f%% %s" : "%4.1f%% %s"),
+							((float) value) / 10.,
+							thisname);
+				if (*names != NULL)
+					display_write(-1, -1, 0, 0, ",");
 
 				/* remember it for next time */
 				*lp = value;
