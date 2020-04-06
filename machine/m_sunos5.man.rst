@@ -1,4 +1,6 @@
-.SH "SUNOS 5 NOTES"
+SUNOS 5 NOTES
+=============
+
 CPU percentage is calculated as a fraction of total available computing
 resources.  Hence on a multiprocessor machine a single threaded process 
 can never consume cpu time in excess of 1 divided by the number of processors.
@@ -12,10 +14,7 @@ amount of physical memory that can be allocated for use by processes
 the amount of unallocated physical memory, "total swap" is the amount
 of swap area on disk that is being used, "free swap" is the amount of
 swap area on disk that is still available.  Unlike previous versions of
-.IR pg_top ,
-The swap figures will differ 
-from the summary output of
-.IR swap (1M)
+*pg_top*, The swap figures will differ from the summary output of *swap (1M)*
 since the latter includes physical memory as well.
 
 The column "THR" indicates the number of execution threads in the process.

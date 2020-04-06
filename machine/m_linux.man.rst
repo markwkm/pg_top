@@ -1,4 +1,6 @@
-.SH "LINUX NOTES"
+LINUX NOTES
+===========
+
 The Linux port was written by Richard Henderson <rth@tamu.edu>.
 The CPU% calculation was brazenly stolen from the Solaris 2
 port and should be attributed to one of the many names listed

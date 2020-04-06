@@ -1,4 +1,6 @@
-.SH "MacOS X NOTES"
+MacOS X NOTES
+=============
+
 The display is pretty close to the recommended display and also that
 of a normal 4.4 BSD system.  The NICE column has been changed to be
 the number of threads for each process.  The SIZE column reflects the

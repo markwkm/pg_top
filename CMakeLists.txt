@@ -154,17 +154,21 @@ configure_file(
 # Build manual page with appropriate machine specific notes.
 
 configure_file(
-    ${CMAKE_SOURCE_DIR}/pg_top.1.in
-    ${CMAKE_BINARY_DIR}/pg_top.1
+    ${CMAKE_SOURCE_DIR}/pg_top.1.rst.in
+    ${CMAKE_BINARY_DIR}/pg_top.1.rst
 )
-if(EXISTS "${CMAKE_SOURCE_DIR}/machine/m_${MACHINE}.man")
+if(EXISTS "${CMAKE_SOURCE_DIR}/machine/m_${MACHINE}.man.rst")
     execute_process(
-        COMMAND cat ${CMAKE_SOURCE_DIR}/machine/m_${MACHINE}.man
+        COMMAND cat ${CMAKE_SOURCE_DIR}/machine/m_${MACHINE}.man.rst
         OUTPUT_VARIABLE MANUAL_SUPPLIMENT
     )
-    file(APPEND ${CMAKE_BINARY_DIR}/pg_top.1 "${MANUAL_SUPPLIMENT}")
-endif(EXISTS "${CMAKE_SOURCE_DIR}/machine/m_${MACHINE}.man")
+    file(APPEND ${CMAKE_BINARY_DIR}/pg_top.1.rst "${MANUAL_SUPPLIMENT}")
+endif(EXISTS "${CMAKE_SOURCE_DIR}/machine/m_${MACHINE}.man.rst")
 file(APPEND ${CMAKE_BINARY_DIR}/pg_top.1 "${MANUAL_SUPPLIMENT}")
+execute_process(
+    COMMAND rst2man.py ${CMAKE_BINARY_DIR}/pg_top.1.rst
+    OUTPUT_FILE ${CMAKE_BINARY_DIR}/pg_top.1
+)
 
 # Set appropriate compile flags.
 

@@ -1,0 +1,288 @@
+========
+ pg_top
+========
+
+---------------------------------------------------------------------
+display and update information about the top cpu PostgreSQL processes
+---------------------------------------------------------------------
+
+:Author: William LeFebvre, Mark Wong
+:Manual section: 1
+:Version: 4.0.0alpha4
+
+SYNOPSIS
+========
+
+**pg_top** [option...] [number]
+
+DESCRIPTION
+===========
+
+*pg_top* displays the top processes on the system and periodically updates this
+information.  Raw cpu percentage is used to rank the processes.  If *number* is
+given, then the top *number* processes will be displayed instead of the
+default.
+
+*pg_top* makes a distinction between terminals that support advanced
+capabilities and those that do not.  This distinction affects the choice of
+defaults for certain options.  In the remainder of this document, an
+"intelligent" terminal is one that supports cursor addressing, clear screen,
+and clear to end of line.  Conversely, a \*(lqdumb\*(rq terminal is one that
+does not support such features.  If the output of *pg_top* is redirected to a
+file, it acts as if it were being run on a dumb terminal.
+
+OPTIONS
+=======
+
+-b, --batch   Use "batch" mode.  In this mode, all input from the terminal is
+              ignored.  Interrupt characters (such as ^C and ^\e) still have an
+              effect.  This is the default on a dumb terminal, or when the
+              output is not a terminal.
+-C, --color-mode   Turn off the use of color in the display.
+-c, --show-command   Show the command name for each process. Default is to show
+                     the full command line.  This option is not supported on
+                     all platforms.
+-h HOST, --host=HOST   Specifies the host name of the machine on which the server is
+                  running. If the value begins with a slash, it is used as the
+                  directory for the Unix domain socket. The default is taken
+                  from the PGHOST environment variable, if set.
+
+-I, --hide-idle   Do not display idle processes.  By default, pg_top displays
+                  both active and idle processes.
+-i, --interactive   Use "lqinteractive" mode.  In this mode, any input is
+                    immediately read for processing.  See the section on
+                    "Interactive Mode" for an explanation of which keys perform
+                    what functions.  After the command is processed, the screen
+                    will immediately be updated, even if the command was not
+                    understood.  This mode is the default when standard output
+                    is an intelligent terminal.
+-n, --non-interactive   Use "non-interactive" mode.  This is identical to
+                        "batch" mode.
+-o FIELD, --order-field=FIELD   Sort the process display area on the specified
+                                field.  The field name is the name of the
+                                column as seen in the output, but in lower
+                                case.  Likely values are "cpu", "size", "res",
+                                "xtime" and "qtime", but may vary on different
+                                operating systems.  Note that not all operating
+                                systems support this option.
+-p PORT, --port=PORT   Specifies the TCP port or local Unix domain socket file
+                       extension on which the server is listening for
+                       connections. Defaults to the PGPORT environment
+                       variable, if set.
+-R   Display WAL sender processes' replication activity to connected standby
+     servers.  Only directly connected standbys are listed; no information is
+     available about downstream standby servers.
+-r, --remote-mode   Monitor a remote database where the database is on a system
+                    other than where pg_top is running from.  *pg_top* will
+                    monitor a remote database if it has the pg_proctab
+                    extension installed.
+-s TIME, --set-delay=TIME   Set the delay between screen updates to *TIME*
+                            seconds.  The default delay between updates is 5
+                            seconds.
+-T, --show-tags   List all available color tags and the current set of tests
+                  used for color highlighting, then exit.
+-U USERNAME, --username=USERNAME   PostgreSQL database user name to connect as.
+-V, --version   Write version number information to stderr then exit
+                immediately.  No other processing takes place when this option
+                is used.  To see current revision information while *pg_top* is
+                running, use the help command "?".
+-W, --password   Forces *pg_top* to prompt for a password before connecting to
+                 a database.  *pg_top* will also keep the database connection
+                 open while running, and will clear the database connection
+                 from memory for security.
+-X   Display I/O activity per process.  This depends on whether the platform
+     *pg_top* is run on supports getting I/O statistics per process, or whether
+     the database system that pg_proctab is installed on supports getting I/O
+     statistics when *pg_top* attempts to get operating system statistics
+     remotely.
+-x COUNT, --set-display=COUNT   Show only *COUNT* displays, then exit.  A
+                                display is considered to be one update of the
+                                screen.  This option allows the user to select
+                                the number of displays he wants to see before
+                                *pg_top* automatically exits.  For intelligent
+                                terminals, no upper limit is set.  The default
+                                is 1 for dumb terminals.
+-z USERNAME, --show-username=USERNAME   Show only those processes owned by
+                                        *USERNAME*.  This option currently only
+                                        accepts PostgreSQL database user names.
+
+Both *COUNT* and *NUMBER* fields can be specified as "infinite", indicating
+that they can stretch as far as possible.  This is accomplished by using any
+proper prefix of the keywords "infinity", "maximum, or "all".  The default for
+*COUNT* on an intelligent terminal is, in fact, *infinity*.
+
+The environment variable **PG_TOP** is examined for options before the command
+line is scanned.  This enables a user to set his or her own defaults.  The
+number of processes to display can also be specified in the environment
+variable **PG_TOP**.  The options **-C**, **-I**, and **\-u** are actually
+toggles.  A second specification of any of these options will negate the first.
+Thus a user who has the environment variable **PG_TOP** set to "-I" may use the
+command "top -I" to see idle processes.
+
+INTERACTIVE MODE
+================
+
+When *pg_top* is running in "interactive mode", it reads commands from the
+terminal and acts upon them accordingly.  In this mode, the terminal is put in
+"BREAK", so that a character will be processed as soon as it is typed.  Almost
+always, a key will be pressed when *pg_top* is between displays; that is, while
+it is waiting for *TIME* seconds to elapse.  If this is the case, the command
+will be processed and the display will be updated immediately thereafter
+(reflecting any changes that the command may have specified).  This happens
+even if the command was incorrect.  If a key is pressed while *pg_top* is in
+the middle of updating the display, it will finish the update and then process
+the command.  Some commands require additional information, and the user will
+be prompted accordingly.  While typing this information in, the user's erase
+and kill keys (as set up by the command *stty*) are recognized, and a newline
+terminates the input.
+
+These commands are currently recognized (^L refers to control-L):
+
+:^L: Redraw the screen.
+:A: Display the actual query plan (EXPLAIN ANALYZE) of the currently running
+    SQL statement by re-running the SQL statement (prompt for process id.)
+:a: Display the top PostgreSQL processor activity. (default)
+:C: Toggle the use of color in the display.
+:c: Toggle the display of the full command line.
+:d: Change the number of displays to show (prompt for new number).  Remember
+    that the next display counts as one, so typing **d1** will make *pg_top*
+    show one final display and then immediately exit.
+:h or ?: Display a summary of the commands (help screen).  Version information
+         is included in this display.
+:E: Display re-determined execution plan (EXPLAIN) of the SQL statement by a
+    backend process (prompt for process id.)
+:i: Toggle the display of idle processes.
+:L: Display the currently held locks by a backend process (prompt for process
+    id.)
+:n or #: Change the number of processes to display (prompt for new number).
+:o: Change the order in which the display is sorted.  This command is not
+    available on all systems.  The sort key names when viewing processes vary
+    from system to system but usually include:  "cpu", "res", "size", "xtime"
+    and "qtime".  The default is unsorted.  See the interactive help for
+    available sort key names.
+:Q: Display the currently running query of a backend process (prompt for
+    process id.)
+:q: Quit *pg_top*.
+:s: Change the number of seconds to delay between displays (prompt for new
+    number).
+:u: Display only processes owned by a specific username (prompt for username).
+    If the username specified is simply \*(lq+\*(rq, then processes belonging
+    to all users will be displayed.
+
+THE DISPLAY
+===========
+
+The actual display varies depending on the specific variant of Unix that the
+machine is running.  This description may not exactly match what is seen by
+pg_top running on this particular machine.  Differences are listed at the end
+of this manual entry.
+
+The top few lines of the display show general information about the state of
+the system, including the last process id assigned to a process (on most
+systems), the three load averages, the current time, the number of existing
+processes, the number of processes in each state (sleeping, running, starting,
+zombies, and stopped), and a percentage of time spent in each of the processor
+states (user, nice, system, and idle).  It also includes information about
+physical and virtual memory allocation.
+
+The remainder of the screen displays information about individual processes.
+This display is similar in spirit to *ps(1)* but it is not exactly the same.
+The columns displayed by *pg_top* will differ slightly between operating
+systems.  Generally, the following display are available:
+
+ACTIVITY DISPLAY
+================
+:PID: The process id.
+:USERNAME: Username of the process's owner (if **-u** is specified, a UID
+           column will be substituted for USERNAME).
+:SIZE: Total size of the process (text, data, and stack) given in kilobytes.
+:RES: Resident memory: current amount of process memory that resides in
+      physical memory, given in kilobytes.
+:STATE: Current backend state (typically one of "idle", "active", "idltxn",
+        "fast", "disable", or "stop".
+:XTIME: Elapsed time since the current transactions started.
+:QTIME: Elapsed time since the current query started.
+:%CPU: Percentage of available cpu time used by this process.
+:LOCKS: Number of locks granted to this process.
+:COMMAND: Name of the command that the process is currently running.
+
+I/O DISPLAY (Linux only)
+========================
+
+:PID: The process id.
+:IOPS: Count the number of read and write I/O operations per second.
+:IORPS: Count the number of read I/O operations per second.
+:IOWPS: Count the number of write I/O operations per second.
+:READS: Number of bytes read from storage.
+:WRITES: Number of bytes written to storage.
+:COMMAND: Name of the command that the process is currently running.
+
+REPLICATION DISPLAY
+===================
+:PID: The process id.
+:USERNAME: Name of the user logged into this WAL sender process
+:APPLICATION: Name of the application that is connected to this WAL sender
+:CLIENT: IP address of the client connected to this WAL sender
+:STATE: Current WAL sender state
+:PRIMARY: Current transaction log insert location on primary node
+:SENT: Last write-ahead log location sent on this connection
+:WRITE: Last write-ahead log location written to disk
+:FLUSH: Last write-ahead log location flushed to disk
+:REPLAY: Last write-ahead log location replayed into the database
+:SLAG: Size of write-ahead log location remaining to be sent
+:WLAG: Size of write-ahead log location remaining to be written to disk
+:FLAG: Size of write-ahead log location remaining to be flushed to disk
+:RLAG: Size of write-ahead log location remaining to be replayed into the
+       database
+
+COLOR
+=====
+
+*pg_top* supports the use of ANSI color in its output. By default, color is
+available but not used.  The environment variable **PG_TOPCOLORS** specifies
+colors to use and conditions for which they should be used.  At the present
+time, only numbers in the summary display area can be colored. In a future
+version it will be possible to highlight numbers in the process display area as
+well.  The environment variable is the only way to specify color: there is no
+equivalent command line option.  Note that the environment variable
+**PG_TOPCOLOURS** is also understood. The British spelling takes precedence.
+The use of color only works on terminals that understand and process ANSI color
+escape sequences.
+
+The environment variable is a sequence of color specifications, separated by
+colons. Each specification takes the form tag=min,max#code where *tag* is the
+name of the value to check, *min* and *max* specify a range for the value, and
+*code* is an ANSI color code.  Multiple color codes can be listed and separated
+with semi-colons.  A missing *min* implies the lowest possible value (usually
+0) and a missing *max* implies infinity. The comma must always be present. When
+specifying numbers for load averages, they should be multiplied by 100.  For
+example, the specification **1min=500,1000#31** indicates that a 1 minute load
+average between 5 and 10 should be displayed in red. Color attributes can be
+combined.  For example, the specification **5min=1000,#37;41** indicates that a
+5 minute load average higher than 10 should be displayed with white characters
+on a red background. A special tag named *header* is used to control the color
+of the header for process display.  It should be specified with no lower and
+upper limits, specifically **header=,#** followed by the ANSI color code.
+
+You can see a list of color codes recognized by this installation of pg_top
+with the **-T** option.  This will also show the current set of tests used for
+color highligting, as specified in the environment.
+
+ENVIRONMENT
+===========
+
+**PG_TOP**		user-configurable defaults for options.  **PG_TOPCOLORS**
+color specification
+
+BUGS
+====
+
+As with *ps(1)*, things can change while *pg_top* is collecting information for
+an update.  The picture it gives is only a close approximation to reality.
+
+SEE ALSO
+========
+
+*ps(1),* *stty(1),* *mem(4)*
+
+@MAN_SUPPLEMENT@
