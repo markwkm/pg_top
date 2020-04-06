@@ -1,16 +1,14 @@
 AppImages are only for Linux based systems:
 
-    https://appimage.org/
+  https://appimage.org/
 
 The AppImageKit AppImage can be downloaded from:
 
-    https://github.com/AppImage/AppImageKit/releases
-
+  https://github.com/AppImage/AppImageKit/releases
 
 It is recommended to build AppImages on older distributions:
 
-    https://docs.appimage.org/introduction/concepts.html#build-on-old-systems-run-on-newer-systems
-
+  https://docs.appimage.org/introduction/concepts.html#build-on-old-systems-run-on-newer-systems
 
 At the time of this document, CentOS 6 is the one of the oldest supported Linux
 distributions with the oldest libc version.
@@ -25,10 +23,9 @@ multiple potential unixsock directories if no PGHOST is defined in the user's
 environment.
 
 At the time of this document, PostgreSQL 10 was configured with the following
-options:
+options::
 
-    ./configure --without-ldap --without-readline --without-zlib --without-gssapi
+  ./configure --without-ldap --without-readline --without-zlib --without-gssapi
 
-
-Don't forget you may have to both PATH and LD_LIBRARY_PATH appropriately
+Don't forget you may have to set both PATH and LD_LIBRARY_PATH appropriately
 depending on where the custom build of PostgreSQL is installed.
