@@ -7,6 +7,8 @@ pg_top allows you to monitor PostgreSQL processes. It also allows you to:
 * View currently running SQL statement of a process.
 * View query plan of a currently running SELECT statement.
 * View locks held by a process.
+* View I/O statistics per process.
+* View replication statistics for downstream nodes.
 
 To compile and install "pg_top", read the file "INSTALL.rst" and follow the
 directions and advice contained therein.
