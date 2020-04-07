@@ -30,9 +30,9 @@
   </provides>
 
   <releases>
-    <release version="4.0alpha1" date="4.0alpha1">
+    <release version="4.0alpha4" date="YYYY-MM-DD">
       <description>
-        <p>4.0 Alpha 1 release.</p>
+        <p>4.0 Alpha 4 release.</p>
       </description>
     </release>
   </releases>
