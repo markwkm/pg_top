@@ -690,7 +690,7 @@ show_locks(struct pg_conninfo_ctx *conninfo, int procpid)
 				k;
 	int			rows;
 	char		info[64];
-	int			width[5] = {1, 8, 5, 4, 7};
+	int			width[7] = {1, 8, 6, 5, 5, 4, 7};
 	PGresult   *pgresult = NULL;
 	char		header_format[1024];
 	char		line_format[1024];
@@ -724,16 +724,25 @@ show_locks(struct pg_conninfo_ctx *conninfo, int procpid)
 			width[3] = strlen(PQgetvalue(pgresult, i, 2));
 		if (strlen(PQgetvalue(pgresult, i, 3)) > width[4])
 			width[4] = strlen(PQgetvalue(pgresult, i, 3));
+		if (strlen(PQgetvalue(pgresult, i, 4)) > width[5])
+			width[5] = strlen(PQgetvalue(pgresult, i, 4));
+		if (strlen(PQgetvalue(pgresult, i, 5)) > width[6])
+			width[6] = strlen(PQgetvalue(pgresult, i, 5));
 	}
-	sprintf(header_format, "%%-%ds | %%-%ds | %%-%ds | %%-%ds | %%-%ds\n",
-			width[0], width[1], width[2], width[3], width[4]);
-	sprintf(line_format, "%%%dd | %%-%ds | %%-%ds | %%-%ds | %%-%ds\n",
-			width[0], width[1], width[2], width[3], width[4]);
+	sprintf(header_format,
+			"%%-%ds | %%-%ds | %%-%ds | %%-%ds | %%-%ds | %%-%ds | %%-%ds\n",
+			width[0], width[1], width[2], width[3], width[4], width[5],
+			width[6]);
+	sprintf(line_format,
+			"%%%dd | %%-%ds | %%-%ds | %%-%ds | %%-%ds | %%-%ds | %%-%ds\n",
+			width[0], width[1], width[2], width[3], width[4], width[5],
+			width[6]);
 
 	/* Display the header. */
-	sprintf(line, header_format, "", "database", "table", "type", "granted");
+	sprintf(line, header_format, "", "database", "schema", "table", "index",
+			"type", "granted");
 	display_pager(line);
-	for (i = 0, k = 0; i < 5; i++)
+	for (i = 0, k = 0; i < 7; i++)
 	{
 		for (j = 0; j < width[i]; j++, k++)
 		{
@@ -752,7 +761,8 @@ show_locks(struct pg_conninfo_ctx *conninfo, int procpid)
 	{
 		sprintf(line, line_format, i + 1, PQgetvalue(pgresult, i, 0),
 				PQgetvalue(pgresult, i, 1), PQgetvalue(pgresult, i, 2),
-				PQgetvalue(pgresult, i, 3));
+				PQgetvalue(pgresult, i, 3), PQgetvalue(pgresult, i, 4),
+				PQgetvalue(pgresult, i, 5));
 		display_pager(line);
 	}
 	display_pager("\n");

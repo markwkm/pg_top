@@ -70,19 +70,31 @@
 		"       FROM pg_stat_replication;"
 
 #define GET_LOCKS \
-		"SELECT datname, relname, mode, granted\n" \
+		"SELECT datname, nspname, r.relname, i.relname, mode, granted\n" \
 		"FROM pg_stat_activity, pg_locks\n" \
-		"LEFT OUTER JOIN pg_class\n" \
-		"ON relation = pg_class.oid\n"\
+		"LEFT OUTER JOIN pg_class r \n" \
+		"  ON relation = r.oid\n"\
+		" AND r.relkind = 'r'\n" \
+		"LEFT OUTER JOIN pg_class i \n" \
+		"  ON relation = i.oid\n"\
+		" AND i.relkind = 'i'\n" \
+		"LEFT OUTER JOIN pg_namespace nsp\n" \
+		"  ON coalesce(r.relnamespace, i.relnamespace) = nsp.oid\n" \
 		"WHERE pg_stat_activity.pid = %d\n" \
 		"  AND pg_stat_activity.pid = pg_locks.pid\n" \
 		"  AND relation IS NOT NULL;"
 
 #define GET_LOCKS_9_1 \
-		"SELECT datname, relname, mode, granted\n" \
+		"SELECT datname, nspname, r.relname, i.relname, mode, granted\n" \
 		"FROM pg_stat_activity, pg_locks\n" \
-		"LEFT OUTER JOIN pg_class\n" \
-		"ON relation = pg_class.oid\n"\
+		"LEFT OUTER JOIN pg_class r \n" \
+		"  ON relation = r.oid\n"\
+		" AND r.relkind = 'r'\n" \
+		"LEFT OUTER JOIN pg_class i \n" \
+		"  ON relation = i.oid\n"\
+		" AND i.relkind = 'i'\n" \
+		"LEFT OUTER JOIN pg_namespace nsp\n" \
+		"  ON coalesce(r.relnamespace, i.relnamespace) = nsp.oid\n" \
 		"WHERE procpid = %d\n" \
 		"  AND procpid = pid\n" \
 		"  AND relation IS NOT NULL;"

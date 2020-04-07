@@ -22,6 +22,8 @@ YYYY-MM-DD v4.0.0
 * Remove toggle for display raw I/O statistics
 * Fix bug for specifing number of displays to show on the command line without
   -x flag
+* Fix view of locks held by process.  Separate table and index locks.  Also
+  showing schema.
 
 2013-07-31 v3.7.0
 -----------------
