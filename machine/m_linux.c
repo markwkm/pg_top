@@ -142,15 +142,26 @@ static char *memorynames[NMEMSTATS + 1] =
 	NULL
 };
 
-#define SWAPUSED   0
-#define SWAPFREE   1
-#define SWAPCACHED 2
-#define NSWAPSTATS 3
+enum swap
+{
+	SWAPUSED,
+	SWAPFREE,
+	SWAPCACHED,
+	SWAPIN,
+	SWAPOUT,
+	NSWAPSTATS
+};
 static char *swapnames[NSWAPSTATS + 1] =
 {
-	"K used, ", "K free, ", "K cached",
-	NULL
+	"K used, ", "K free, ", "K cached, ", "K in, ", "K out", NULL
 };
+
+struct swap_t
+{
+	int index;
+	long long in[2];
+	long long out[2];
+} swap_activity;
 
 static char fmt_header[] =
 "  PID X         SIZE   RES STATE   XTIME  QTIME  %CPU LOCKS COMMAND";
@@ -554,14 +565,16 @@ get_system_info(struct system_info *info)
 
 				if (swpin != -1 && swpout != -1)
 				{
-					info->swap.swapin = pagetok(swpin -
-							info->swap.prev_swapin) ;
-					info->swap.swapout = pagetok(swpout -
-							info->swap.prev_swapout);
+					swap_activity.in[swap_activity.index] = swpin;
+					swap_activity.out[swap_activity.index] = swpout;
 
-					info->swap.prev_swapin = swpin;
-					info->swap.prev_swapout = swpout;
+					swap_stats[SWAPIN] = diff_stat(swap_activity.in,
+							swap_activity.index);
+					swap_stats[SWAPOUT] = diff_stat(swap_activity.out,
+							swap_activity.index);
 
+
+					swap_activity.index = (swap_activity.index + 1) % 2;
 					break;
 				}
 
@@ -573,14 +586,14 @@ get_system_info(struct system_info *info)
 	}
 	else
 	{
-				info->swap.swapin = -1;
-				info->swap.swapout = -1;
+		swap_activity.in[swap_activity.index] = -1;
+		swap_activity.out[swap_activity.index] = -1;
 	}
 
 	/* set arrays and strings */
 	info->cpustates = cpu_states;
 	info->memory = memory_stats;
-	info->swap.swap = swap_stats;
+	info->swap = swap_stats;
 }
 
 static void

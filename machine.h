@@ -80,16 +80,6 @@ struct statics
 #define P_ACTIVE p_active
 #endif
 
-struct swap_t
-{
-	long	   *swap;
-
-	unsigned long	prev_swapin;
-	unsigned long	prev_swapout;
-	unsigned long	swapin;
-	unsigned long	swapout;
-};
-
 struct system_info
 {
 	int			last_pid;
@@ -99,8 +89,7 @@ struct system_info
 	int		   *procstates;
 	int64_t    *cpustates;
 	long	   *memory;
-
-	struct swap_t swap;
+	long	   *swap;
 };
 
 /* cpu_states is an array of percentages * 10.	For example,

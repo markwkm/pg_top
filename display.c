@@ -1171,7 +1171,7 @@ u_memory(long *stats)
  */
 
 void
-i_swap(struct swap_t *stats)
+i_swap(long *stats)
 {
 	if (num_swap > 0)
 	{
@@ -1179,23 +1179,19 @@ i_swap(struct swap_t *stats)
 		display_write(0, y_swap, 0, 0, "Swap: ");
 
 		/* format and print the swap summary */
-		summary_format_memory(x_swap, y_swap, stats->swap, swap_names,
+		summary_format_memory(x_swap, y_swap, stats, swap_names,
 				swap_cidx);
-		display_fmt(-1, y_swap, 0, 0, ", Swapped in: %s, Swapped Out: %s",
-				format_k(stats->swapin), format_k(stats->swapout));
 	}
 }
 
 void
-u_swap(struct swap_t *stats)
+u_swap(long *stats)
 {
 	if (num_swap > 0)
 	{
 		/* format the new line */
-		summary_format_memory(x_swap, y_swap, stats->swap, swap_names,
+		summary_format_memory(x_swap, y_swap, stats, swap_names,
 				swap_cidx);
-		display_fmt(-1, y_swap, 0, 0, ", Swapped in: %s, Swapped Out: %s",
-				format_k(stats->swapin), format_k(stats->swapout));
 	}
 }
 
