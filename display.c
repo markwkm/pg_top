@@ -543,8 +543,8 @@ summary_format_memory(int x, int y, long *numbers, char **names, int *cidx)
 		num = *numbers++;
 		color = 0;
 
-		/* display only non-zero numbers */
-		if (num != 0)
+		/* display non-negative numbers */
+		if (num >= 0)
 		{
 			/* write the previous name */
 			if (lastname != NULL)
