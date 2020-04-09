@@ -3,6 +3,9 @@
  */
 
 #include <stdlib.h>
+#ifdef __FreeBSD__
+#include <sys/tree.h>
+#endif /* __FreeBSD__*/
 #ifdef __linux__
 #include <bsd/stdlib.h>
 #include <bsd/sys/tree.h>

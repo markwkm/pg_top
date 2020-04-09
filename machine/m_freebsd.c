@@ -210,11 +210,6 @@ static int64_t cp_diff[CPUSTATES];
 /* these are for detailing the process states */
 
 int			process_states[6];
-char	   *procstatenames[] = {
-	"", " starting, ", " running, ", " sleeping, ", " stopped, ",
-	" zombie, ",
-	NULL
-};
 
 /* these are for detailing the cpu states */
 
@@ -521,7 +516,7 @@ caddr_t
 get_process_info(struct system_info *si,
 				 struct process_select *sel,
 				 int compare_index,
-				 const char *values[])
+				 struct pg_conninfo_ctx *conninfo)
 
 {
 	register int i;
@@ -534,22 +529,19 @@ get_process_info(struct system_info *si,
 	int			show_idle;
 	int			show_self;
 	int			show_system = 0;
-	int			show_uid;
 
-	PGconn	   *pgconn;
 	PGresult   *pgresult = NULL;
 
 	nproc = 0;
-	pgconn = connect_to_db(values);
-	if (pgconn != NULL)
+	connect_to_db(conninfo);
+	if (conninfo->connection != NULL)
 	{
-		pgresult = pg_processes(pgconn);
+		pgresult = pg_processes(conninfo->connection);
 		nproc = PQntuples(pgresult);
 		if (nproc > onproc)
 			pbase = (struct kinfo_proc *)
 				realloc(pbase, sizeof(struct kinfo_proc) * nproc);
 	}
-	PQfinish(pgconn);
 
 	if (nproc > onproc)
 		pref = (struct kinfo_proc **) realloc(pref, sizeof(struct kinfo_proc *)
@@ -565,7 +557,6 @@ get_process_info(struct system_info *si,
 	/* set up flags which define what we are going to select */
 	show_idle = sel->idle;
 	show_self = 0;
-	show_uid = sel->uid != -1;
 	show_fullcmd = sel->fullcmd;
 
 	/* count up process states and get pointers to interesting procs */
@@ -586,7 +577,7 @@ get_process_info(struct system_info *si,
 		}
 
 		/*
-		 * FIXME: This memcpy is so not elegent and the reason why I'm donig
+		 * FIXME: This memcpy is so not elegant and the reason why I'm doing
 		 * it...
 		 */
 		memcpy(&pbase[i], &junk2[0], sizeof(struct kinfo_proc));
@@ -605,19 +596,22 @@ get_process_info(struct system_info *si,
 			process_states[(unsigned char) PP(pp, stat)]++;
 			if ((PP(pp, stat) != SZOMB) &&
 				(show_idle || (PP(pp, pctcpu) != 0) ||
-				 (PP(pp, stat) == SRUN)) &&
-				(!show_uid || PRUID(pp) == (uid_t) sel->uid))
+				 (PP(pp, stat) == SRUN)))
 			{
 				*prefp++ = pp;
 				active_procs++;
 			}
 		}
 	}
-	PQclear(pgresult);
+
+	if (pgresult != NULL)
+		PQclear(pgresult);
+	disconnect_from_db(conninfo);
 
 	/* if requested, sort the "interesting" processes */
-	qsort((char *) pref, active_procs, sizeof(struct kinfo_proc *),
-		  proc_compares[compare_index]);
+	if (compare_index >= 0 && active_procs)
+		qsort((char *) pref, active_procs, sizeof(struct kinfo_proc *),
+		  		proc_compares[compare_index]);
 
 	/* remember active and total counts */
 	si->p_total = total_procs;
@@ -633,7 +627,7 @@ char		fmt[MAX_COLS];		/* static area where result is built */
 char		cmd[MAX_COLS];
 
 char *
-format_next_process(caddr_t handle, char *(*get_userid) (uid_t))
+format_next_process(caddr_t handle)
 
 {
 	register struct kinfo_proc *pp;
@@ -735,7 +729,7 @@ format_next_process(caddr_t handle, char *(*get_userid) (uid_t))
 			smpmode ? smp_Proc_format : up_Proc_format,
 			PP(pp, pid),
 			namelength, namelength,
-			(*get_userid) (PRUID(pp)),
+			"",
 #ifdef SHOW_THREADS
 			PP(pp, numthreads),
 #endif

@@ -117,12 +117,16 @@ caddr_t		get_process_info(struct system_info *, struct process_select *, int,
 							 struct pg_conninfo_ctx *, int);
 #else
 caddr_t		get_process_info(struct system_info *, struct process_select *, int,
-							 char *);
+							 struct pg_conninfo_ctx *);
 #endif							/* __linux__ */
 char	   *format_header(char *);
+#ifdef __linux__
 char	   *format_next_io(caddr_t);
+#endif /* __linux__ */
 char	   *format_next_process(caddr_t);
+#ifdef __linux__
 char	   *format_next_replication(caddr_t);
+#endif /* __linux__ */
 uid_t		proc_owner(pid_t);
 void		update_state(int *pgstate, char *state);
 void		update_str(char **, char *);
