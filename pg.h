@@ -42,4 +42,22 @@ enum pg_stat_activity
 	PROC_LOCKS
 };
 
+enum pg_stat_replication
+{
+	REP_PID = 0,
+	REP_USENAME,
+	REP_APPLICATION_NAME,
+	REP_CLIENT_ADDR,
+	REP_STATE,
+	REP_WAL_INSERT,
+	REP_SENT,
+	REP_WRITE,
+	REP_FLUSH,
+	REP_REPLAY,
+	REP_SENT_LAG,
+	REP_WRITE_LAG,
+	REP_FLUSH_LAG,
+	REP_REPLAY_LAG
+};
+
 #endif							/* _PG_H_ */

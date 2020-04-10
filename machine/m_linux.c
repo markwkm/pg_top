@@ -881,19 +881,22 @@ get_process_info(struct system_info *si,
 
 			if (mode == MODE_REPLICATION)
 			{
-				update_str(&n->usename, PQgetvalue(pgresult, i, 1));
-				update_str(&n->application_name, PQgetvalue(pgresult, i, 2));
-				update_str(&n->client_addr, PQgetvalue(pgresult, i, 3));
-				update_str(&n->repstate, PQgetvalue(pgresult, i, 4));
-				update_str(&n->primary, PQgetvalue(pgresult, i, 5));
-				update_str(&n->sent, PQgetvalue(pgresult, i, 6));
-				update_str(&n->write, PQgetvalue(pgresult, i, 7));
-				update_str(&n->flush, PQgetvalue(pgresult, i, 8));
-				update_str(&n->replay, PQgetvalue(pgresult, i, 9));
-				n->sent_lag = atol(PQgetvalue(pgresult, i, 10));
-				n->write_lag = atol(PQgetvalue(pgresult, i, 11));
-				n->flush_lag = atol(PQgetvalue(pgresult, i, 12));
-				n->replay_lag = atol(PQgetvalue(pgresult, i, 13));
+				update_str(&n->usename, PQgetvalue(pgresult, i, REP_USENAME));
+				update_str(&n->application_name,
+						PQgetvalue(pgresult, i, REP_APPLICATION_NAME));
+				update_str(&n->client_addr,
+						PQgetvalue(pgresult, i, REP_CLIENT_ADDR));
+				update_str(&n->repstate, PQgetvalue(pgresult, i, REP_STATE));
+				update_str(&n->primary,
+						PQgetvalue(pgresult, i, REP_WAL_INSERT));
+				update_str(&n->sent, PQgetvalue(pgresult, i, REP_SENT));
+				update_str(&n->write, PQgetvalue(pgresult, i, REP_WRITE));
+				update_str(&n->flush, PQgetvalue(pgresult, i, REP_FLUSH));
+				update_str(&n->replay, PQgetvalue(pgresult, i, REP_REPLAY));
+				n->sent_lag = atol(PQgetvalue(pgresult, i, REP_SENT_LAG));
+				n->write_lag = atol(PQgetvalue(pgresult, i, REP_WRITE_LAG));
+				n->flush_lag = atol(PQgetvalue(pgresult, i, REP_FLUSH_LAG));
+				n->replay_lag = atol(PQgetvalue(pgresult, i, REP_REPLAY_LAG));
 
 				memcpy(&pgtable[active_procs++], n, sizeof(struct top_proc));
 			}
