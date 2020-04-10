@@ -31,4 +31,15 @@ enum BackendState
 	STATE_DISABLED
 };
 
+enum pg_stat_activity
+{
+	PROC_PID = 0,
+	PROC_QUERY,
+	PROC_STATE,
+	PROC_USENAME,
+	PROC_XSTART,
+	PROC_QSTART,
+	PROC_LOCKS
+};
+
 #endif							/* _PG_H_ */

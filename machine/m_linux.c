@@ -902,14 +902,14 @@ get_process_info(struct system_info *si,
 				read_one_proc_stat(n, sel);
 				if (sel->fullcmd == 2)
 				{
-					update_str(&n->name, PQgetvalue(pgresult, i, 1));
+					update_str(&n->name, PQgetvalue(pgresult, i, PROC_QUERY));
 					printable(n->name);
 				}
-				update_state(&n->pgstate, PQgetvalue(pgresult, i, 2));
-				update_str(&n->usename, PQgetvalue(pgresult, i, 3));
-				n->xtime = atol(PQgetvalue(pgresult, i, 4));
-				n->qtime = atol(PQgetvalue(pgresult, i, 5));
-				n->locks = atoi(PQgetvalue(pgresult, i, 6));
+				update_state(&n->pgstate, PQgetvalue(pgresult, i, PROC_STATE));
+				update_str(&n->usename, PQgetvalue(pgresult, i, PROC_USENAME));
+				n->xtime = atol(PQgetvalue(pgresult, i, PROC_XSTART));
+				n->qtime = atol(PQgetvalue(pgresult, i, PROC_QSTART));
+				n->locks = atoi(PQgetvalue(pgresult, i, PROC_LOCKS));
 
 				process_states[n->pgstate]++;
 
