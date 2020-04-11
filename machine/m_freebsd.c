@@ -699,7 +699,7 @@ format_next_process(caddr_t handle)
 	{
 		case SRUN:
 			if (smpmode && PP(pp, oncpu) != 0xff)
-				sprintf(status, "CPU%d", PP(pp, oncpu));
+				snprintf(status, sizeof(status), "CPU%d", PP(pp, oncpu));
 			else
 				strcpy(status, "RUN");
 			break;
@@ -707,9 +707,9 @@ format_next_process(caddr_t handle)
 			if (PP(pp, wmesg) != NULL)
 			{
 #if OSMAJOR <= 4
-				sprintf(status, "%.6s", EP(pp, wmesg));
+				snprintf(status, sizeof(status), "%.6s", EP(pp, wmesg));
 #else
-				sprintf(status, "%.6s", PP(pp, wmesg));
+				snprintf(status, sizeof(status), "%.6s", PP(pp, wmesg));
 #endif
 				break;
 			}
@@ -718,14 +718,14 @@ format_next_process(caddr_t handle)
 
 			if (state >= 0 &&
 				state < sizeof(state_abbrev) / sizeof(*state_abbrev))
-				sprintf(status, "%.6s", state_abbrev[(unsigned char) state]);
+				snprintf(status, sizeof(status), "%.6s", state_abbrev[(unsigned char) state]);
 			else
-				sprintf(status, "?%5d", state);
+				snprintf(status, sizeof(status), "?%5d", state);
 			break;
 	}
 
 	/* format this entry */
-	sprintf(fmt,
+	snprintf(fmt, sizeof(fmt),
 			smpmode ? smp_Proc_format : up_Proc_format,
 			PP(pp, pid),
 			namelength, namelength,
