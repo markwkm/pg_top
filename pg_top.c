@@ -185,13 +185,9 @@ do_display(struct pg_top_context *pgtctx)
 	if (pgtctx->mode_remote == 0)
 	{
 		get_system_info(&pgtctx->system_info);
-#ifdef __linux__
 		processes = get_process_info(&pgtctx->system_info, &pgtctx->ps,
-									 pgtctx->order_index, &pgtctx->conninfo, pgtctx->mode);
-#else
-		processes = get_process_info(&pgtctx->system_info, &pgtctx->ps,
-									 pgtctx->order_index, &pgtctx->conninfo);
-#endif							/* __linux__ */
+									 pgtctx->order_index, &pgtctx->conninfo,
+									pgtctx->mode);
 	}
 	else
 	{
@@ -995,13 +991,8 @@ main(int argc, char *argv[])
 		if (pgtctx.mode_remote == 0)
 		{
 			get_system_info(&pgtctx.system_info);
-#ifdef __linux__
 			(void) get_process_info(&pgtctx.system_info, &pgtctx.ps, -1,
 									&pgtctx.conninfo, pgtctx.mode);
-#else
-			(void) get_process_info(&pgtctx.system_info, &pgtctx.ps, -1,
-									&pgtctx.conninfo);
-#endif							/* __linux__ */
 		}
 		else
 		{
