@@ -39,6 +39,7 @@
 #include <sys/vmmeter.h>
 #include <sys/resource.h>
 #include <sys/rtprio.h>
+#include <sys/tree.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -52,6 +53,9 @@
 #include "pg_top.h"
 #include "machine.h"
 #include "utils.h"
+
+/* declarations for load_avg */
+#include "loadavg.h"
 
 #define GETSYSCTL(name, var) getsysctl(name, &(var), sizeof(var))
 
@@ -83,8 +87,24 @@ struct handle
 	int			remaining;		/* number of pointers remaining */
 };
 
-/* declarations for load_avg */
-#include "loadavg.h"
+struct pg_proc
+{
+	RB_ENTRY(pg_proc) entry;
+	pid_t		pid;
+
+	char *name;
+	char *usename;
+	int pgstate;
+	unsigned long xtime;
+	unsigned long qtime;
+	unsigned int locks;
+};
+
+int			topproccmp(struct pg_proc *, struct pg_proc *);
+
+RB_HEAD(pgproc, pg_proc) head_proc = RB_INITIALIZER(&head_proc);
+RB_PROTOTYPE(pgproc, pg_proc, entry, topproccmp)
+RB_GENERATE(pgproc, pg_proc, entry, topproccmp)
 
 /* macros to access process information */
 #if OSMAJOR <= 4
@@ -139,38 +159,8 @@ static struct nlist nlst[] = {
  *	These definitions control the format of the per-process area
  */
 
-#ifdef SHOW_THREADS
-static char smp_header[] =
-"  PID %-*.*s THR PRI NICE  SIZE    RES STATE  C   TIME    CPU COMMAND";
-
-#define smp_Proc_format \
-	"%5d %-*.*s %3d %3d %3d%7s %6s %-6.6s %1x%7s %5.2f%% %s"
-
-static char up_header[] =
-"  PID %-*.*s THR PRI NICE  SIZE    RES STATE    TIME    CPU COMMAND";
-
-#define up_Proc_format \
-	"%5d %-*.*s %3d %3d %3d%7s %6s %-6.6s%.0d%7s %5.2f%% %s"
-#else
-
-static char smp_header[] =
-"  PID %-*.*s PRI NICE  SIZE    RES STATE  C   TIME   WCPU    CPU COMMAND";
-
-#define smp_Proc_format \
-	"%5d %-*.*s %3d %3d%7s %6s %-6.6s %1x%7s %5.2f%% %5.2f%% %s"
-
-static char up_header[] =
-"  PID %-*.*s PRI NICE  SIZE    RES STATE    TIME   WCPU    CPU COMMAND";
-
-#define up_Proc_format \
-	"%5d %-*.*s %3d %3d%7s %6s %-6.6s%.0d%7s %5.2f%% %5.2f%% %s"
-
-/* define what weighted cpu is.  */
-#define weighted_cpu(pct, pp) (PP((pp), swtime) == 0 ? 0.0 : \
-			 ((pct) / (1.0 - exp(PP((pp), swtime) * logcpu))))
-#endif
-
-
+static char header[] =
+"  PID %-*.*s    SIZE    RES STATE   XTIME  QTIME    CPU LOCKS COMMAND";
 
 /* process state names for the "STATE" column of the display */
 /* the extra nulls in the string "run" are for adding a slash and
@@ -385,8 +375,8 @@ format_header(char *uname_field)
 {
 	static char Header[128];
 
-	snprintf(Header, sizeof(Header), smpmode ? smp_header : up_header,
-			 namelength, namelength, uname_field);
+	snprintf(Header, sizeof(Header), header, namelength, namelength,
+			uname_field);
 
 	cmdlength = 80 - strlen(Header) + 6;
 
@@ -516,7 +506,8 @@ caddr_t
 get_process_info(struct system_info *si,
 				 struct process_select *sel,
 				 int compare_index,
-				 struct pg_conninfo_ctx *conninfo)
+				 struct pg_conninfo_ctx *conninfo,
+				 int mode)
 
 {
 	register int i;
@@ -531,6 +522,7 @@ get_process_info(struct system_info *si,
 	int			show_system = 0;
 
 	PGresult   *pgresult = NULL;
+	struct pg_proc *n, *p;
 
 	nproc = 0;
 	connect_to_db(conninfo);
@@ -541,6 +533,8 @@ get_process_info(struct system_info *si,
 		if (nproc > onproc)
 			pbase = (struct kinfo_proc *)
 				realloc(pbase, sizeof(struct kinfo_proc) * nproc);
+
+		pgresult = pg_processes(conninfo->connection);
 	}
 
 	if (nproc > onproc)
@@ -602,6 +596,32 @@ get_process_info(struct system_info *si,
 				active_procs++;
 			}
 		}
+
+		n = malloc(sizeof(struct pg_proc));
+		if (n == NULL)
+		{
+			fprintf(stderr, "malloc error\n");
+			if (pgresult != NULL)
+				PQclear(pgresult);
+			disconnect_from_db(conninfo);
+			exit(1);
+		}
+		memset(n, 0, sizeof(struct pg_proc));
+		n->pid = atoi(PQgetvalue(pgresult, i, 0));
+		p = RB_INSERT(pgproc, &head_proc, n);
+		if (p != NULL)
+		{
+			free(n);
+			n = p;
+		}
+
+		update_str(&n->name, PQgetvalue(pgresult, i, PROC_QUERY));
+		printable(n->name);
+		update_state(&n->pgstate, PQgetvalue(pgresult, i, PROC_STATE));
+		update_str(&n->usename, PQgetvalue(pgresult, i, PROC_USENAME));
+		n->xtime = atol(PQgetvalue(pgresult, i, PROC_XSTART));
+		n->qtime = atol(PQgetvalue(pgresult, i, PROC_QSTART));
+		n->locks = atoi(PQgetvalue(pgresult, i, PROC_LOCKS));
 	}
 
 	if (pgresult != NULL)
@@ -636,6 +656,8 @@ format_next_process(caddr_t handle)
 	struct handle *hp;
 	char		status[16];
 	int			state;
+
+	struct pg_proc n, *pr = NULL;
 
 	/* find and remember the next proc structure */
 	hp = (struct handle *) handle;
@@ -724,48 +746,24 @@ format_next_process(caddr_t handle)
 			break;
 	}
 
+	memset(&n, 0, sizeof(struct pg_proc));
+	n.pid = PP(pp, pid);
+	pr = RB_FIND(pgproc, &head_proc, &n);
+
 	/* format this entry */
 	snprintf(fmt, sizeof(fmt),
-			smpmode ? smp_Proc_format : up_Proc_format,
+			"%5d %-*.*s %7s %6s %-6.6s %5s %5s %5.2f%% %5d %s",
 			PP(pp, pid),
 			namelength, namelength,
-			"",
-#ifdef SHOW_THREADS
-			PP(pp, numthreads),
-#endif
-#if OSMAJOR <= 4
-			PP(pp, priority) - PZERO,
-#else
-			PP(pp, pri.pri_level) - PZERO,
-#endif
-
-	/*
-	 * normal time		-> nice value -20 - +20 real time 0 - 31 -> nice value
-	 * -52 - -21 idle time 0 - 31 -> nice value +21 - +52
-	 */
-#if OSMAJOR <= 4
-			(PP(pp, rtprio.type) == RTP_PRIO_NORMAL ?
-			 PP(pp, nice) - NZERO :
-			 (RTP_PRIO_IS_REALTIME(PP(pp, rtprio.type)) ?
-			  (PRIO_MIN - 1 - RTP_PRIO_MAX + PP(pp, rtprio.prio)) :
-			  (PRIO_MAX + 1 + PP(pp, rtprio.prio)))),
-#else
-			(PP(pp, pri.pri_class) == PRI_TIMESHARE ?
-			 PP(pp, nice) - NZERO :
-			 (PRI_IS_REALTIME(PP(pp, pri.pri_class))) ?
-			 (PRIO_MIN - 1 - (PRI_MAX_REALTIME - PP(pp, pri.pri_level))) :
-			 (PRIO_MAX + 1 + PP(pp, pri.pri_level) - PRI_MIN_IDLE)),
-#endif
+			pr->usename,
 			format_k(PROCSIZE(pp)),
 			format_k(pagetok(VP(pp, rssize))),
-			status,
-			smpmode ? PP(pp, lastcpu) : 0,
-			format_time(cputime),
-#ifndef SHOW_THREADS
-			100.0 * weighted_cpu(pct, pp),
-#endif
+			backendstatenames[pr->pgstate],
+			format_time(pr->xtime),
+			format_time(pr->qtime),
 			100.0 * pct,
-			printable(cmd));
+			pr->locks,
+			pr->name);
 
 	/* return the result */
 	return (fmt);
@@ -1081,4 +1079,10 @@ swapmode(int *retavail, int *retfree)
 	n = (int) ((double) swapary[0].ksw_used * 100.0 /
 			   (double) swapary[0].ksw_total);
 	return (n);
+}
+
+int
+topproccmp(struct pg_proc *e1, struct pg_proc *e2)
+{
+	return (e1->pid < e2->pid ? -1 : e1->pid > e2->pid);
 }
