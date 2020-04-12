@@ -276,6 +276,7 @@ do_display(struct pg_top_context *pgtctx)
 						(*d_process) (i, format_next_io_r(processes));
 				}
 				break;
+#endif /* __linux__ */
 			case MODE_REPLICATION:
 				for (i = 0; i < active_procs; i++)
 				{
@@ -285,7 +286,6 @@ do_display(struct pg_top_context *pgtctx)
 						(*d_process) (i, format_next_replication_r(processes));
 				}
 				break;
-#endif /* __linux__ */
 			case MODE_PROCESSES:
 			default:
 				for (i = 0; i < active_procs; i++)
@@ -850,8 +850,8 @@ main(int argc, char *argv[])
 	pgtctx.header_options[0][MODE_PROCESSES] = format_header(uname_field);
 #ifdef __linux__
 	pgtctx.header_options[0][MODE_IO_STATS] = fmt_header_io;
-	pgtctx.header_options[0][MODE_REPLICATION] = fmt_header_replication;
 #endif /* __linux__ */
+	pgtctx.header_options[0][MODE_REPLICATION] = fmt_header_replication;
 
 	/* 1 corresponds to headers definitions when remotely connecting to pg */
 	pgtctx.header_options[1][MODE_PROCESSES] = format_header_r(uname_field);

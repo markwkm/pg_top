@@ -169,9 +169,6 @@ static char fmt_header[] =
 char		fmt_header_io[] =
 "  PID    IOPS   IORPS   IOWPS READS WRITES COMMAND";
 
-char		fmt_header_replication[] =
-"  PID USERNAME APPLICATION          CLIENT STATE     PRIMARY    SENT       WRITE      FLUSH      REPLAY      SLAG  WLAG  FLAG  RLAG";
-
 /* these are names given to allowed sorting orders -- first is default */
 static char *ordernames[] =
 {
