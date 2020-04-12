@@ -98,6 +98,20 @@ struct pg_proc
 	unsigned long xtime;
 	unsigned long qtime;
 	unsigned int locks;
+
+	/* Replication data */
+	char	   *application_name;
+	char	   *client_addr;
+	char	   *repstate;
+	char	   *primary;
+	char	   *sent;
+	char	   *write;
+	char	   *flush;
+	char	   *replay;
+	long long	sent_lag;
+	long long	write_lag;
+	long long	flush_lag;
+	long long	replay_lag;
 };
 
 int			topproccmp(struct pg_proc *, struct pg_proc *);
@@ -528,7 +542,14 @@ get_process_info(struct system_info *si,
 	connect_to_db(conninfo);
 	if (conninfo->connection != NULL)
 	{
-		pgresult = pg_processes(conninfo->connection);
+		if (mode == MODE_REPLICATION)
+		{
+			pgresult = pg_replication(conninfo->connection);
+		}
+		else
+		{
+			pgresult = pg_processes(conninfo->connection);
+		}
 		nproc = PQntuples(pgresult);
 		if (nproc > onproc)
 			pbase = (struct kinfo_proc *)
@@ -615,13 +636,35 @@ get_process_info(struct system_info *si,
 			n = p;
 		}
 
-		update_str(&n->name, PQgetvalue(pgresult, i, PROC_QUERY));
-		printable(n->name);
-		update_state(&n->pgstate, PQgetvalue(pgresult, i, PROC_STATE));
-		update_str(&n->usename, PQgetvalue(pgresult, i, PROC_USENAME));
-		n->xtime = atol(PQgetvalue(pgresult, i, PROC_XSTART));
-		n->qtime = atol(PQgetvalue(pgresult, i, PROC_QSTART));
-		n->locks = atoi(PQgetvalue(pgresult, i, PROC_LOCKS));
+		if (mode == MODE_REPLICATION)
+		{
+			update_str(&n->usename, PQgetvalue(pgresult, i, REP_USENAME));
+			update_str(&n->application_name,
+					PQgetvalue(pgresult, i, REP_APPLICATION_NAME));
+			update_str(&n->client_addr,
+					PQgetvalue(pgresult, i, REP_CLIENT_ADDR));
+			update_str(&n->repstate, PQgetvalue(pgresult, i, REP_STATE));
+			update_str(&n->primary,
+					PQgetvalue(pgresult, i, REP_WAL_INSERT));
+			update_str(&n->sent, PQgetvalue(pgresult, i, REP_SENT));
+			update_str(&n->write, PQgetvalue(pgresult, i, REP_WRITE));
+			update_str(&n->flush, PQgetvalue(pgresult, i, REP_FLUSH));
+			update_str(&n->replay, PQgetvalue(pgresult, i, REP_REPLAY));
+			n->sent_lag = atol(PQgetvalue(pgresult, i, REP_SENT_LAG));
+			n->write_lag = atol(PQgetvalue(pgresult, i, REP_WRITE_LAG));
+			n->flush_lag = atol(PQgetvalue(pgresult, i, REP_FLUSH_LAG));
+			n->replay_lag = atol(PQgetvalue(pgresult, i, REP_REPLAY_LAG));
+		}
+		else
+		{
+			update_str(&n->name, PQgetvalue(pgresult, i, PROC_QUERY));
+			printable(n->name);
+			update_state(&n->pgstate, PQgetvalue(pgresult, i, PROC_STATE));
+			update_str(&n->usename, PQgetvalue(pgresult, i, PROC_USENAME));
+			n->xtime = atol(PQgetvalue(pgresult, i, PROC_XSTART));
+			n->qtime = atol(PQgetvalue(pgresult, i, PROC_QSTART));
+			n->locks = atoi(PQgetvalue(pgresult, i, PROC_LOCKS));
+		}
 	}
 
 	if (pgresult != NULL)
@@ -769,6 +812,43 @@ format_next_process(caddr_t handle)
 	return (fmt);
 }
 
+char *
+format_next_replication(caddr_t handle)
+{
+	static char fmt[MAX_COLS];	/* static area where result is built */
+	register struct kinfo_proc *pp;
+	struct handle *hp;
+	struct pg_proc n, *p = NULL;
+
+	/* find and remember the next proc structure */
+	hp = (struct handle *) handle;
+	pp = *(hp->next_proc++);
+	hp->remaining--;
+
+	memset(&n, 0, sizeof(struct pg_proc));
+	n.pid = PP(pp, pid);
+	p = RB_FIND(pgproc, &head_proc, &n);
+
+	snprintf(fmt, sizeof(fmt),
+			 "%5d %-8.8s %-11.11s %15s %-9.9s %-10.10s %-10.10s %-10.10s %-10.10s %-10.10s %5s %5s %5s %5s",
+			 p->pid,
+			 p->usename,
+			 p->application_name,
+			 p->client_addr,
+			 p->repstate,
+			 p->primary,
+			 p->sent,
+			 p->write,
+			 p->flush,
+			 p->replay,
+			 format_b(p->sent_lag),
+			 format_b(p->write_lag),
+			 format_b(p->flush_lag),
+			 format_b(p->replay_lag));
+
+	/* return the result */
+	return (fmt);
+}
 
 /*
  *	getkval(offset, ptr, size, refstr) - get a value out of the kernel.
