@@ -1253,6 +1253,8 @@ static int	header_length;
 void
 i_header(char *text)
 {
+	if (text == NULL)
+		return;
 	header_length = strlen(text);
 	if (header_status == ON)
 	{
