@@ -115,9 +115,9 @@ void		get_system_info(struct system_info *);
 caddr_t		get_process_info(struct system_info *, struct process_select *, int,
 							 struct pg_conninfo_ctx *, int);
 char	   *format_header(char *);
-#ifdef __linux__
+#if defined(__linux__) || defined (__FreeBSD__)
 char	   *format_next_io(caddr_t);
-#endif /* __linux__ */
+#endif /* defined(__linux__) || defined (__FreeBSD__) */
 char	   *format_next_process(caddr_t);
 char	   *format_next_replication(caddr_t);
 uid_t		proc_owner(pid_t);
