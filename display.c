@@ -1286,8 +1286,12 @@ u_header(char *text)
 void
 i_process(int line, char *thisline)
 {
+	if (thisline == NULL)
+		return;
+
 	/* truncate the line to conform to our current screen width */
-	thisline[display_width] = '\0';
+	if (strlen(thisline) > display_width)
+		thisline[display_width] = '\0';
 
 	/* write the line out */
 	display_write(0, y_procs + line, 0, 1, thisline);
