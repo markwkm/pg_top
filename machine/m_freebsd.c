@@ -92,6 +92,9 @@ struct pg_proc
 	RB_ENTRY(pg_proc) entry;
 	pid_t		pid;
 
+	/* This will be the previous copy of ki_rusage. */
+    struct rusage ki_rusage;
+
 	char *name;
 	char *usename;
 	int pgstate;
@@ -131,6 +134,7 @@ RB_GENERATE(pgproc, pg_proc, entry, topproccmp)
 #define VP(pp, field) ((pp)->ki_##field)
 #define PRUID(pp) ((pp)->ki_ruid)
 #endif
+#define RU(pp)	(&(pp)->ki_rusage)
 
 /* what we consider to be process size: */
 #if OSMAJOR <= 4
@@ -185,6 +189,9 @@ char	   *state_abbrev[] =
 	"", "START", "RUN\0\0\0", "SLEEP", "STOP", "ZOMB",
 };
 
+
+char fmt_header_io[] =
+		"PID   USERNAME     VCSW  IVCSW   READ  WRITE  FAULT  TOTAL COMMAND";
 
 static kvm_t * kd;
 
@@ -634,6 +641,7 @@ get_process_info(struct system_info *si,
 		{
 			free(n);
 			n = p;
+			memcpy(RU(n), RU(&junk2[0]), sizeof(struct rusage));
 		}
 
 		if (mode == MODE_REPLICATION)
@@ -688,6 +696,40 @@ get_process_info(struct system_info *si,
 
 char		fmt[MAX_COLS];		/* static area where result is built */
 char		cmd[MAX_COLS];
+
+char *
+format_next_io(caddr_t handle)
+{
+	register struct kinfo_proc *pp;
+	struct handle *hp;
+	struct pg_proc n, *p = NULL;
+
+	/* find and remember the next proc structure */
+	hp = (struct handle *) handle;
+	pp = *(hp->next_proc++);
+	hp->remaining--;
+
+	memset(&n, 0, sizeof(struct pg_proc));
+	n.pid = PP(pp, pid);
+	p = RB_FIND(pgproc, &head_proc, &n);
+
+	snprintf(fmt, sizeof(fmt),
+			"%5d %-*.*s %6ld %6ld %6ld %6ld %6ld %6ld %s",
+			PP(pp, pid),
+			namelength, namelength,
+			p->usename,
+			RU(pp)->ru_nvcsw - RU(p)->ru_nvcsw,
+			RU(pp)->ru_nivcsw - RU(p)->ru_nivcsw,
+			RU(pp)->ru_inblock - RU(p)->ru_inblock,
+			RU(pp)->ru_oublock - RU(p)->ru_oublock,
+			RU(pp)->ru_majflt - RU(p)->ru_majflt,
+			(RU(pp)->ru_inblock - RU(p)->ru_inblock) +
+					(RU(pp)->ru_oublock - RU(p)->ru_oublock) +
+					(RU(pp)->ru_majflt - RU(p)->ru_majflt),
+			p->name);
+
+	return fmt;
+}
 
 char *
 format_next_process(caddr_t handle)
