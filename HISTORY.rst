@@ -24,6 +24,7 @@ YYYY-MM-DD v4.0.0
   -x flag
 * Fix view of locks held by process.  Separate table and index locks.  Also
   showing schema.
+* Handle longer pids on Linux
 
 2013-07-31 v3.7.0
 -----------------

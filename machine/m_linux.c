@@ -164,10 +164,10 @@ struct swap_t
 } swap_activity;
 
 static char fmt_header[] =
-"  PID X         SIZE   RES STATE   XTIME  QTIME  %CPU LOCKS COMMAND";
+"    PID X           SIZE   RES STATE   XTIME  QTIME  %CPU LOCKS COMMAND";
 
 char		fmt_header_io[] =
-"  PID    IOPS   IORPS   IOWPS READS WRITES COMMAND";
+"    PID  IOPS   IORPS   IOWPS READS WRITES COMMAND";
 
 /* these are names given to allowed sorting orders -- first is default */
 static char *ordernames[] =
@@ -990,7 +990,7 @@ format_next_process(caddr_t handle)
 	struct top_proc *p = &pgtable[proc_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			 "%5d %-8.8s %5s %5s %-6s %5s %5s %5.1f %5d %s",
+			 "%7d %-10.8s %5s %5s %-6s %5s %5s %5.1f %5d %s",
 			 p->pid,
 			 p->usename,
 			 format_k(p->size),
