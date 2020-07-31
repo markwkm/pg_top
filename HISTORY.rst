@@ -25,6 +25,7 @@ YYYY-MM-DD v4.0.0
 * Fix view of locks held by process.  Separate table and index locks.  Also
   showing schema.
 * Handle longer pids on Linux
+* Updated for FreeBSD 12.
 * Updated for OpenBSD 6.7.
 
 2013-07-31 v3.7.0
