@@ -10,6 +10,7 @@
 #define _PG_TOP_H_
 
 #include "machine.h"
+#include "os.h"
 
 /* Log base 2 of 1024 is 10 (2^10 == 1024) */
 #define LOG1024		10

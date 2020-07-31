@@ -34,11 +34,12 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/dkstat.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/sched.h>
 #include <sys/swap.h>
 #include <sys/sysctl.h>
+#include <sys/tree.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,7 +55,6 @@
 #include "loadavg.h"
 
 static long swapmode(long *, long *);
-static char *state_abbr(struct kinfo_proc *);
 static char *format_comm(struct kinfo_proc *);
 
 /* get_process_info passes back a handle.  This is what it looks like: */
@@ -65,6 +65,39 @@ struct handle
 	int			remaining;		/* number of pointers remaining */
 };
 
+struct pg_proc
+{
+	RB_ENTRY(pg_proc) entry;
+	pid_t		pid;
+
+	char *name;
+	char *usename;
+	int pgstate;
+	unsigned long xtime;
+	unsigned long qtime;
+	unsigned int locks;
+
+	/* Replication data */
+	char	   *application_name;
+	char	   *client_addr;
+	char	   *repstate;
+	char	   *primary;
+	char	   *sent;
+	char	   *write;
+	char	   *flush;
+	char	   *replay;
+	long long	sent_lag;
+	long long	write_lag;
+	long long	flush_lag;
+	long long	replay_lag;
+};
+
+int			topproccmp(struct pg_proc *, struct pg_proc *);
+
+RB_HEAD(pgproc, pg_proc) head_proc = RB_INITIALIZER(&head_proc);
+RB_PROTOTYPE(pgproc, pg_proc, entry, topproccmp)
+RB_GENERATE(pgproc, pg_proc, entry, topproccmp)
+
 /* what we consider to be process size: */
 #define PROCSIZE(pp) ((pp)->p_vm_tsize + (pp)->p_vm_dsize + (pp)->p_vm_ssize)
 
@@ -72,13 +105,13 @@ struct handle
  *  These definitions control the format of the per-process area
  */
 static char header[] =
-"  PID X        PRI NICE  SIZE   RES STATE    WAIT      TIME    CPU COMMAND";
+"  PID X         SIZE   RES STATE     XTIME  QTIME  %CPU LOCKS COMMAND";
 
 /* 0123456   -- field to fill in starts at header+6 */
 #define UNAME_START 6
 
 #define Proc_format \
-	"%5d %-8.8s %3d %4d %5s %5s %-8s %-7.7s %6s %5.2f%% %.50s"
+	"%5d %-8.8s %5s %5s %-8s %5s %5s %5.2f %5d %.50s"
 
 /* process state names for the "STATE" column of the display */
 /*
@@ -96,12 +129,7 @@ static int64_t * *cp_old;
 static int64_t * *cp_diff;
 
 /* these are for detailing the process states */
-int			process_states[8];
-char	   *procstatenames[] = {
-	"", " starting, ", " running, ", " idle, ",
-	" stopped, ", " zombie, ", " dead, ", " on processor, ",
-	NULL
-};
+int			process_states[6];
 
 /* these are for detailing the cpu states */
 int64_t    *cpu_states;
@@ -225,9 +253,9 @@ void
 get_system_info(struct system_info *si)
 {
 	static int	sysload_mib[] = {CTL_VM, VM_LOADAVG};
-	static int	vmtotal_mib[] = {CTL_VM, VM_METER};
+	static int uvmexp_mib[] = {CTL_VM, VM_UVMEXP};
 	struct loadavg sysload;
-	struct vmtotal vmtotal;
+	struct uvmexp uvmexp;
 	double	   *infoloadp;
 	size_t		size;
 	int			i;
@@ -241,6 +269,7 @@ get_system_info(struct system_info *si)
 	 * is more than 1 process.
 	 */
 	if (nproc > 1)
+	{
 		if (ncpu > 1)
 		{
 			int			cp_time_mib[] = {CTL_KERN, KERN_CPTIME2, 0};
@@ -275,6 +304,7 @@ get_system_info(struct system_info *si)
 								   cp_old[0], cp_diff[0]);
 			}
 		}
+	}
 
 	size = sizeof(sysload);
 	if (sysctl(sysload_mib, 2, &sysload, &size, NULL, 0) < 0)
@@ -285,18 +315,18 @@ get_system_info(struct system_info *si)
 
 
 	/* get total -- systemwide main memory usage structure */
-	size = sizeof(vmtotal);
-	if (sysctl(vmtotal_mib, 2, &vmtotal, &size, NULL, 0) < 0)
+	size = sizeof(uvmexp);
+	if (sysctl(uvmexp_mib, 2, &uvmexp, &size, NULL, 0) < 0)
 	{
 		warn("sysctl failed");
-		bzero(&vmtotal, sizeof(vmtotal));
+		bzero(&uvmexp, sizeof(uvmexp));
 	}
 	/* convert memory stats to Kbytes */
 	memory_stats[0] = -1;
-	memory_stats[1] = pagetok(vmtotal.t_arm);
-	memory_stats[2] = pagetok(vmtotal.t_rm);
+	memory_stats[1] = pagetok(uvmexp.active);
+	memory_stats[2] = pagetok(uvmexp.npages - uvmexp.free);
 	memory_stats[3] = -1;
-	memory_stats[4] = pagetok(vmtotal.t_free);
+	memory_stats[4] = pagetok(uvmexp.free);
 	memory_stats[5] = -1;
 
 	if (!swapmode(&memory_stats[6], &memory_stats[7]))
@@ -315,12 +345,9 @@ static struct handle handle;
 
 caddr_t
 get_process_info(struct system_info *si, struct process_select *sel,
-				 int compare_index, const char *values[])
+				 int compare_index, struct pg_conninfo_ctx *conninfo, int mode)
 {
 	int			show_idle,
-				show_system,
-				show_threads,
-				show_uid,
 				show_cmd;
 	int			total_procs,
 				active_procs;
@@ -330,8 +357,8 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	size_t		size;
 
 	int			i;
-	PGconn	   *pgconn;
 	PGresult   *pgresult = NULL;
+	struct pg_proc *n, *p;
 
 	size = (size_t) sizeof(struct kinfo_proc);
 	mib[0] = CTL_KERN;
@@ -341,15 +368,22 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	mib[5] = 1;
 
 	nproc = 0;
-	pgconn = connect_to_db(values);
-	if (pgconn != NULL)
+	connect_to_db(conninfo);
+	if (conninfo->connection != NULL)
 	{
-		pgresult = pg_processes(pgconn);
+		if (mode == MODE_REPLICATION)
+		{
+			pgresult = pg_replication(conninfo->connection);
+		}
+		else
+		{
+			pgresult = pg_processes(conninfo->connection);
+		}
 		nproc = PQntuples(pgresult);
-		pbase = (struct kinfo_proc *) realloc(pbase,
-											  sizeof(struct kinfo_proc *) * nproc);
+		if (nproc > onproc)
+			pbase = (struct kinfo_proc *)
+					realloc(pbase, sizeof(struct kinfo_proc) * nproc);
 	}
-	PQfinish(pgconn);
 
 	if (nproc > onproc)
 		pref = (struct kinfo_proc **) realloc(pref,
@@ -364,7 +398,6 @@ get_process_info(struct system_info *si, struct process_select *sel,
 
 	/* set up flags which define what we are going to select */
 	show_idle = sel->idle;
-	show_uid = sel->uid != (uid_t) -1;
 	show_cmd = sel->command != NULL;
 
 	/* count up process states and get pointers to interesting procs */
@@ -376,7 +409,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	for (pp = pbase; pp < &pbase[nproc]; pp++)
 	{
 		mib[3] = atoi(PQgetvalue(pgresult, i, 0));
-		if (sysctl(mib, 6, &pbase[i++], &size, NULL, 0) != 0)
+		if (sysctl(mib, 6, &pbase[i], &size, NULL, 0) != 0)
 		{
 			/*
 			 * It appears that when pg_top is the only process accessing the
@@ -385,7 +418,6 @@ get_process_info(struct system_info *si, struct process_select *sel,
 			 * throws any error, assume that is the case and adjust pbase
 			 * accordingly.
 			 */
-			--i;
 			--nproc;
 			continue;
 		}
@@ -397,15 +429,14 @@ get_process_info(struct system_info *si, struct process_select *sel,
 		 * ignored unless show_system is set.
 		 */
 		if (pp->p_stat != 0 &&
-			(show_system || (pp->p_flag & P_SYSTEM) == 0) &&
-			(show_threads || (pp->p_flag & P_THREAD) == 0))
+			((pp->p_flag & P_SYSTEM) == 0) &&
+			((pp->p_flag & P_THREAD) == 0))
 		{
 			total_procs++;
 			process_states[(unsigned char) pp->p_stat]++;
 			if (pp->p_stat != SZOMB &&
 				(show_idle || pp->p_pctcpu != 0 ||
 				 pp->p_stat == SRUN) &&
-				(!show_uid || pp->p_ruid == sel->uid) &&
 				(!show_cmd || strstr(pp->p_comm,
 									 sel->command)))
 			{
@@ -413,10 +444,59 @@ get_process_info(struct system_info *si, struct process_select *sel,
 				active_procs++;
 			}
 		}
+
+		n = malloc(sizeof(struct pg_proc));
+		if (n == NULL)
+		{
+			fprintf(stderr, "malloc error\n");
+			if (pgresult != NULL)
+				PQclear(pgresult);
+			disconnect_from_db(conninfo);
+			exit(1);
+		}
+		memset(n, 0, sizeof(struct pg_proc));
+		n->pid = atoi(PQgetvalue(pgresult, i, 0));
+		p = RB_INSERT(pgproc, &head_proc, n);
+		if (p != NULL)
+		{
+			free(n);
+			n = p;
+		}
+
+		if (mode == MODE_REPLICATION)
+		{
+			update_str(&n->usename, PQgetvalue(pgresult, i, REP_USENAME));
+			update_str(&n->application_name,
+					PQgetvalue(pgresult, i, REP_APPLICATION_NAME));
+			update_str(&n->client_addr,
+					PQgetvalue(pgresult, i, REP_CLIENT_ADDR));
+			update_str(&n->repstate, PQgetvalue(pgresult, i, REP_STATE));
+			update_str(&n->primary,
+					PQgetvalue(pgresult, i, REP_WAL_INSERT));
+			update_str(&n->sent, PQgetvalue(pgresult, i, REP_SENT));
+			update_str(&n->write, PQgetvalue(pgresult, i, REP_WRITE));
+			update_str(&n->flush, PQgetvalue(pgresult, i, REP_FLUSH));
+			update_str(&n->replay, PQgetvalue(pgresult, i, REP_REPLAY));
+			n->sent_lag = atol(PQgetvalue(pgresult, i, REP_SENT_LAG));
+			n->write_lag = atol(PQgetvalue(pgresult, i, REP_WRITE_LAG));
+			n->flush_lag = atol(PQgetvalue(pgresult, i, REP_FLUSH_LAG));
+			n->replay_lag = atol(PQgetvalue(pgresult, i, REP_REPLAY_LAG));
+		}
+		else
+		{
+			update_str(&n->name, PQgetvalue(pgresult, i, PROC_QUERY));
+			printable(n->name);
+			update_state(&n->pgstate, PQgetvalue(pgresult, i, PROC_STATE));
+			update_str(&n->usename, PQgetvalue(pgresult, i, PROC_USENAME));
+			n->xtime = atol(PQgetvalue(pgresult, i, PROC_XSTART));
+			n->qtime = atol(PQgetvalue(pgresult, i, PROC_QSTART));
+			n->locks = atoi(PQgetvalue(pgresult, i, PROC_LOCKS));
+		}
+		++i;
 	}
 
 	/* if requested, sort the "interesting" processes */
-	if (compare_index != 0)
+	if (compare_index >= 0)
 		qsort((char *) pref, active_procs,
 			  sizeof(struct kinfo_proc *), proc_compares[compare_index]);
 	/* remember active and total counts */
@@ -430,20 +510,6 @@ get_process_info(struct system_info *si, struct process_select *sel,
 }
 
 char		fmt[MAX_COLS];		/* static area where result is built */
-
-static char *
-state_abbr(struct kinfo_proc *pp)
-{
-	static char buf[10];
-
-	if (ncpu > 1 && pp->p_cpuid != KI_NOCPU)
-		snprintf(buf, sizeof buf, "%s/%llu",
-				 state_abbrev[(unsigned char) pp->p_stat], pp->p_cpuid);
-	else
-		snprintf(buf, sizeof buf, "%s",
-				 state_abbrev[(unsigned char) pp->p_stat]);
-	return buf;
-}
 
 static char *
 format_comm(struct kinfo_proc *kp)
@@ -481,18 +547,23 @@ format_comm(struct kinfo_proc *kp)
 }
 
 char *
-format_next_process(caddr_t handle, char *(*get_userid) (uid_t))
+format_next_process(caddr_t handle)
 {
 	char	   *p_wait;
 	struct kinfo_proc *pp;
 	struct handle *hp;
 	int			cputime;
 	double		pct;
+	struct pg_proc n, *p = NULL;
 
 	/* find and remember the next proc structure */
 	hp = (struct handle *) handle;
 	pp = *(hp->next_proc++);
 	hp->remaining--;
+
+	memset(&n, 0, sizeof(struct pg_proc));
+	n.pid = pp->p_pid;
+	p = RB_FIND(pgproc, &head_proc, &n);
 
 	cputime = pp->p_rtime_sec + ((pp->p_rtime_usec + 500000) / 1000000);
 
@@ -506,14 +577,53 @@ format_next_process(caddr_t handle, char *(*get_userid) (uid_t))
 
 	/* format this entry */
 	snprintf(fmt, sizeof fmt, Proc_format,
-			 pp->p_pid, (*get_userid) (pp->p_ruid),
-			 pp->p_priority - PZERO, pp->p_nice - NZERO,
+			 pp->p_pid, p->usename,
 			 format_k(pagetok(PROCSIZE(pp))),
 			 format_k(pagetok(pp->p_vm_rssize)),
-			 (pp->p_stat == SSLEEP && pp->p_slptime > maxslp) ?
-			 "idle" : state_abbr(pp),
-			 p_wait, format_time(cputime), 100.0 * pct,
+			 backendstatenames[p->pgstate],
+			 format_time(p->xtime),
+			 format_time(p->qtime),
+			 100.0 * pct,
+			 p->locks,
 			 printable(format_comm(pp)));
+
+	/* return the result */
+	return (fmt);
+}
+
+char *
+format_next_replication(caddr_t handle)
+{
+	static char fmt[MAX_COLS];	/* static area where result is built */
+	register struct kinfo_proc *pp;
+	struct handle *hp;
+	struct pg_proc n, *p = NULL;
+
+	/* find and remember the next proc structure */
+	hp = (struct handle *) handle;
+	pp = *(hp->next_proc++);
+	hp->remaining--;
+
+	memset(&n, 0, sizeof(struct pg_proc));
+	n.pid = pp->p_pid;
+	p = RB_FIND(pgproc, &head_proc, &n);
+
+	snprintf(fmt, sizeof(fmt),
+			 "%5d %-8.8s %-11.11s %15s %-9.9s %-10.10s %-10.10s %-10.10s %-10.10s %-10.10s %5s %5s %5s %5s",
+			 p->pid,
+			 p->usename,
+			 p->application_name,
+			 p->client_addr,
+			 p->repstate,
+			 p->primary,
+			 p->sent,
+			 p->write,
+			 p->flush,
+			 p->replay,
+			 format_b(p->sent_lag),
+			 format_b(p->write_lag),
+			 format_b(p->flush_lag),
+			 format_b(p->replay_lag));
 
 	/* return the result */
 	return (fmt);
@@ -749,4 +859,10 @@ swapmode(long *used, long *total)
 	}
 	free(swdev);
 	return 1;
+}
+
+int
+topproccmp(struct pg_proc *e1, struct pg_proc *e2)
+{
+	return (e1->pid < e2->pid ? -1 : e1->pid > e2->pid);
 }

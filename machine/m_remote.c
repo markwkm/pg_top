@@ -3,7 +3,7 @@
  */
 
 #include <stdlib.h>
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <sys/tree.h>
 #endif /* __FreeBSD__*/
 #ifdef __linux__
