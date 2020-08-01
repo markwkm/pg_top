@@ -5,7 +5,7 @@
   <metadata_license>PostgreSQL</metadata_license>
   <project_license>PostgreSQL</project_license>
   <name>pg_top</name>
-  <summary>'top' for PostgreSQL>
+  <summary>'top' for PostgreSQL</summary>
 
   <description>
     <p>
