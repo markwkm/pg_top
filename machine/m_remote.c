@@ -2,6 +2,10 @@
  * Copyright (c) 2008-2009, Mark Wong
  */
 
+#ifdef __linux__
+#define _GNU_SOURCE
+#endif /* __linux__ */
+
 #include <stdlib.h>
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <sys/tree.h>

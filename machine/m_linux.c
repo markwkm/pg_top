@@ -17,6 +17,8 @@
  * Ported to 2.4 by William LeFebvre
  */
 
+#define _GNU_SOURCE
+
 #include "config.h"
 
 #include <sys/types.h>
