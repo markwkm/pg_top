@@ -973,7 +973,7 @@ format_next_io(caddr_t handle)
 	struct top_proc *p = &pgtable[proc_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			"%5d %7.0f %7.0f %7.0f %5s %6s %s",
+			"%7d %7.0f %7.0f %7.0f %5s %6s %s",
 			p->pid,
 			diff_stat(p->iops, p->index) / timediff,
 			diff_stat(p->syscr, p->index) / timediff,
@@ -1015,7 +1015,7 @@ format_next_replication(caddr_t handle)
 	struct top_proc *p = &pgtable[proc_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			 "%5d %-8.8s %-11.11s %15s %-9.9s %-10.10s %-10.10s %-10.10s %-10.10s %-10.10s %5s %5s %5s %5s",
+			 "%7d %-8.8s %-11.11s %15s %-9.9s %-10.10s %-10.10s %-10.10s %-10.10s %-10.10s %5s %5s %5s %5s",
 			 p->pid,
 			 p->usename,
 			 p->application_name,

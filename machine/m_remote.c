@@ -209,13 +209,13 @@ static char *swapnames[NSWAPSTATS + 1] =
 };
 
 static char fmt_header[] =
-"  PID X         SIZE   RES STATE   XTIME  QTIME  %CPU LOCKS COMMAND";
+"      PID X           SIZE   RES STATE   XTIME  QTIME  %CPU LOCKS COMMAND";
 
 char		fmt_header_io_r[] =
-"  PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
+"    PID RCHAR WCHAR   SYSCR   SYSCW READS WRITES CWRITES COMMAND";
 
 char		fmt_header_replication_r[] =
-"  PID USERNAME APPLICATION          CLIENT STATE     PRIMARY    SENT       WRITE      FLUSH      REPLAY      SLAG  WLAG  FLAG  RLAG";
+"    PID USERNAME APPLICATION          CLIENT STATE     PRIMARY    SENT       WRITE      FLUSH      REPLAY      SLAG  WLAG  FLAG  RLAG";
 
 /* Now the array that maps process state to a weight. */
 
@@ -693,7 +693,7 @@ format_next_io_r(caddr_t handler)
 	struct top_proc_r *p = &pgrtable[proc_r_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			"%5d %5s %5s %7lld %7lld %5s %6s %7s %s",
+			"%7d %5s %5s %7lld %7lld %5s %6s %7s %s",
 			(int) p->pid,
 			format_b(p->rchar_diff),
 			format_b(p->wchar_diff),
@@ -714,7 +714,7 @@ format_next_process_r(caddr_t handler)
 	struct top_proc_r *p = &pgrtable[proc_r_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			 "%5d %-8.8s %5s %5s %-6s %5s %5s %5.1f %5d %s",
+			 "%7d %-8.8s %5s %5s %-6s %5s %5s %5.1f %5d %s",
 			 (int) p->pid,		/* Some OS's need to cast pid_t to int. */
 			 p->usename,
 			 format_k(p->size),
@@ -736,7 +736,7 @@ format_next_replication_r(caddr_t handle)
 	struct top_proc_r *p = &pgrtable[proc_r_index++];
 
 	snprintf(fmt, sizeof(fmt),
-			 "%5d %-8.8s %-11.11s %15s %-9.9s %9s %9s %9s %9s %9s %5s %5s %5s %5s",
+			 "%7d %-8.8s %-11.11s %15s %-9.9s %9s %9s %9s %9s %9s %5s %5s %5s %5s",
 			 p->pid,
 			 p->usename,
 			 p->application_name,

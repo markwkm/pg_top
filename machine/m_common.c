@@ -25,7 +25,7 @@ char	   *procstatenames[] =
 };
 
 char		fmt_header_replication[] =
-"  PID USERNAME APPLICATION          CLIENT STATE     PRIMARY    SENT       WRITE      FLUSH      REPLAY      SLAG  WLAG  FLAG  RLAG";
+"    PID USERNAME APPLICATION          CLIENT STATE     PRIMARY    SENT       WRITE      FLUSH      REPLAY      SLAG  WLAG  FLAG  RLAG";
 
 void
 update_state(int *pgstate, char *state)

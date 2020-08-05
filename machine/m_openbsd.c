@@ -609,7 +609,7 @@ format_next_replication(caddr_t handle)
 	p = RB_FIND(pgproc, &head_proc, &n);
 
 	snprintf(fmt, sizeof(fmt),
-			 "%5d %-8.8s %-11.11s %15s %-9.9s %-10.10s %-10.10s %-10.10s %-10.10s %-10.10s %5s %5s %5s %5s",
+			 "%7d %-8.8s %-11.11s %15s %-9.9s %-10.10s %-10.10s %-10.10s %-10.10s %-10.10s %5s %5s %5s %5s",
 			 p->pid,
 			 p->usename,
 			 p->application_name,
