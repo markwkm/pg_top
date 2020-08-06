@@ -25,7 +25,8 @@ environment.
 At the time of this document, PostgreSQL 10 was configured with the following
 options::
 
-  ./configure --without-ldap --without-readline --without-zlib --without-gssapi
+  ./configure --without-ldap --without-readline --without-zlib \
+        --without-gssapi --with-openssl
 
 Don't forget you may have to set both PATH and LD_LIBRARY_PATH appropriately
 depending on where the custom build of PostgreSQL is installed.
