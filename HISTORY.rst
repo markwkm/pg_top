@@ -5,8 +5,10 @@ YYYY-MM-DD v4.0.0
 -----------------
 
 * Replace autoconf with cmake
-* Remove table stats monitoring, use pgstat instead
-* Remove index stats monitoring, use pgstat instead
+* Remove table stats monitoring, use pg_systat instead
+  https://pg_systat.gitlab.io/
+* Remove index stats monitoring, use pg_systat instead
+  https://pg_systat.gitlab.io/
 * Remove kill and renice command, and stop displaying nice priority
 * Show backend state instead of operating system state
 * Show database username instead of operating system username
