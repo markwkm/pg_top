@@ -169,7 +169,7 @@ static char fmt_header[] =
 "    PID X           SIZE   RES STATE   XTIME  QTIME  %CPU LOCKS COMMAND";
 
 char		fmt_header_io[] =
-"    PID  IOPS   IORPS   IOWPS READS WRITES COMMAND";
+"    PID    IOPS   IORPS   IOWPS READS WRITES COMMAND";
 
 /* these are names given to allowed sorting orders -- first is default */
 static char *ordernames[] =
