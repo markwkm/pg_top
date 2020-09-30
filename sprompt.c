@@ -28,9 +28,7 @@
  */
 #include "c.h"
 
-#ifdef HAVE_TERMIOS_H
 #include <termios.h>
-#endif
 
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
@@ -42,15 +40,8 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	FILE	   *termin,
 			   *termout;
 
-#ifdef HAVE_TERMIOS_H
 	struct termios t_orig,
 				t;
-#else
-#ifdef WIN32
-	HANDLE		t = NULL;
-	LPDWORD		t_orig = NULL;
-#endif
-#endif
 
 	destination = (char *) malloc(maxlen + 1);
 	if (!destination)
@@ -63,10 +54,6 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	termin = fopen(DEVTTY, "r");
 	termout = fopen(DEVTTY, "w");
 	if (!termin || !termout
-#ifdef WIN32
-	/* See DEVTTY comment for msys */
-		|| (getenv("OSTYPE") && strcmp(getenv("OSTYPE"), "msys") == 0)
-#endif
 		)
 	{
 		if (termin)
@@ -77,7 +64,6 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		termout = stderr;
 	}
 
-#ifdef HAVE_TERMIOS_H
 	if (!echo)
 	{
 		tcgetattr(fileno(termin), &t);
@@ -85,22 +71,6 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		t.c_lflag &= ~ECHO;
 		tcsetattr(fileno(termin), TCSAFLUSH, &t);
 	}
-#else
-#ifdef WIN32
-	if (!echo)
-	{
-		/* get a new handle to turn echo off */
-		t_orig = (LPDWORD) malloc(sizeof(DWORD));
-		t = GetStdHandle(STD_INPUT_HANDLE);
-
-		/* save the old configuration first */
-		GetConsoleMode(t, t_orig);
-
-		/* set to the new mode */
-		SetConsoleMode(t, ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
-	}
-#endif
-#endif
 
 	if (prompt)
 	{
@@ -130,25 +100,12 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		/* remove trailing newline */
 		destination[length - 1] = '\0';
 
-#ifdef HAVE_TERMIOS_H
 	if (!echo)
 	{
 		tcsetattr(fileno(termin), TCSAFLUSH, &t_orig);
 		fputs("\n", termout);
 		fflush(termout);
 	}
-#else
-#ifdef WIN32
-	if (!echo)
-	{
-		/* reset to the original console mode */
-		SetConsoleMode(t, *t_orig);
-		fputs("\n", termout);
-		fflush(termout);
-		free(t_orig);
-	}
-#endif
-#endif
 
 	if (termin != stdin)
 	{

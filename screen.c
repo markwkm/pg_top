@@ -26,22 +26,14 @@
 #include <sgtty.h>
 #define SGTTY
 #else
-#ifdef TCGETA
-#define TERMIO
-#include <termio.h>
-#else
-#define TERMIOS
 #include <termios.h>
-#endif
-#endif
-#if defined(TERMIO) || defined(TERMIOS)
+#endif /* CBREAK */
 #ifndef TAB3
 #ifdef OXTABS
 #define TAB3 OXTABS
 #else
 #define TAB3 0
-#endif
-#endif
+#endif /* OXTABS */
 #endif
 #include "screen.h"
 #include "boolean.h"
@@ -74,14 +66,8 @@ char	   *terminal_end;
 static struct sgttyb old_settings;
 static struct sgttyb new_settings;
 #endif
-#ifdef TERMIO
-static struct termio old_settings;
-static struct termio new_settings;
-#endif
-#ifdef TERMIOS
 static struct termios old_settings;
 static struct termios new_settings;
-#endif
 static char is_a_terminal = No;
 
 #ifdef TOStop
@@ -289,18 +275,10 @@ init_termcap(int interactive)
 		smart_terminal = No;
 	}
 #endif
-#ifdef TERMIO
-	if (ioctl(STDOUT, TCGETA, &old_settings) == -1)
-	{
-		smart_terminal = No;
-	}
-#endif
-#ifdef TERMIOS
 	if (tcgetattr(STDOUT, &old_settings) == -1)
 	{
 		smart_terminal = No;
 	}
-#endif
 }
 
 void
@@ -337,31 +315,6 @@ init_screen()
 		putcap(terminal_init);
 	}
 #endif
-#ifdef TERMIO
-	if (ioctl(STDOUT, TCGETA, &old_settings) != -1)
-	{
-		/* copy the settings so we can modify them */
-		new_settings = old_settings;
-
-		/* turn off ICANON, character echo and tab expansion */
-		new_settings.c_lflag &= ~(ICANON | ECHO);
-		new_settings.c_oflag &= ~(TAB3);
-		new_settings.c_cc[VMIN] = 1;
-		new_settings.c_cc[VTIME] = 0;
-		(void) ioctl(STDOUT, TCSETA, &new_settings);
-
-		/* remember the erase and kill characters */
-		ch_erase = old_settings.c_cc[VERASE];
-		ch_kill = old_settings.c_cc[VKILL];
-
-		/* remember that it really is a terminal */
-		is_a_terminal = Yes;
-
-		/* send the termcap initialization string */
-		putcap(terminal_init);
-	}
-#endif
-#ifdef TERMIOS
 	if (tcgetattr(STDOUT, &old_settings) != -1)
 	{
 		/* copy the settings so we can modify them */
@@ -384,7 +337,6 @@ init_screen()
 		/* send the termcap initialization string */
 		putcap(terminal_init);
 	}
-#endif
 
 	if (!is_a_terminal)
 	{
@@ -414,12 +366,7 @@ end_screen()
 		(void) ioctl(STDOUT, TIOCLSET, &old_lword);
 #endif
 #endif
-#ifdef TERMIO
-		(void) ioctl(STDOUT, TCSETA, &old_settings);
-#endif
-#ifdef TERMIOS
 		(void) tcsetattr(STDOUT, TCSADRAIN, &old_settings);
-#endif
 	}
 }
 
@@ -435,12 +382,7 @@ reinit_screen()
 		(void) ioctl(STDOUT, TIOCLSET, &new_lword);
 #endif
 #endif
-#ifdef TERMIO
-		(void) ioctl(STDOUT, TCSETA, &new_settings);
-#endif
-#ifdef TERMIOS
 		(void) tcsetattr(STDOUT, TCSADRAIN, &new_settings);
-#endif
 	}
 
 	/* send init string */
