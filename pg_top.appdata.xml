@@ -30,9 +30,9 @@
   </provides>
 
   <releases>
-    <release version="4.0beta1" date="2020-08-05">
+    <release version="4.0.0" date="2020-10-8">
       <description>
-        <p>4.0 Beta 1 release.</p>
+        <p>4.0.0 release.</p>
       </description>
     </release>
   </releases>
