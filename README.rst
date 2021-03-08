@@ -24,7 +24,7 @@ created on the database to be monitored.  Any operating system that pg_proctab
 supports can be monitored remotely on any operating system.  See details for
 pg_proctab here:
 
-  https://gitlab.com/pg_top/pg_proctab
+  https://gitlab.com/pg_proctab/pg_proctab
 
 Availability
 ------------
