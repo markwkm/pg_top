@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-YYYY-MM-DD v4.0.0
+2020-08-05 v4.0.0
 -----------------
 
 * Replace autoconf with cmake
