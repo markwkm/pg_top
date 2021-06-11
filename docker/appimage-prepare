@@ -1,0 +1,14 @@
+#!/bin/sh
+
+which docker > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+	echo "docker is not in your path"
+	exit 1
+fi
+
+DOCKER_DIR=`dirname $0`
+DOCKER_DIR=`readlink -f $DOCKER_DIR`
+
+DOCKER_TAG="pg_top-appimage"
+
+(cd $DOCKER_DIR/.. && docker build -t $DOCKER_TAG -f Dockerfile.appimage .)

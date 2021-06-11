@@ -1,0 +1,48 @@
+# Build an environment for creating an AppImage.
+
+# Use a distro with an old libc to maximize support on as many linux distros as
+# possible.
+FROM centos:6
+
+# CentOS 6 is EOL so update the repo config to use the CentOS vault.  6.10 is
+# the final version.
+RUN sed -i 's/enabled=1/enabled=0/' /etc/yum/pluginconf.d/fastestmirror.conf
+RUN sed -i 's/mirrorlist/#mirrorlist/' /etc/yum.repos.d/*.repo
+RUN sed -i 's|#baseurl=http://mirror.centos.org/centos/$releasever|baseurl=https://vault.centos.org/6.10|' /etc/yum.repos.d/*.repo
+
+RUN yum -y update
+RUN yum -y install epel-release
+RUN yum -y update
+RUN yum -y install cmake \
+                   bison \
+                   flex \
+                   gcc \
+                   libbsd-devel \
+                   make \
+                   ncurses-devel \
+                   openssl-devel \
+                   xz
+
+WORKDIR /usr/local
+# Release 12 is the latest that will run on CentOS 6.
+RUN curl -OL https://github.com/AppImage/AppImageKit/releases/download/12/appimagetool-x86_64.AppImage
+RUN chmod +x appimagetool-x86_64.AppImage
+RUN ./appimagetool-x86_64.AppImage --appimage-extract
+RUN chmod 0755 squashfs-root
+RUN chmod 0755 squashfs-root/usr
+RUN chmod 0755 squashfs-root/usr/bin
+RUN chmod 0755 squashfs-root/usr/lib
+RUN chmod 0755 squashfs-root/usr/lib/appimagekit
+RUN chmod 0755 squashfs-root/usr/share
+
+WORKDIR /usr/local/src
+
+# PostgreSQL 10 is the first release supporting multiple hosts in the
+# connection string.
+RUN curl -OL https://ftp.postgresql.org/pub/source/v10.17/postgresql-10.17.tar.bz2
+RUN tar xvf postgresql-10.17.tar.bz2
+WORKDIR /usr/local/src/postgresql-10.17
+RUN ./configure --without-ldap --without-readline --without-zlib \
+    --without-gssapi --with-openssl --prefix=/usr
+RUN make install
+RUN ldconfig
