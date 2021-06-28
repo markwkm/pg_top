@@ -16,6 +16,7 @@ C       - toggle the use of color\n\
 E       - show execution plan (UPDATE/DELETE safe)\n\
 I       - show I/O statistics per process (Linux only)\n\
 L       - show locks held by a process\n\
+R       - show PostgreSQL replication subscriptions\n\
 Q       - show current query of a process\n\
 c       - toggle the display of process commands\n\
 d       - change number of displays to show\n\
