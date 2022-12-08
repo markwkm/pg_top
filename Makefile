@@ -12,8 +12,8 @@ appimage-prep:
 appimage: appimage-prep
 	cd build/appimage && make appimage
 
-appimage-docker: appimage-prep
-	cd build/appimage && make appimage-docker
+appimage-podman: appimage-prep
+	cd build/appimage && make appimage-podman
 
 clean:
 	-rm -rf build

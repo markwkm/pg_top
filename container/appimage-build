@@ -1,0 +1,19 @@
+#!/bin/sh
+
+if ! which podman > /dev/null 2>&1; then
+	echo "podman is not in your path"
+	exit 1
+fi
+
+CONTAINER_DIR=$(readlink -f "$(dirname "$0")")
+CONTAINER_TAG="pg_top-appimage"
+
+# Use the return code from `podman inspect` to determine if the container image
+# needs to be created.
+if ! podman inspect $CONTAINER_TAG > /dev/null 2>&1; then
+	"${CONTAINER_DIR}/appimage-prepare" || exit 1
+fi
+
+podman run --rm -v "${CONTAINER_DIR}/..:/usr/local/src/pg_top:rw" \
+		-w /usr/local/src/pg_top $CONTAINER_TAG \
+		make appimage-podman

@@ -396,7 +396,7 @@ add_custom_target(appimage
     COMMAND VERSION=${PROJECT_VERSION} appimagetool-${ARCH}.AppImage AppDir
 )
 
-add_custom_target(appimage-docker
+add_custom_target(appimage-podman
     COMMAND cp -aL ${CMAKE_SOURCE_DIR}/AppRun AppDir
     COMMAND cp -aL ${CMAKE_SOURCE_DIR}/pg_top.desktop AppDir
     COMMAND cp -aL ${CMAKE_SOURCE_DIR}/pg_top.png AppDir

@@ -4,8 +4,8 @@ Release Notes
 YYYY-MM-DD v4.0.1
 -----------------
 
-* Add Docker files for creating an AppImage
 * Set CMake minimum version to 2.8.12
+* Add container files for creating an AppImage
 
 2020-08-05 v4.0.0
 -----------------

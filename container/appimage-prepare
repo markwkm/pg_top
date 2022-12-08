@@ -1,0 +1,13 @@
+#!/bin/sh
+
+if ! which podman > /dev/null 2>&1; then
+	echo "podman is not in your path"
+	exit 1
+fi
+
+CONTAINER_DIR=$(readlink -f "$(dirname "$0")")
+CONTAINER_TAG="pg_top-appimage"
+
+cd "$CONTAINER_DIR/.." && \
+		podman build --isolation=chroot -t $CONTAINER_TAG \
+				-f Containerfile.appimage .

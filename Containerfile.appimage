@@ -1,0 +1,45 @@
+# Build an environment for creating an AppImage.
+
+# Use a distro with an old libc to maximize support on as many linux distros as
+# possible.
+FROM centos:7
+
+RUN yum -y update && \
+    yum -y install epel-release && \
+    yum -y update && \
+    yum -y install bison \
+                   bzip2 \
+                   cmake \
+                   file \
+                   flex \
+                   gcc \
+                   libbsd-devel \
+                   make \
+                   ncurses-devel \
+                   openssl-devel \
+                   xz && \
+    yum -y clean all
+
+WORKDIR /usr/local
+# Release 12 is the latest that will run on CentOS 6.
+RUN curl -OL https://github.com/AppImage/AppImageKit/releases/download/12/appimagetool-x86_64.AppImage && \
+    chmod +x appimagetool-x86_64.AppImage && \
+    ./appimagetool-x86_64.AppImage --appimage-extract && \
+    chmod 0755 squashfs-root && \
+    chmod 0755 squashfs-root/usr && \
+    chmod 0755 squashfs-root/usr/bin && \
+    chmod 0755 squashfs-root/usr/lib && \
+    chmod 0755 squashfs-root/usr/lib/appimagekit && \
+    chmod 0755 squashfs-root/usr/share
+
+WORKDIR /usr/local/src
+
+# PostgreSQL 10 is the first release supporting multiple hosts in the
+# connection string.
+RUN curl -OL https://ftp.postgresql.org/pub/source/v10.17/postgresql-10.17.tar.bz2
+RUN tar xvf postgresql-10.17.tar.bz2
+WORKDIR /usr/local/src/postgresql-10.17
+RUN ./configure --without-ldap --without-readline --without-zlib \
+    --without-gssapi --with-openssl --prefix=/usr
+RUN make install
+RUN ldconfig
