@@ -10,7 +10,7 @@ It is recommended to build AppImages on older distributions:
 
   https://docs.appimage.org/introduction/concepts.html#build-on-old-systems-run-on-newer-systems
 
-At the time of this document, CentOS 6 is the one of the oldest supported Linux
+At the time of this document, CentOS 7 is the one of the oldest supported Linux
 distributions with the oldest libc version.
 
 Use a custom configured PostgreSQL build with minimal options enabled to reduce
@@ -30,3 +30,5 @@ options::
 
 Don't forget you may have to set both PATH and LD_LIBRARY_PATH appropriately
 depending on where the custom build of PostgreSQL is installed.
+
+See the README.rst in the container/ directory for an example.
