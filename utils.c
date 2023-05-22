@@ -554,7 +554,7 @@ format_time(long seconds)
 char *
 format_b(long long amt)
 {
-	static char retarray[NUM_STRINGS][16];
+	static char retarray[NUM_STRINGS][32];
 	static int	index = 0;
 	register char *ret;
 	register char tag = 'B';
@@ -609,7 +609,7 @@ format_b(long long amt)
 char *
 format_k(long amt)
 {
-	static char retarray[NUM_STRINGS][16];
+	static char retarray[NUM_STRINGS][32];
 	static int	index = 0;
 	register char *ret;
 	register char tag = 'K';
