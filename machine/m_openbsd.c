@@ -866,3 +866,10 @@ topproccmp(struct pg_proc *e1, struct pg_proc *e2)
 {
 	return (e1->pid < e2->pid ? -1 : e1->pid > e2->pid);
 }
+
+void
+get_io_info(struct io_info *io_info)
+{
+	/* Not supported yet */
+	memset(io_info, 0, sizeof(*io_info));
+}

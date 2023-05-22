@@ -74,6 +74,15 @@ struct system_info
     int    *memory;      /* memory information */
 };
 
+The io_info struct is filled in by get_io_info.
+struct io_info {
+    int64_t reads;
+    int64_t readsectors;
+    int64_t writes;
+    int64_t writesectors;
+};
+
+
 The last three pointers each point to an array of integers.  The
 length of the array is determined by the length of the corresponding
 _names array in the statics structure.  Furthermore, if an entry in a
@@ -115,6 +124,8 @@ char *format_next_process(caddr_t, char *(*func)())
 int proc_compare(caddr_t, caddr_t)
 
 	qsort comparison function
+
+void get_io_info(struct io_info *)
 
 get_process_info is called immediately after get_system_info.  In
 fact, the two functions could be rolled in to one.  The reason they

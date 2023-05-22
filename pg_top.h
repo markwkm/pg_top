@@ -101,6 +101,8 @@ struct pg_top_context
 								 * system. */
 	int			order_index;
 	char	   *order_name;
+	struct db_info db_info;
+	struct io_info io_info;
 	struct process_select ps;
 	char		show_tags;
 	struct statics statics;

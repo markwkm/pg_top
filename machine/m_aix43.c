@@ -741,3 +741,10 @@ proc_owner(int pid)
 
 	return (-1);
 }
+
+void
+get_io_info(struct io_info *io_info)
+{
+	/* Not supported yet */
+	memset(io_info, 0, sizeof(*io_info));
+}
