@@ -365,65 +365,49 @@ include(CPack)
 set(OUTPUT "${PROJECT_VERSION}")
 
 add_custom_target(appimage
-    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/AppRun AppDir
-    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/pg_top.desktop AppDir
-    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/pg_top.png AppDir
+    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/appimage/AppRun
+                   ${CMAKE_SOURCE_DIR}/appimage/pg_top.desktop
+                   ${CMAKE_SOURCE_DIR}/appimage/pg_top.svg
+            AppDir
     COMMAND mkdir -p AppDir/usr/share/metainfo
-    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/pg_top.appdata.xml AppDir/usr/share/metainfo
+    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/appimage/pg_top.appdata.xml
+            AppDir/usr/share/metainfo
     COMMAND mkdir -p AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libpq.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libtinfo.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libbsd.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libssl.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libcrypto.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libgssapi_krb5.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libkrb5.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libk5crypto.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libkrb5support.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libkeyutils.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libselinux.so | cut -d \" \" -f 3` AppDir/usr/lib
+    COMMAND cp -aL `ldd pg_top | grep libpq\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libtinfo\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libbsd\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libssl\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libcrypto\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libgssapi_krb5\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libkrb5\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libk5crypto\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libkrb5support\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libkeyutils\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libselinux\\. | cut -d \" \" -f 3`
+            AppDir/usr/lib
     COMMAND VERSION=${PROJECT_VERSION} appimagetool-${ARCH}.AppImage AppDir
 )
 
 add_custom_target(appimage-podman
-    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/AppRun AppDir
-    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/pg_top.desktop AppDir
-    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/pg_top.png AppDir
+    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/appimage/AppRun
+                   ${CMAKE_SOURCE_DIR}/appimage/pg_top.desktop
+                   ${CMAKE_SOURCE_DIR}/appimage/pg_top.svg
+            AppDir
     COMMAND mkdir -p AppDir/usr/share/metainfo
-    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/pg_top.appdata.xml AppDir/usr/share/metainfo
+    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/appimage/pg_top.appdata.xml
+            AppDir/usr/share/metainfo
     COMMAND mkdir -p AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libpq.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libtinfo.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libbsd.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libssl.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libcrypto.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libgssapi_krb5.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libkrb5.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libk5crypto.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libkrb5support.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libkeyutils.so | cut -d \" \" -f 3` AppDir/usr/lib
-    COMMAND cp -aL
-            `ldd pg_top | grep libselinux.so | cut -d \" \" -f 3` AppDir/usr/lib
+    COMMAND cp -aL `ldd pg_top | grep libpq\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libtinfo\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libbsd\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libssl\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libcrypto\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libgssapi_krb5\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libkrb5\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libk5crypto\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libkrb5support\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libkeyutils\\. | cut -d \" \" -f 3`
+                   `ldd pg_top | grep libselinux\\. | cut -d \" \" -f 3`
+            AppDir/usr/lib
     COMMAND VERSION=${PROJECT_VERSION} /usr/local/squashfs-root/AppRun --comp=xz AppDir
 )
