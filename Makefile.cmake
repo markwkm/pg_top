@@ -1,7 +1,7 @@
+.PHONY: appimage clean default debug package release
+
 default:
 	@echo "targets: appimage (Linux only), clean, debug, package, release"
-
-UNAME_S := $(shell uname -s)
 
 appimage:
 	cmake -H. -Bbuild/appimage -DCMAKE_INSTALL_PREFIX=/usr
