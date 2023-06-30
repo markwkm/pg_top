@@ -26,7 +26,6 @@
 #endif
 #include <unistd.h>
 
-#include "sigdesc.h"			/* generated automatically */
 #include "pg_top.h"
 #include "boolean.h"
 #include "utils.h"

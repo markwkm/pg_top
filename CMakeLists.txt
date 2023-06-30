@@ -121,29 +121,6 @@ if(NOT TIME_T_DEFINED)
     set(time_t "long")
 endif(NOT TIME_T_DEFINED)
 
-# Build sigdesc.h file.
-
-foreach(f
-        /usr/include/signal.h
-        /usr/include/sys/signal.h
-        /usr/include/sys/iso/signal_iso.h
-        /usr/include/bits/signum.h
-        /usr/include/asm-generic/signal.h
-       )
-    execute_process(
-        COMMAND grep SIGKILL ${f}
-        RESULT_VARIABLE CHECK_FOR_SIGKILL
-        OUTPUT_QUIET ERROR_QUIET
-    )
-    if(CHECK_FOR_SIGKILL EQUAL 0)
-        execute_process(
-            COMMAND awk -f ${CMAKE_SOURCE_DIR}/sigconv.awk ${f}
-            OUTPUT_FILE ${CMAKE_BINARY_DIR}/sigdesc.h
-        )
-        break()
-    endif(CHECK_FOR_SIGKILL EQUAL 0)
-endforeach(f)
-
 # Build config.h header.
 
 configure_file(

@@ -10,6 +10,7 @@ YYYY-MM-DD v4.0.1
 * Fix string truncation warnings in byte and kilobyte pretty functions
 * Replace reallocarray() with POSIX realloc()
 * Fix escaping in CMakeLists.txt AppImage target
+* Removed building of sigdesc.h, since kill commands was removed in v4.0.0
 
 2020-08-05 v4.0.0
 -----------------

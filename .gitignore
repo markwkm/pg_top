@@ -7,7 +7,6 @@ config.h
 depcomp
 pg_top
 pg_top.1
-sigdesc.h
 tags
 
 *.BAK
