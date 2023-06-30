@@ -1,30 +1,36 @@
 # Build an environment for creating an AppImage.
 
-# Use a distro with an old libc to maximize support on as many linux distros as
-# possible.
-FROM centos:7
+# Use a distro with an old libc to maximize support on as many linux distros
+# and architectures as possible.
+FROM ubuntu:14.04
 
-RUN yum -y update && \
-    yum -y install epel-release && \
-    yum -y update && \
-    yum -y install bison \
+ARG ARCH
+
+RUN apt-get -qq -y update && \
+    apt-get -qq -y dist-upgrade && \
+    apt-get -qq -y install bison \
                    bzip2 \
                    cmake \
+                   curl \
                    file \
                    flex \
                    gcc \
-                   libbsd-devel \
+                   libc6-dev \
+                   libbsd-dev \
+                   libncurses5-dev \
                    make \
-                   ncurses-devel \
-                   openssl-devel \
-                   xz && \
-    yum -y clean all
+                   wget \
+                   xz-utils && \
+    apt-get -qq -y clean && \
+    apt-get -qq -y autoclean
 
 WORKDIR /usr/local
-
-RUN curl -OL https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage && \
-    chmod +x appimagetool-x86_64.AppImage && \
-    ./appimagetool-x86_64.AppImage --appimage-extract && \
+ARG APPIMAGEPATH="AppImage/AppImageKit/releases/download/13"
+ARG APPIMAGEFILENAME="appimagetool-${ARCH}.AppImage"
+ARG APPIMAGEURL="https://github.com/${APPIMAGEPATH}/${APPIMAGEFILENAME}"
+RUN curl -OL ${APPIMAGEURL} && \
+    chmod +x appimagetool-${ARCH}.AppImage && \
+    ./appimagetool-${ARCH}.AppImage --appimage-extract && \
     chmod 0755 squashfs-root && \
     chmod 0755 squashfs-root/usr && \
     chmod 0755 squashfs-root/usr/bin && \
@@ -32,14 +38,25 @@ RUN curl -OL https://github.com/AppImage/AppImageKit/releases/download/13/appima
     chmod 0755 squashfs-root/usr/lib/appimagekit && \
     chmod 0755 squashfs-root/usr/share
 
-WORKDIR /usr/local/src
+ARG OPENSSLVER="1.1.1s"
+RUN wget -O /tmp/openssl-${OPENSSLVER}.tar.gz -q --no-check-certificate \
+         https://www.openssl.org/source/openssl-${OPENSSLVER}.tar.gz && \
+    tar -C /usr/local/src -xf /tmp/openssl-${OPENSSLVER}.tar.gz
+WORKDIR /usr/local/src/openssl-${OPENSSLVER}
+RUN ./config -fPIC shared && \
+    make -s -j$(nproc) && \
+    make -s install
 
 # PostgreSQL 10 is the first release supporting multiple hosts in the
 # connection string.
-RUN curl -OL https://ftp.postgresql.org/pub/source/v10.17/postgresql-10.17.tar.bz2
-RUN tar xvf postgresql-10.17.tar.bz2
-WORKDIR /usr/local/src/postgresql-10.17
-RUN ./configure --without-ldap --without-readline --without-zlib \
-    --without-gssapi --with-openssl --prefix=/usr
-RUN make install
-RUN ldconfig
+ARG PGVER="10.23"
+ARG PGFILENAME="postgresql-${PGVER}.tar.bz2"
+ARG PGURL="https://ftp.postgresql.org/pub/source/v${PGVER}/${PGFILENAME}"
+RUN wget -O /tmp/postgresql-${PGVER}.tar.bz2 -q --no-check-certificate \
+         ${PGURL}
+RUN tar -C /usr/local/src -xf /tmp/postgresql-${PGVER}.tar.bz2
+WORKDIR /usr/local/src/postgresql-${PGVER}
+RUN ./configure --silent --without-ldap --without-readline --without-zlib \
+    --without-gssapi --with-openssl --prefix=/usr && \
+    make -s -j $(nproc) install && \
+    ldconfig

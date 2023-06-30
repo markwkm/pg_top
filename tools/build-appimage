@@ -11,9 +11,20 @@ CONTAINER_TAG="pg_top-appimage"
 # Use the return code from `podman inspect` to determine if the container image
 # needs to be created.
 if ! podman inspect $CONTAINER_TAG > /dev/null 2>&1; then
-	"${CONTAINER_DIR}/build-appimage_container" || exit 1
+	"${CONTAINER_DIR}/build-appimage-container" || exit 1
 fi
 
-podman run --rm -v "${CONTAINER_DIR}/..:/usr/local/src/pg_top:rw" \
-		-w /usr/local/src/pg_top $CONTAINER_TAG \
-		make appimage-podman
+podman run \
+		--rm \
+		-v "${CONTAINER_DIR}/..:/usr/local/src/pg_top:rw,Z" \
+		-w /usr/local/src/pg_top \
+		$CONTAINER_TAG \
+		make -f Makefile.cmake appimage
+
+podman run \
+        --rm \
+        -v "${CONTAINER_DIR}/..:/usr/local/src/pg_top:rw,Z" \
+        -w /usr/local/src/pg_top \
+        -u root \
+        $CONTAINER_TAG \
+        chown -R root:root build/appimage/

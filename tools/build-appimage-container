@@ -8,6 +8,16 @@ fi
 CONTAINER_DIR=$(readlink -f "$(dirname "$0")")
 CONTAINER_TAG="pg_top-appimage"
 
+ARCH="$(uname -m)"
+
+if [ "${ARCH}" = "arm64" ]; then
+	ARCH="aarch64"
+fi
+
 cd "$CONTAINER_DIR/.." && \
-		podman build --isolation=chroot -t $CONTAINER_TAG \
-				-f Containerfile.appimage .
+		podman build \
+				--isolation=chroot \
+				--build-arg ARCH="${ARCH}" \
+				-t "${CONTAINER_TAG}" \
+				-f Containerfile.appimage \
+				.
