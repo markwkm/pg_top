@@ -27,4 +27,4 @@ podman run \
         -w /usr/local/src/pg_top \
         -u root \
         $CONTAINER_TAG \
-        chown -R root:root build/appimage/
+        chown -R root:root builds/appimage/
