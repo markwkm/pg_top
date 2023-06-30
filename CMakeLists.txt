@@ -172,12 +172,15 @@ set_source_files_properties(
     PROPERTIES COMPILE_FLAGS "-I${CMAKE_HOME_DIRECTORY} ${PGINCLUDE}"
 )
 
+if (NOT ${HAVE_GETOPT})
+    set (EXTRAFILES "${EXTRAFILES} getopt.c")
+endif (NOT ${HAVE_GETOPT})
+
 add_executable(
     ${PROJECT_NAME}
     color.c
     commands.c
     display.c
-    getopt.c
     screen.c
     sprompt.c
     pg.c
@@ -187,6 +190,7 @@ add_executable(
     machine/m_remote.c
     machine/m_common.c
     machine/m_${MACHINE}.c
+    ${EXTRAFILES}
 )
 
 # Determine appropriate linker flags.

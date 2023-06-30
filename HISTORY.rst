@@ -11,6 +11,7 @@ YYYY-MM-DD v4.0.1
 * Replace reallocarray() with POSIX realloc()
 * Fix escaping in CMakeLists.txt AppImage target
 * Removed building of sigdesc.h, since kill commands was removed in v4.0.0
+* Fix CMake handling of building getopt.c when not found
 
 2020-08-05 v4.0.0
 -----------------
