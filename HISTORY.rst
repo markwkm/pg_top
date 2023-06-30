@@ -8,6 +8,7 @@ YYYY-MM-DD v4.0.1
 * Add container files for creating an AppImage using AppImageKit v13
 * Update AppImage notes
 * Fix string truncation warnings in byte and kilobyte pretty functions
+* Replace reallocarray() with POSIX realloc()
 
 2020-08-05 v4.0.0
 -----------------

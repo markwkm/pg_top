@@ -913,10 +913,10 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 
 	if (rows > 0)
 	{
-		p = reallocarray(pgrtable, rows, sizeof(struct top_proc_r));
+		p = realloc(pgrtable, sizeof(struct top_proc_r) * rows);
 		if (p == NULL)
 		{
-			fprintf(stderr, "reallocarray error\n");
+			fprintf(stderr, "realloc error\n");
 			if (pgresult != NULL)
 				PQclear(pgresult);
 			disconnect_from_db(conninfo);

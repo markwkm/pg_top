@@ -840,10 +840,10 @@ get_process_info(struct system_info *si,
 
 		if (rows > 0)
 		{
-			p = reallocarray(pgtable, rows, sizeof(struct top_proc));
+			p = realloc(pgtable, sizeof(struct top_proc) * rows);
 			if (p == NULL)
 			{
-				fprintf(stderr, "reallocarray error\n");
+				fprintf(stderr, "realloc error\n");
 				if (pgresult != NULL)
 					PQclear(pgresult);
 				disconnect_from_db(conninfo);
