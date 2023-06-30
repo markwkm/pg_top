@@ -47,8 +47,6 @@ char		ch_erase;
 char		ch_kill;
 char		smart_terminal;
 char		PC;
-char	   *tgetstr();
-char	   *tgoto();
 char		termcap_buf[1024];
 char		string_buffer[1024];
 char		home[16];
@@ -148,7 +146,6 @@ init_termcap(int interactive)
 	char	   *bufptr;
 	char	   *PCptr;
 	char	   *term_name;
-	char	   *getenv();
 	int			status;
 
 	/* set defaults in case we aren't smart */
