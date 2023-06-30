@@ -1,0 +1,49 @@
+if [ "${BASH}" = "" ]; then
+	echo "sourcing activate currently requires a bash shell"
+	return
+fi
+
+APPIMAGE_NAME="pg_top"
+
+deactivate()
+{
+	PATH="${APPIMAGE_OLD_PATH}"
+	export PATH
+	unset APPIMAGE_OLD_PATH
+
+	if [ "${APPIMAGE_OLD_LD_LIBRARY_PATH}" = "" ]; then
+		unset LD_LIBRARY_PATH
+	else
+		LD_LIBRARY_PATH="${APPIMAGE_OLD_LD_LIBRARY_PATH}"
+		export LD_LIBRARY_PATH
+	fi
+	unset APPIMAGE_OLD_LD_LIBRARY_PATH
+
+	PS1="${APPIMAGE_OLD_PS1}"
+	export PS1
+	unset APPIMAGE_OLD_PS1
+}
+
+APPIMAGE_ENV="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+
+APPIMAGE_OLD_PS1="${PS1}"
+export APPIMAGE_OLD_PS1
+
+APPIMAGE_OLD_PATH="${PATH}"
+export APPIMAGE_OLD_PATH
+
+APPIMAGE_OLD_LD_LIBRARY_PATH="${LD_LIBRARY_PATH}"
+export APPIMAGE_OLD_LD_LIBRARY_PATH
+
+PATH="${APPIMAGE_ENV}/usr/bin:${PATH}"
+export PATH
+
+if [ "${LD_LIBRARY_PATH}" = "" ]; then
+	LD_LIBRARY_PATH="${APPIMAGE_ENV}/usr/lib"
+else
+	LD_LIBRARY_PATH="${APPIMAGE_ENV}/usr/lib:${LD_LIBRARY_PATH}"
+fi
+export LD_LIBRARY_PATH
+
+PS1="<${APPIMAGE_NAME}> ${PS1}"
+export PS1

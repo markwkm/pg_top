@@ -365,7 +365,8 @@ include(CPack)
 set(OUTPUT "${PROJECT_VERSION}")
 
 add_custom_target(appimage
-    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/appimage/AppRun
+    COMMAND cp -aL ${CMAKE_SOURCE_DIR}/appimage/activate
+                   ${CMAKE_SOURCE_DIR}/appimage/AppRun
                    ${CMAKE_SOURCE_DIR}/appimage/pg_top.desktop
                    ${CMAKE_SOURCE_DIR}/appimage/pg_top.svg
             AppDir
