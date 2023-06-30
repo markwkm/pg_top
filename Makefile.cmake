@@ -3,17 +3,12 @@ default:
 
 UNAME_S := $(shell uname -s)
 
-appimage-prep:
+appimage:
 	cmake -H. -Bbuild/appimage -DCMAKE_INSTALL_PREFIX=/usr
 	cd build/appimage && make
 	cd build/appimage && sed -i -e 's#/usr#././#g' pg_top
 	cd build/appimage && make install DESTDIR=AppDir
-
-appimage: appimage-prep
 	cd build/appimage && make appimage
-
-appimage-podman: appimage-prep
-	cd build/appimage && make appimage-podman
 
 clean:
 	-rm -rf build

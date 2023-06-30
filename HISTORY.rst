@@ -9,6 +9,7 @@ YYYY-MM-DD v4.0.1
 * Update AppImage notes
 * Fix string truncation warnings in byte and kilobyte pretty functions
 * Replace reallocarray() with POSIX realloc()
+* Fix escaping in CMakeLists.txt AppImage target
 
 2020-08-05 v4.0.0
 -----------------
