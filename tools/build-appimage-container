@@ -5,7 +5,7 @@ if ! which podman > /dev/null 2>&1; then
 	exit 1
 fi
 
-CONTAINER_DIR=$(readlink -f "$(dirname "$0")")
+CONTAINER_DIR=$(realpath "$(dirname "$0")")
 CONTAINER_TAG="pg_top-appimage"
 
 ARCH="$(uname -m)"
