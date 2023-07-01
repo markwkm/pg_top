@@ -12,6 +12,7 @@ YYYY-MM-DD v4.0.1
 * Fix escaping in CMakeLists.txt AppImage target
 * Removed building of sigdesc.h, since kill commands was removed in v4.0.0
 * Fix CMake handling of building getopt.c when not found
+* Bump CMake minimum to 3.1.0
 
 2020-08-05 v4.0.0
 -----------------
