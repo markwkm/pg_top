@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-YYYY-MM-DD v4.0.1
+2023-07-01 v4.1.0
 -----------------
 
 * Set CMake minimum version to 2.8.12
