@@ -975,9 +975,9 @@ get_process_info_r(struct system_info *si, struct process_select *sel,
 				break;
 			default:
 				if (sel->fullcmd && PQgetvalue(pgresult, i, c_fullcomm))
-					update_str(&n->name, PQgetvalue(pgresult, i, c_fullcomm));
+					update_str(&n->name, printable(PQgetvalue(pgresult, i, c_fullcomm)));
 				else
-					update_str(&n->name, PQgetvalue(pgresult, i, c_comm));
+					update_str(&n->name, printable(PQgetvalue(pgresult, i, c_comm)));
 
 				switch (PQgetvalue(pgresult, i, c_state)[0])
 				{
