@@ -241,11 +241,6 @@ if(LIBKSTAT)
     target_link_libraries(${PROJECT_NAME} ${LIBKSTAT})
 endif(LIBKSTAT)
 
-find_library(LIBELF elf REQUIRED)
-if(LIBELF)
-    target_link_libraries(${PROJECT_NAME} ${LIBELF})
-endif(LIBELF)
-
 find_library(LIBMACH mach)
 if(LIBMACH)
     target_link_libraries(${PROJECT_NAME} ${LIBMACH})

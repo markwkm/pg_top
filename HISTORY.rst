@@ -5,6 +5,7 @@ YYYY-MM-DD X.Y.Z
 -----------------
 
 * Fix remote query display to query in a single line
+* Remove requirement for unused libelf
 
 2023-07-01 v4.1.0
 -----------------
