@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-YYYY-MM-DD X.Y.Z
+2024-06-06 v4.1.1
 -----------------
 
 * Fix remote query display to query in a single line
